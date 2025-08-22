@@ -14,6 +14,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\URL;
 use App\Models\Permission;
+use App\Models\Proposal;
 use App\Notifications\CustomResetPasswordNotification;
 use App\Notifications\CustomVerifyEmailNotification;
 
@@ -102,6 +103,14 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(NotificationType::class, 'notifiableusers', 'useridfk', 'notificationfk');
 
+    }
+    
+    public function department()
+    {
+        return $this->hasOne(Proposal::class, 'useridfk', 'userid')
+                    ->with('department')
+                    ->select('useridfk', 'departmentidfk')
+                    ->latest();
     }
     public function defaultpermissions()
     {

@@ -91,4 +91,40 @@ class ResearchdesignController extends Controller
          // Return the view with the proposal data
          return view('pages.proposals.proposalform', compact('prop', 'isreadonlypage', 'isadminmode', 'departments', 'grants', 'themes'));
      }
+
+     public function updateResearchDesign(Request $request, $id)
+     {
+         $rules = [
+             'projectsummary' => 'required|string',
+             'indicators' => 'required|string',
+             'verification' => 'required|string',
+             'assumptions' => 'required|string',
+             'goal' => 'required|string',
+             'purpose' => 'required|string'
+         ];
+
+         $validator = Validator::make($request->all(), $rules);
+         if ($validator->fails()) {
+             return response()->json(['message' => $validator->errors(), 'type' => 'danger'], 400);
+         }
+
+         $reditem = ResearchDesignItem::findOrFail($id);
+         $reditem->summary = $request->input('projectsummary');
+         $reditem->indicators = $request->input('indicators');
+         $reditem->verification = $request->input('verification');
+         $reditem->assumptions = $request->input('assumptions');
+         $reditem->goal = $request->input('goal');
+         $reditem->purpose = $request->input('purpose');
+         $reditem->save();
+
+         return response()->json(['message' => 'Research design updated successfully!', 'type' => 'success']);
+     }
+
+     public function deleteResearchDesign($id)
+     {
+         $reditem = ResearchDesignItem::findOrFail($id);
+         $reditem->delete();
+
+         return response()->json(['message' => 'Research design deleted successfully!', 'type' => 'success']);
+     }
 }

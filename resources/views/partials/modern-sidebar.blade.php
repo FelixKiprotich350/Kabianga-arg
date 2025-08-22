@@ -1,0 +1,147 @@
+<nav class="modern-sidebar" id="sidebar">
+    <div class="sidebar-nav">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('pages.home') ? 'active' : '' }}"
+                    href="{{ route('pages.home') }}">
+                    <i class="bi bi-house-door"></i>
+                    Dashboard
+                </a>
+            </li>
+
+            @if (Auth::user()->haspermission('canmakenewproposal'))
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('pages.proposals.viewnewproposal') ? 'active' : '' }}"
+                        href="{{ route('pages.proposals.viewnewproposal') }}">
+                        <i class="bi bi-plus-circle"></i>
+                        New Application
+                    </a>
+                </li>
+            @endif
+
+            @if (Auth::user()->haspermission('canviewmyapplications'))
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('pages.proposals.myapplications') ? 'active' : '' }}"
+                        href="{{ route('pages.proposals.myapplications') }}">
+                        <i class="bi bi-file-text"></i>
+                        My Applications
+                    </a>
+                </li>
+            @endif
+
+            @if (Auth::user()->haspermission('canviewallapplications'))
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('pages.proposals.allproposals') ? 'active' : '' }}"
+                        href="{{ route('pages.proposals.allproposals') }}">
+                        <i class="bi bi-files"></i>
+                        Proposals
+                    </a>
+                </li>
+            @endif
+
+            @if (Auth::user()->haspermission('canviewprojects'))
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('pages.projects.*') ? 'active' : '' }}"
+                        href="{{ route('pages.projects.myprojects') }}">
+                        <i class="bi bi-kanban"></i>
+                        My Projects
+                    </a>
+                </li>
+            @endif
+
+            @if (Auth::user()->haspermission('canviewallprojects'))
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('pages.projects.allprojects') ? 'active' : '' }}"
+                        href="{{ route('pages.projects.allprojects') }}">
+                        <i class="bi bi-diagram-3"></i>
+                        Projects
+                    </a>
+                </li>
+            @endif
+
+            @if (Auth::user()->haspermission('canviewreports'))
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('pages.reports.*') ? 'active' : '' }}"
+                        href="{{ route('pages.reports.home') }}">
+                        <i class="bi bi-graph-up"></i>
+                        Reports
+                    </a>
+                </li>
+            @endif
+
+            @if (Auth::user()->haspermission('canviewallusers'))
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('pages.users.*') ? 'active' : '' }}"
+                        href="{{ route('pages.users.manage') }}">
+                        <i class="bi bi-people"></i>
+                        User Management
+                    </a>
+                </li>
+            @endif
+
+            @if (Auth::user()->haspermission('canviewgrants'))
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('pages.grants.*') ? 'active' : '' }}"
+                        href="{{ route('pages.grants.home') }}">
+                        <i class="bi bi-cash-stack"></i>
+                        Grants
+                    </a>
+                </li>
+            @endif
+
+            @if (Auth::user()->haspermission('canviewdepartmentsandschools'))
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('pages.departments.*') ? 'active' : '' }}"
+                        href="{{ route('pages.departments.home') }}">
+                        <i class="bi bi-building"></i>
+                        Departments
+                    </a>
+                </li>
+            @endif
+
+            @if (Auth::user()->haspermission('canviewdepartmentsandschools'))
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('pages.schools.*') ? 'active' : '' }}"
+                        href="{{ route('pages.schools.home') }}">
+                        <i class="bi bi-buildings"></i>
+                        Schools
+                    </a>
+                </li>
+            @endif
+
+            @if (Auth::user()->haspermission('canviewmailing'))
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('pages.mailing.*') ? 'active' : '' }}"
+                        href="{{ route('pages.mailing.home') }}">
+                        <i class="bi bi-envelope"></i>
+                        Notifications
+                    </a>
+                </li>
+            @endif
+
+@if (Auth::user()->haspermission('cansupervise'))
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('pages.supervision.*') ? 'active' : '' }}"
+                        href="{{ route('pages.supervision.home') }}">
+                        <i class="bi bi-clipboard-check"></i>
+                        Monitoring
+                    </a>
+                </li>
+            @endif
+
+            <li class="nav-item mt-3">
+                <hr class="sidebar-divider">
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('pages.myprofile') ? 'active' : '' }}"
+                    href="{{ route('pages.myprofile') }}">
+                    <i class="bi bi-person-circle"></i>
+                    My Account
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>

@@ -101,4 +101,46 @@ class CollaboratorsController extends Controller
         // Return the view with the proposal data
         return view('pages.proposals.proposalform', compact('prop', 'isreadonlypage', 'isadminmode', 'departments', 'grants', 'themes'));
     }
+
+    public function updateCollaborator(Request $request, $id)
+    {
+        if(!auth()->user()->haspermission('canmakenewproposal')){
+            return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
+        }
+
+        $rules = [
+            'collaboratorname' => 'required|string',
+            'institution' => 'required|string',
+            'position' => 'required|string',
+            'researcharea' => 'required|string',
+            'experience' => 'required|string'
+        ];
+
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            return response()->json(['message' => $validator->errors(), 'type' => 'danger'], 400);
+        }
+
+        $collaborator = Collaborator::findOrFail($id);
+        $collaborator->collaboratorname = $request->input('collaboratorname');
+        $collaborator->institution = $request->input('institution');
+        $collaborator->position = $request->input('position');
+        $collaborator->researcharea = $request->input('researcharea');
+        $collaborator->experience = $request->input('experience');
+        $collaborator->save();
+
+        return response()->json(['message' => 'Collaborator updated successfully!', 'type' => 'success']);
+    }
+
+    public function deleteCollaborator($id)
+    {
+        if(!auth()->user()->haspermission('canmakenewproposal')){
+            return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
+        }
+
+        $collaborator = Collaborator::findOrFail($id);
+        $collaborator->delete();
+
+        return response()->json(['message' => 'Collaborator deleted successfully!', 'type' => 'success']);
+    }
 }

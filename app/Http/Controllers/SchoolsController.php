@@ -84,13 +84,12 @@ class SchoolsController extends Controller
 
 
     }
-    public function viewallschools()
+    public function modernViewAllSchools()
     {
         if(!auth()->user()->haspermission('canviewdepartmentsandschools')){
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to View Departments!");
+            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to View Schools!");
         }
-        $allschools = School::all();
-        return view('pages.schools.home', compact('allschools'));
+        return view('pages.departments.modern-schools');
     }
     public function getviewschoolpage($id)
     {
@@ -117,8 +116,8 @@ class SchoolsController extends Controller
 
     public function fetchallschools()
     {
-        $data = School::all();
-        return response()->json($data); // Return  data as JSON
+        $data = School::withCount('departments')->get();
+        return response()->json(['data' => $data]);
     }
 
     public function fetchsearchschools(Request $request)

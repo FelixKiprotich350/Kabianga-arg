@@ -34,13 +34,11 @@ use Barryvdh\DomPDF\Facade\Pdf;
 class ProposalsController extends Controller
 {
     //
-    public function getnewproposalpage()
+    public function modernNewProposal()
     {
         if (!auth()->user()->haspermission('canmakenewproposal')) {
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Make a new Proposal!");
         }
-        $isnewprop = true;
-        $departments = Department::all();
         $themes = ResearchTheme::all();
         $user = auth()->user();
         $currentgrant = GlobalSetting::where('item', 'current_open_grant')->first();
@@ -52,7 +50,7 @@ class ProposalsController extends Controller
                 })->get();
         }
 
-        return view('pages.proposals.proposalform', compact('isnewprop', 'departments', 'grants', 'themes'));
+        return view('pages.proposals.modern-form', compact('grants', 'themes'));
     }
 
     public function postnewproposal(Request $request)
@@ -402,32 +400,26 @@ class ProposalsController extends Controller
         if (!auth()->user()->haspermission('canviewallapplications')) {
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to view all Proposals!");
         }
-        $allproposals = Proposal::all();
-        return view('pages.proposals.allproposals', compact('allproposals'));
+        return view('pages.proposals.modern-all');
     }
-    public function viewmyapplications()
+    public function modernMyApplications()
     {
         if (!auth()->user()->haspermission('canviewmyapplications')) {
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to view My Proposals!");
         }
-        $userid = auth()->user()->userid;
-        $allproposals = Proposal::where('useridfk', $userid);
-        return view('pages.proposals.myapplications', compact('allproposals'));
+        $themes = ResearchTheme::all();
+        return view('pages.proposals.modern-list', compact('themes'));
     }
     public function getsingleproposalpage($id)
     {
         $user = Auth::user();
         // Find the proposal by ID or fail with a 404 error
-        $prop = Proposal::findOrFail($id);
+        $prop = Proposal::with(['applicant', 'department', 'themeitem', 'grantitem'])->findOrFail($id);
 
         if (!$user->haspermission('canreadproposaldetails') && $user->userid != $prop->useridfk) {
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to read the requested Proposal!");
         }
-        $grants = Grant::all();
-        $departments = Department::all();
-        $themes = ResearchTheme::all();
-        $finyears = FinancialYear::all();
-        return view('pages.proposals.readproposalform', compact('prop', 'departments', 'grants', 'themes', 'finyears'));
+        return view('pages.proposals.modern-view', compact('prop'));
     }
     public function printpdf($id)
     {
@@ -462,15 +454,24 @@ class ProposalsController extends Controller
     public function fetchmyapplications()
     {
         if (!auth()->user()->haspermission('canviewmyapplications')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to view My Proposals!");
+            return response()->json(['data' => []]);
         }
         $user = auth()->user();
         $myapplications = Proposal::where('useridfk', $user->userid)->with('department', 'grantitem', 'themeitem', 'applicant')->get();
-        $proposals = $myapplications->map(function ($proposal) use ($user) {
-            $proposal->haspendingupdates = $proposal->hasPendingUpdates();
-            return $proposal;
+        $proposals = $myapplications->map(function ($proposal) {
+            return [
+                'proposalid' => $proposal->proposalid,
+                'title' => $proposal->researchtitle,
+                'abstract' => $proposal->objectives,
+                'approvalstatus' => strtolower($proposal->approvalstatus),
+                'theme_name' => $proposal->themeitem->themename ?? 'N/A',
+                'grant_name' => $proposal->grantitem->grantname ?? 'N/A',
+                'requested_amount' => $proposal->grantitem->amount ?? 0,
+                'created_at' => $proposal->created_at,
+                'themefk' => $proposal->themefk
+            ];
         });
-        return response()->json($proposals);
+        return response()->json(['data' => $proposals]);
     }
 
     public function fetchallproposals()

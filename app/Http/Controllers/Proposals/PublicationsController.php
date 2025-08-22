@@ -65,4 +65,58 @@ class PublicationsController extends Controller
 
 
     }
+
+    public function fetchall()
+    {
+        $data = Publication::all();
+        return response()->json(['data' => $data]);
+    }
+
+    public function fetchsearch(Request $request)
+    {
+        $searchTerm = $request->input('search');
+        $data = Publication::where('title', 'like', '%' . $searchTerm . '%')
+            ->orWhere('authors', 'like', '%' . $searchTerm . '%')
+            ->orWhere('publisher', 'like', '%' . $searchTerm . '%')
+            ->get();
+        return response()->json(['data' => $data]);
+    }
+
+    public function updatePublication(Request $request, $id)
+    {
+        $rules = [
+            'authors' => 'required|string',
+            'year' => 'required|string',
+            'pubtitle' => 'required|string',
+            'researcharea' => 'required|string',
+            'publisher' => 'required|string',
+            'volume' => 'required|string',
+            'pubpages' => 'required|integer'
+        ];
+
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            return response()->json(['message' => $validator->errors(), 'type' => 'danger'], 400);
+        }
+
+        $publication = Publication::findOrFail($id);
+        $publication->authors = $request->input('authors');
+        $publication->year = $request->input('year');
+        $publication->title = $request->input('pubtitle');
+        $publication->volume = $request->input('volume');
+        $publication->researcharea = $request->input('researcharea');
+        $publication->pages = $request->input('pubpages');
+        $publication->publisher = $request->input('publisher');
+        $publication->save();
+
+        return response()->json(['message' => 'Publication updated successfully!', 'type' => 'success']);
+    }
+
+    public function deletePublication($id)
+    {
+        $publication = Publication::findOrFail($id);
+        $publication->delete();
+
+        return response()->json(['message' => 'Publication deleted successfully!', 'type' => 'success']);
+    }
 }

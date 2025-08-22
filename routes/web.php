@@ -29,6 +29,9 @@ use App\Http\Controllers\{
     PDFController,
     SupervisionController,
     FinYearController,
+    ResearchThemeController,
+    PermissionsController,
+    SettingsController,
 };
 
 
@@ -45,6 +48,12 @@ use App\Http\Controllers\{
 
 //test controller /endpoint
 Route::get('/test', [TestController::class, 'test'])->name('api.test');
+
+// Public API Routes (no authentication required)
+Route::prefix('api')->group(function () {
+    Route::get('/users', [UsersController::class, 'apiGetAllUsers'])->name('api.public.users');
+    Route::get('/users/{id}', [UsersController::class, 'apiGetUser'])->name('api.public.user');
+});
 
 // Common Pages Routes
 Route::get('/default', [CommonPagesController::class, 'index'])->name('pages.default');
@@ -86,12 +95,15 @@ Route::middleware(['auth.custom', 'email.account.verification'])->group(function
     Route::get('/unauthorized', [DashboardController::class, 'unauthorized'])->name('pages.unauthorized');
 
     //dashboard & home
-    Route::get('/home', [DashboardController::class, 'home'])->name('pages.home');
-    Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('pages.dashboard');
+    Route::get('/home', [DashboardController::class, 'modernHome'])->name('pages.home');
+    Route::get('/dashboard', [DashboardController::class, 'modernDashboard'])->name('pages.dashboard');
     Route::get('/dashboard/chart', [DashboardController::class, 'chartdata'])->name('api.dashboard.chartdata');
 
     //proposals
-    Route::get('/proposals/newproposal', [ProposalsController::class, 'getnewproposalpage'])->name('pages.proposals.viewnewproposal');
+    Route::get('/proposals/newproposal', [ProposalsController::class, 'modernNewProposal'])->name('pages.proposals.viewnewproposal');
+Route::get('/proposals/myapplications', [ProposalsController::class, 'modernMyApplications'])->name('pages.proposals.myapplications');
+    Route::get('/proposals/allproposals', [ProposalsController::class, 'viewallproposals'])->name('pages.proposals.allproposals');
+    Route::get('/proposals/view/{id}', [ProposalsController::class, 'getsingleproposalpage'])->name('pages.proposals.viewproposal');
     Route::post('/proposals/post', [ProposalsController::class, 'postnewproposal'])->name('route.proposals.post');
     Route::post('/proposals/updatebasicdetails/{id}', [ProposalsController::class, 'updatebasicdetails'])->name('route.proposals.updatebasicdetails');
     Route::post('/proposals/updateresearch/{id}', [ProposalsController::class, 'updateresearchdetails'])->name('route.proposals.updateresearchdetails');
@@ -120,9 +132,10 @@ Route::middleware(['auth.custom', 'email.account.verification'])->group(function
     Route::get('/proposals/changes/{id}/fetchall', [ProposalChangesController::class, 'fetchall'])->name('api.proposalchanges.fetchall');
 
 
-    //schools
+//schools
     Route::post('/schools/post', [SchoolsController::class, 'postnewschool'])->name('api.schools.post');
-    Route::get('/schools/home', [SchoolsController::class, 'viewallschools'])->name('pages.schools.home');
+    Route::get('/schools/home', [SchoolsController::class, 'modernViewAllSchools'])->name('pages.schools.home');
+    Route::get('/schools', [SchoolsController::class, 'modernViewAllSchools'])->name('pages.schools.home');
     Route::get('/schools/fetchsearchschools', [SchoolsController::class, 'fetchsearchschools'])->name('api.schools.fetchsearchschools');
     Route::get('/schools/fetchallschools', [SchoolsController::class, 'fetchallschools'])->name('api.schools.fetchallschools');
     Route::get('/schools/view/{id}', [SchoolsController::class, 'getviewschoolpage'])->name('pages.schools.viewschool');
@@ -171,6 +184,9 @@ Route::middleware(['auth.custom', 'email.account.verification'])->group(function
     Route::post('/users/permissions/{id}', [UsersController::class, 'updateuserpermissions'])->name('api.users.updatepermissions');
     Route::post('/users/updaterole/{id}', [UsersController::class, 'updaterole'])->name('api.users.updaterole');
     Route::post('/users/resetpassword/{id}', [RegisterController::class, 'resetuserpassword'])->name('api.users.resetpassword');
+    Route::post('/users/create', [UsersController::class, 'createUser'])->name('api.users.create');
+    Route::post('/users/disable/{id}', [UsersController::class, 'disableUser'])->name('api.users.disable');
+    Route::post('/users/enable/{id}', [UsersController::class, 'enableUser'])->name('api.users.enable');
     //notificationtypes
     Route::get('/notificationtype/view/{id}', [UsersController::class, 'managenotificationtype'])->name('pages.notificationtype.managenotificationtype');
     Route::post('/notificationtype/addusers/{id}', [UsersController::class, 'addnotifiableusers'])->name('api.notificationtype.addnotifiableusers');
@@ -213,6 +229,7 @@ Route::middleware(['auth.custom', 'email.account.verification'])->group(function
 
 
     //projects
+//projects
     Route::get('/projects/myprojects', [ProjectsController::class, 'myprojects'])->name('pages.projects.myprojects');
     Route::get('/projects/fetchmyactiveprojects', [ProjectsController::class, 'fetchmyactiveprojects'])->name('api.projects.fetchmyactiveprojects');
     Route::get('/projects/fetchmyallprojects', [ProjectsController::class, 'fetchmyallprojects'])->name('api.projects.fetchmyallprojects');
@@ -235,9 +252,11 @@ Route::middleware(['auth.custom', 'email.account.verification'])->group(function
     Route::post('/projects/addfunding/{id}', [ProjectsController::class, 'addfunding'])->name('api.projects.addfunding');
     Route::get('/projects/fetchprojectfunding/{id}', [ProjectsController::class, 'fetchprojectfunding'])->name('api.projects.fetchprojectfunding');
 
-    //supervision
+//monitoring (renamed from supervision)
     Route::get('/supervision/home', [SupervisionController::class, 'home'])->name('pages.supervision.home');
+    Route::get('/monitoring/home', [SupervisionController::class, 'home'])->name('pages.monitoring.home');
     Route::get('/supervision/monitoring/{id}', [SupervisionController::class, 'viewmonitoringpage'])->name('pages.supervision.monitoring.monitoringpage');
+    Route::get('/monitoring/project/{id}', [SupervisionController::class, 'viewmonitoringpage'])->name('pages.monitoring.project');
     Route::post('/supervision/monitoring/addreport/{id}', [SupervisionController::class, 'addreport'])->name('api.supervision.monitoring.addreport');
     Route::get('/supervision/monitoring/fetchmonitoringreport/{id}', [SupervisionController::class, 'fetchmonitoringreport'])->name('api.supervision.monitoring.fetchmonitoringreport');
 
@@ -254,7 +273,45 @@ Route::middleware(['auth.custom', 'email.account.verification'])->group(function
     //reports
     Route::get('/reports/home', [ReportsController::class, 'home'])->name('pages.reports.home');
     Route::get('/api/reports/proposals/all', [ReportsController::class, 'getallproposals'])->name('api.reports.proposals.all');
-    Route::get('/api/reports/proposals/byschool', [ReportsController::class, 'getproposalsbyschool'])->name('api.reports.proposals.byschool');
-    Route::get('/api/reports/proposals/bytheme', [ReportsController::class, 'getproposalsbytheme'])->name('api.reports.proposals.bytheme');
-    Route::get('/api/reports/proposals/bygrant', [ReportsController::class, 'getproposalsbygrant'])->name('api.reports.proposals.bygrant');
-});
+    Route::get('/api/reports/proposals/byschool', [ReportsController::class, 'getProposalsBySchool'])->name('api.reports.proposals.byschool');
+    Route::get('/api/reports/proposals/bytheme', [ReportsController::class, 'getProposalsByTheme'])->name('api.reports.proposals.bytheme');
+    Route::get('/api/reports/proposals/bygrant', [ReportsController::class, 'getProposalsByGrant'])->name('api.reports.proposals.bygrant');
+
+    //research themes
+    Route::get('/themes/fetchall', [ResearchThemeController::class, 'fetchAllThemes'])->name('api.themes.fetchall');
+    Route::post('/themes/create', [ResearchThemeController::class, 'createTheme'])->name('api.themes.create');
+    Route::post('/themes/update/{id}', [ResearchThemeController::class, 'updateTheme'])->name('api.themes.update');
+    Route::post('/themes/delete/{id}', [ResearchThemeController::class, 'deleteTheme'])->name('api.themes.delete');
+
+    //permissions
+    Route::get('/permissions/fetchall', [PermissionsController::class, 'fetchAllPermissions'])->name('api.permissions.fetchall');
+    Route::get('/permissions/fetchbyrole/{role}', [PermissionsController::class, 'fetchPermissionsByRole'])->name('api.permissions.fetchbyrole');
+
+    //global settings
+    Route::get('/settings/fetchall', [SettingsController::class, 'fetchAllSettings'])->name('api.settings.fetchall');
+    Route::post('/settings/update', [SettingsController::class, 'updateSettings'])->name('api.settings.update');
+
+    //dashboard stats
+    Route::get('/dashboard/stats', [DashboardController::class, 'getStats'])->name('api.dashboard.stats');
+    Route::get('/dashboard/recentactivity', [DashboardController::class, 'getRecentActivity'])->name('api.dashboard.recentactivity');
+
+    //collaborators CRUD
+    Route::post('/collaborators/update/{id}', [CollaboratorsController::class, 'updateCollaborator'])->name('api.collaborators.update');
+    Route::post('/collaborators/delete/{id}', [CollaboratorsController::class, 'deleteCollaborator'])->name('api.collaborators.delete');
+
+    //publications CRUD
+    Route::post('/publications/update/{id}', [PublicationsController::class, 'updatePublication'])->name('api.publications.update');
+    Route::post('/publications/delete/{id}', [PublicationsController::class, 'deletePublication'])->name('api.publications.delete');
+
+    //expenditures CRUD
+    Route::post('/expenditures/update/{id}', [ExpendituresController::class, 'updateExpenditure'])->name('api.expenditures.update');
+    Route::post('/expenditures/delete/{id}', [ExpendituresController::class, 'deleteExpenditure'])->name('api.expenditures.delete');
+
+    //workplan CRUD
+    Route::post('/workplan/update/{id}', [WorkplanController::class, 'updateWorkplan'])->name('api.workplan.update');
+    Route::post('/workplan/delete/{id}', [WorkplanController::class, 'deleteWorkplan'])->name('api.workplan.delete');
+
+    //research design CRUD
+    Route::post('/researchdesign/update/{id}', [ResearchdesignController::class, 'updateResearchDesign'])->name('api.researchdesign.update');
+    Route::post('/researchdesign/delete/{id}', [ResearchdesignController::class, 'deleteResearchDesign'])->name('api.researchdesign.delete');
+});;

@@ -13,19 +13,21 @@ class SupervisionController extends Controller
     //
     public function home()
     {
-        return view('pages.supervision.home');
+        if (!auth()->user()->hasPermission('cansupervise')) {
+            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Monitor Projects!");
+        }
+        return view('pages.monitoring.modern-home');
     }
 
     public function viewmonitoringpage($id)
     {
-        $project = ResearchProject::with(['proposal.applicant'])->findOrFail($id);
+        $project = ResearchProject::with(['proposal.applicant', 'proposal.department', 'applicant'])->findOrFail($id);
 
-        if (!auth()->user()->hasPermission('canviewmonitoringpage') || $project->supervisorfk != auth()->user()->userid) {
+        if (!auth()->user()->hasPermission('canviewmonitoringpage')) {
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Monitor this Project!");
         }
 
-        // Return the view with the necessary data 
-        return view('pages.supervision.monitoring.monitorproject', compact('project'));
+        return view('pages.monitoring.modern-project', compact('project'));
     }
     public function fetchmonitoringreport($id)
     {

@@ -97,7 +97,7 @@ class DepartmentsController extends Controller
         }
         $alldepartments = Department::all();
         $schools=School::all();
-        return view('pages.departments.home', compact('alldepartments','schools'));
+        return view('pages.departments.modern-home', compact('alldepartments','schools'));
     }
     public function getviewdepartmentpage($id)
     {
@@ -105,10 +105,8 @@ class DepartmentsController extends Controller
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Add or Edit a Department!");
         }
         // Find the department by ID or fail with a 404 error
-        $department = Department::findOrFail($id);
-        $schools = School::all();
-        $isreadonlypage = true; 
-        return view('pages.departments.departmentform', compact('department','schools', 'isreadonlypage'));
+        $department = Department::with('school')->findOrFail($id);
+        return view('pages.departments.modern-view', compact('department'));
     }
     public function geteditdepartmentpage($id)
     {
@@ -125,8 +123,8 @@ class DepartmentsController extends Controller
 
     public function fetchalldepartments()
     {
-        $data = Department::with('school')->get();
-        return response()->json($data); // Return  data as JSON
+        $data = Department::with('school')->withCount('users as staff_count')->get();
+        return response()->json(['data' => $data]);
     }
 
     public function fetchsearchdepartments(Request $request)

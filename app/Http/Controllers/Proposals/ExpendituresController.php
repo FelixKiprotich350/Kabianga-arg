@@ -131,4 +131,38 @@ class ExpendituresController extends Controller
             return false;
         }
     }
+
+    public function updateExpenditure(Request $request, $id)
+    {
+        $rules = [
+            'itemtype' => 'required|string',
+            'item' => 'required|string',
+            'total' => 'required|numeric|regex:/^\d+(\.\d{1,2})?$/',
+            'quantity' => 'required|integer',
+            'unitprice' => 'required|integer'
+        ];
+
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            return response()->json(['message' => $validator->errors(), 'type' => 'danger'], 400);
+        }
+
+        $expenditure = Expenditureitem::findOrFail($id);
+        $expenditure->itemtype = $request->input('itemtype');
+        $expenditure->total = $request->input('total');
+        $expenditure->unitprice = $request->input('unitprice');
+        $expenditure->quantity = $request->input('quantity');
+        $expenditure->item = $request->input('item');
+        $expenditure->save();
+
+        return response()->json(['message' => 'Expenditure updated successfully!', 'type' => 'success']);
+    }
+
+    public function deleteExpenditure($id)
+    {
+        $expenditure = Expenditureitem::findOrFail($id);
+        $expenditure->delete();
+
+        return response()->json(['message' => 'Expenditure deleted successfully!', 'type' => 'success']);
+    }
 }

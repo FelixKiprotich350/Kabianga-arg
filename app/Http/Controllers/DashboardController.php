@@ -11,7 +11,29 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    public function home()
+    public function modernDashboard()
+    {
+        if (!auth()->user()->haspermission('canviewadmindashboard')) {
+            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to View Admin Dashboard!");
+        }
+
+        // Get  proposals count
+        $allProposalscount = Proposal::count();
+        $approvedProposalsCount = Proposal::where('approvalstatus', 'approved')->count();
+        $rejectedProposalsCount = Proposal::where('approvalstatus', 'rejected')->count();
+        $pendingProposalsCount = Proposal::where('approvalstatus', 'pending')->count();
+        
+        $dashboardmetrics = [
+            'allProposalscount' => $allProposalscount,
+            'approvedProposalsCount' => $approvedProposalsCount,
+            'pendingProposalsCount' => $pendingProposalsCount,
+            'rejectedProposalsCount' => $rejectedProposalsCount,
+        ];
+
+        return view('pages.modern-dashboard', $dashboardmetrics);
+    }
+
+    public function modernHome()
     {
         // Get the current user's ID
         $userid = auth()->user()->userid;
@@ -43,7 +65,7 @@ class DashboardController extends Controller
             'completedprojects' => $completedprojects,
         ];
 
-        return view('pages.home', $dashboardmetrics);
+        return view('pages.modern-dashboard', $dashboardmetrics);
     }
 
     public function dashboard()
@@ -204,6 +226,76 @@ class DashboardController extends Controller
 
         return view('pages.unauthorized', ['message' => $message]);
 
+    }
+
+    public function getStats()
+    {
+        if (!auth()->user()->haspermission('canviewadmindashboard')) {
+            return response()->json(['data' => []]);
+        }
+
+        $stats = [
+            'proposals' => [
+                'total' => Proposal::count(),
+                'approved' => Proposal::where('approvalstatus', 'Approved')->count(),
+                'pending' => Proposal::where('approvalstatus', 'Pending')->count(),
+                'rejected' => Proposal::where('approvalstatus', 'Rejected')->count()
+            ],
+            'projects' => [
+                'total' => ResearchProject::count(),
+                'active' => ResearchProject::where('projectstatus', 'Active')->count(),
+                'completed' => ResearchProject::where('projectstatus', 'Completed')->count(),
+                'cancelled' => ResearchProject::where('projectstatus', 'Cancelled')->count()
+            ],
+            'funding' => [
+                'total' => ResearchFunding::sum('amount'),
+                'count' => ResearchFunding::count()
+            ]
+        ];
+
+        return response()->json(['data' => $stats]);
+    }
+
+    public function getRecentActivity()
+    {
+        if (!auth()->user()->haspermission('canviewadmindashboard')) {
+            return response()->json(['data' => []]);
+        }
+
+        $recentProposals = Proposal::with('applicant')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get()
+            ->map(function($proposal) {
+                return [
+                    'type' => 'proposal',
+                    'title' => $proposal->researchtitle ?? 'New Proposal',
+                    'user' => $proposal->applicant->name,
+                    'status' => $proposal->approvalstatus,
+                    'date' => $proposal->created_at->format('M d, Y')
+                ];
+            });
+
+        $recentProjects = ResearchProject::with('applicant')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get()
+            ->map(function($project) {
+                return [
+                    'type' => 'project',
+                    'title' => $project->researchnumber,
+                    'user' => $project->applicant->name,
+                    'status' => $project->projectstatus,
+                    'date' => $project->created_at->format('M d, Y')
+                ];
+            });
+
+        $activities = $recentProposals->concat($recentProjects)
+            ->sortByDesc('date')
+            ->take(10)
+            ->values();
+
+        return response()->json(['data' => $activities]);
     }
 
 }

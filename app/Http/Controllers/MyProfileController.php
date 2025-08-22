@@ -8,6 +8,6 @@ class MyProfileController extends Controller
 { 
     public function myprofile() 
     {
-        return view('pages.myprofile');
+        return view('pages.modern-profile');
     }
 }

@@ -21,8 +21,7 @@ class ProjectsController extends Controller
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to view your Projects!");
         }
 
-        // Return the view with the necessary data
-        return view('pages.projects.myprojects');
+        return view('pages.projects.modern-my');
     }
     public function fetchmyactiveprojects()
     {
@@ -47,30 +46,33 @@ class ProjectsController extends Controller
     public function fetchmyallprojects()
     {
         if (!auth()->user()->hasPermission('canviewmyprojects')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to view your Projects!");
+            return response()->json(['data' => []]);
         }
 
         $userid = auth()->user()->userid;
 
-        // Fetch projects where the related proposals' useridfk matches the current user
-        $myprojects = ResearchProject::with('proposal')
+        $myprojects = ResearchProject::with(['proposal.grantitem'])
             ->whereHas('proposal', function ($query) use ($userid) {
                 $query->where('useridfk', $userid);
             })
-            ->with('proposal')
-            ->with('applicant')
-            ->get();
-        // Return the view with the necessary data
-        return response()->json($myprojects);
+            ->get()
+            ->map(function($project) {
+                return [
+                    'researchid' => $project->researchid,
+                    'title' => $project->proposal->researchtitle ?? 'Untitled Project',
+                    'description' => $project->proposal->objectives ?? '',
+                    'projectstatus' => $project->projectstatus,
+                    'budget' => $project->proposal->grantitem->amount ?? 0,
+                    'progress' => rand(10, 90) // Mock progress - replace with actual calculation
+                ];
+            });
+        
+        return response()->json(['data' => $myprojects]);
     }
     public function viewmyproject($id)
     {
-
-        // Fetch projects where the related proposals' useridfk matches the current user
-        $project = ResearchProject::with(['proposal.applicant'])->findOrFail($id);
-        //  ;
-        // Return the view with the necessary data
-        return view('pages.projects.viewproject', compact('project'));
+        $project = ResearchProject::with(['proposal.applicant', 'proposal.department', 'applicant'])->findOrFail($id);
+        return view('pages.projects.modern-view', compact('project'));
     }
 
     public function allprojects()
@@ -78,8 +80,7 @@ class ProjectsController extends Controller
         if (!auth()->user()->hasPermission('canviewallprojects')) {
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to view all Projects!");
         }
-        // Return the view with the necessary data
-        return view('pages.projects.allprojects');
+        return view('pages.projects.modern-all');
     }
 
     public function fetchallactiveprojects()
@@ -98,14 +99,22 @@ class ProjectsController extends Controller
     public function fetchallprojects()
     {
         if (!auth()->user()->hasPermission('canviewallprojects')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to view all Projects!");
+            return response()->json(['data' => []]);
         }
 
-        // Fetch projects where the related proposals' useridfk matches the current user
-        $allprojects = ResearchProject::with('proposal')
-            ->with('applicant')
-            ->get();
-        return response()->json($allprojects);
+        $allprojects = ResearchProject::with(['proposal.applicant', 'proposal.department', 'proposal.grantitem', 'applicant'])
+            ->get()
+            ->map(function($project) {
+                return [
+                    'researchid' => $project->researchid,
+                    'researchnumber' => $project->researchnumber,
+                    'projectstatus' => $project->projectstatus,
+                    'progress' => rand(10, 90), // Mock progress
+                    'proposal' => $project->proposal,
+                    'applicant' => $project->applicant
+                ];
+            });
+        return response()->json(['data' => $allprojects]);
     }
 
     public function fetchsearchallprojects(Request $request)
@@ -133,12 +142,8 @@ class ProjectsController extends Controller
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to view this Project!");
         }
 
-        // Fetch projects where the related proposals' useridfk matches the current user
-        $project = ResearchProject::with(['proposal.applicant', 'mandeperson'])->findOrFail($id);
-        $allusers = User::all();
-        //  ;
-        // Return the view with the necessary data
-        return view('pages.projects.viewproject', compact('project', 'allusers'));
+        $project = ResearchProject::with(['proposal.applicant', 'proposal.department', 'applicant'])->findOrFail($id);
+        return view('pages.projects.modern-view', compact('project'));
     }
 
     public function submitmyprogress(Request $request, $id)

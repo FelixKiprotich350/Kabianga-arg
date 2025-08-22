@@ -23,7 +23,7 @@ class UsersController extends Controller
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to View Users!");
         }
         $allusers = User::all();
-        return view('pages.users.home', compact('allusers'));
+        return view('pages.users.modern-manage', compact('allusers'));
     }
 
     public function updateuserpermissions(Request $request, $id)
@@ -155,11 +155,15 @@ class UsersController extends Controller
         }
         // Find the user by ID or fail with a 404 error
         $user = User::findOrFail($id);
-        $isreadonlypage = true;
-        $isadminmode = true;
-        $permissions = Permission::all();
+        $userStats = [
+            'proposals' => 0,
+            'approved' => 0, 
+            'pending' => 0,
+            'projects' => 0
+        ];
+        $departments = [];
         // Return the view with the proposal data
-        return view('pages.users.viewuser', compact('user', 'isreadonlypage', 'isadminmode', 'permissions'));
+        return view('pages.users.modern-view', compact('user', 'userStats', 'departments'));
     }
 
     public function geteditsingleuserpage($id)
@@ -179,11 +183,25 @@ class UsersController extends Controller
     public function fetchallusers()
     {
         if (!auth()->user()->haspermission('canviewallusers')) {
-            return response()->json([]);
+            return response()->json(['data' => []]);
         }
         else {
-            $data = User::all();
-            return response()->json($data); // Return  data as JSON
+            $data = User::with(['department.department'])->get()->map(function ($user) {
+                return [
+                    'userid' => $user->userid,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'pfno' => $user->pfno,
+                    'phonenumber' => $user->phonenumber,
+                    'role' => $user->role,
+                    'isadmin' => $user->isadmin,
+                    'isactive' => $user->isactive,
+                    'department' => $user->department ? $user->department->department : null,
+                    'created_at' => $user->created_at,
+                    'updated_at' => $user->updated_at
+                ];
+            });
+            return response()->json(['data' => $data]);
         }
     }
 
@@ -327,5 +345,98 @@ class UsersController extends Controller
         }
         $data = NotifiableUser::with('applicant')->where('notificationfk', $id)->get();
         return response()->json($data); // Return  data as JSON
+    }
+
+    // Public API methods (no authentication required)
+    public function apiGetAllUsers()
+    {
+        $users = User::select('userid', 'name', 'email', 'pfno', 'phonenumber', 'role', 'isadmin', 'isactive', 'created_at')
+            ->get();
+        return response()->json([
+            'success' => true,
+            'data' => $users,
+            'count' => $users->count()
+        ]);
+    }
+
+    public function apiGetUser($id)
+    {
+        $user = User::select('userid', 'name', 'email', 'pfno', 'phonenumber', 'role', 'isadmin', 'isactive', 'created_at')
+            ->find($id);
+        
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $user
+        ]);
+    }
+
+    public function createUser(Request $request)
+    {
+        if (!auth()->user()->haspermission('canaddnewuser')) {
+            return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
+        }
+
+        $rules = [
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'pfno' => 'required|string|unique:users,pfno',
+            'phonenumber' => 'required|string|unique:users,phonenumber',
+            'role' => 'required|integer',
+            'password' => 'required|string|min:6'
+        ];
+
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            return response()->json(['message' => $validator->errors(), 'type' => 'danger'], 400);
+        }
+
+        $user = new User();
+        $user->name = $request->input('name');
+        $user->email = $request->input('email');
+        $user->pfno = $request->input('pfno');
+        $user->phonenumber = $request->input('phonenumber');
+        $user->role = $request->input('role');
+        $user->password = bcrypt($request->input('password'));
+        $user->isactive = true;
+        $user->save();
+
+        return response()->json(['message' => 'User created successfully!', 'type' => 'success', 'user' => $user]);
+    }
+
+    public function disableUser($id)
+    {
+        if (!auth()->user()->haspermission('canenabledisableuser')) {
+            return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
+        }
+
+        $user = User::findOrFail($id);
+        if ($user->issuperadmin()) {
+            return response()->json(['message' => 'Cannot disable super administrator!', 'type' => 'warning']);
+        }
+
+        $user->isactive = false;
+        $user->save();
+
+        return response()->json(['message' => 'User disabled successfully!', 'type' => 'success']);
+    }
+
+    public function enableUser($id)
+    {
+        if (!auth()->user()->haspermission('canenabledisableuser')) {
+            return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
+        }
+
+        $user = User::findOrFail($id);
+        $user->isactive = true;
+        $user->save();
+
+        return response()->json(['message' => 'User enabled successfully!', 'type' => 'success']);
     }
 }

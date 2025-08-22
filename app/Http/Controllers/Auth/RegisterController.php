@@ -13,7 +13,7 @@ class RegisterController extends Controller
     //
     public function showRegistrationForm()
     {
-        return view('pages.auth.register');
+        return view('pages.auth.modern-register');
     }
 
     public function register(Request $request)

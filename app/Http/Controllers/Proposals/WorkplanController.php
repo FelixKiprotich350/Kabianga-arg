@@ -97,4 +97,40 @@ class WorkplanController extends Controller
         // Return the view with the proposal data
         return view('pages.proposals.proposalform', compact('prop', 'isreadonlypage', 'isadminmode', 'departments', 'grants', 'themes'));
     }
+
+    public function updateWorkplan(Request $request, $id)
+    {
+        $rules = [
+            'activity' => 'required|string',
+            'time' => 'required|string',
+            'input' => 'required|string',
+            'outcome' => 'required|string',
+            'facilities' => 'required|string',
+            'bywhom' => 'required|string'
+        ];
+
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            return response()->json(['message' => $validator->errors(), 'type' => 'danger'], 400);
+        }
+
+        $workplan = Workplan::findOrFail($id);
+        $workplan->activity = $request->input('activity');
+        $workplan->input = $request->input('input');
+        $workplan->bywhom = $request->input('bywhom');
+        $workplan->outcome = $request->input('outcome');
+        $workplan->facilities = $request->input('facilities');
+        $workplan->time = $request->input('time');
+        $workplan->save();
+
+        return response()->json(['message' => 'Workplan updated successfully!', 'type' => 'success']);
+    }
+
+    public function deleteWorkplan($id)
+    {
+        $workplan = Workplan::findOrFail($id);
+        $workplan->delete();
+
+        return response()->json(['message' => 'Workplan deleted successfully!', 'type' => 'success']);
+    }
 }
