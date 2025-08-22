@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('content')
-     @if (isset($prop))
+    @if (isset($prop))
         <div>
             <style>
                 .prop-tabcontainer {
@@ -28,26 +28,28 @@
                 <nav>
                     <div class="nav nav-tabs" id="nav-tab" role="tablist">
                         <button class="nav-link active" id="nav-personal-tab" data-bs-toggle="tab"
-                            data-bs-target="#panel-basicdetails" type="button" role="tab" aria-controls="panel-basicdetails"
-                            aria-selected="true">Basic Details</button>
+                            data-bs-target="#panel-basicdetails" type="button" role="tab"
+                            aria-controls="panel-basicdetails" aria-selected="true">Basic Details</button>
                         <button class="nav-link" id="nav-research-tab" data-bs-toggle="tab" data-bs-target="#panel-research"
-                            type="button" role="tab" aria-controls="panel-profile" aria-selected="false">Research</button>
+                            type="button" role="tab" aria-controls="panel-profile"
+                            aria-selected="false">Research</button>
                         <button class="nav-link" id="nav-collaboration-tab" data-bs-toggle="tab"
-                            data-bs-target="#panel-collaboration" type="button" role="tab" aria-controls="panel-collaboration"
-                            aria-selected="false">C & P Lists</button>
+                            data-bs-target="#panel-collaboration" type="button" role="tab"
+                            aria-controls="panel-collaboration" aria-selected="false">C & P Lists</button>
                         <button class="nav-link" id="nav-finance-tab" data-bs-toggle="tab" data-bs-target="#panel-finance"
-                            type="button" role="tab" aria-controls="panel-finance" aria-selected="false">Finance</button>
+                            type="button" role="tab" aria-controls="panel-finance"
+                            aria-selected="false">Finance</button>
                         <button class="nav-link" id="nav-researchdesign-tab" data-bs-toggle="tab"
-                            data-bs-target="#panel-researchdesign" type="button" role="tab" aria-controls="panel-researchdesign"
-                            aria-selected="false">Research Design</button>
+                            data-bs-target="#panel-researchdesign" type="button" role="tab"
+                            aria-controls="panel-researchdesign" aria-selected="false">Research Design</button>
                         <button class="nav-link" id="nav-workplan-tab" data-bs-toggle="tab" data-bs-target="#panel-workplan"
-                            type="button" role="tab" aria-controls="panel-workplan" aria-selected="false">Workplan</button>
+                            type="button" role="tab" aria-controls="panel-workplan"
+                            aria-selected="false">Workplan</button>
 
                         @if (Auth::user()->haspermission('canviewofficeuse') && $prop->submittedstatus)
-                            <button class="nav-link" id="nav-officeuse-tab" data-bs-toggle="tab" data-bs-target="#panel-officeuse"
-                                type="button" role="tab" aria-controls="panel-officeuse" aria-selected="false">Office Use</button>
-
-
+                            <button class="nav-link" id="nav-officeuse-tab" data-bs-toggle="tab"
+                                data-bs-target="#panel-officeuse" type="button" role="tab"
+                                aria-controls="panel-officeuse" aria-selected="false">Office Use</button>
                         @endif
 
 
@@ -76,7 +78,7 @@
                                 </div>
                                 <div class="col-12 col-md-9">
                                     <input type="text" id="fullname" name="fullname" placeholder="Your Full Name"
-                                        value="{{$prop->applicant->name}}" class="form-control" readonly>
+                                        value="{{ $prop->applicant->name }}" class="form-control" readonly>
                                 </div>
                             </div>
 
@@ -86,7 +88,7 @@
                                 </div>
                                 <div class="col-12 col-md-9">
                                     <input type="text" id="email" name="email" placeholder="Your Email"
-                                        value="{{ $prop->applicant->email}}" class="form-control" readonly>
+                                        value="{{ $prop->applicant->email }}" class="form-control" readonly>
                                 </div>
                             </div>
 
@@ -96,7 +98,7 @@
                                 </div>
                                 <div class="col-12 col-md-9">
                                     <input type="text" id="pfnofk" name="pfnofk" placeholder="Your PF Number"
-                                        value="{{$prop->applicant->pfno }}" class="form-control" readonly>
+                                        value="{{ $prop->applicant->pfno }}" class="form-control" readonly>
                                 </div>
                             </div>
 
@@ -106,7 +108,7 @@
                                 </div>
                                 <div class="col-12 col-md-9">
                                     <input type="text" id="grantnofk" name="grantnofk" placeholder="Grant"
-                                        value="{{$prop->grantitem->title }}" class="form-control" readonly>
+                                        value="{{ $prop->grantitem->title }}" class="form-control" readonly>
                                 </div>
                             </div>
                             <div class="row form-group">
@@ -115,7 +117,7 @@
                                 </div>
                                 <div class="col-12 col-md-9">
                                     <input type="text" id="themefk" name="themefk" placeholder="Theme"
-                                        value="{{$prop->themeitem->themename }}" class="form-control" readonly>
+                                        value="{{ $prop->themeitem->themename }}" class="form-control" readonly>
                                 </div>
                             </div>
                             <div class="row form-group">
@@ -123,8 +125,9 @@
                                     <label class="form-control-label">Department Name</label>
                                 </div>
                                 <div class="col-12 col-md-9">
-                                    <input type="text" id="departmentidfk" name="departmentidfk" placeholder="Department"
-                                        value="{{$prop->department->shortname }}" class="form-control" readonly>
+                                    <input type="text" id="departmentidfk" name="departmentidfk"
+                                        placeholder="Department" value="{{ $prop->department->shortname }}"
+                                        class="form-control" readonly>
                                 </div>
                             </div>
 
@@ -135,7 +138,7 @@
                                 <div class="col-12 col-md-9">
                                     <input type="text" id="highestqualification" name="highestqualification"
                                         placeholder="Highest Qualification" class="form-control"
-                                        value="{{ $prop->highqualification  }}" readonly>
+                                        value="{{ $prop->highqualification }}" readonly>
                                 </div>
                             </div>
 
@@ -144,8 +147,9 @@
                                     <label class="form-control-label">Office Telephone</label>
                                 </div>
                                 <div class="col-12 col-md-9">
-                                    <input type="text" id="officephone" name="officephone" placeholder="Office Telephone"
-                                        class="form-control" value="{{ $prop->officephone }}" readonly>
+                                    <input type="text" id="officephone" name="officephone"
+                                        placeholder="Office Telephone" class="form-control"
+                                        value="{{ $prop->officephone }}" readonly>
                                 </div>
                             </div>
 
@@ -155,7 +159,7 @@
                                 </div>
                                 <div class="col-12 col-md-9">
                                     <input type="text" id="cellphone" name="cellphone" placeholder="Cellphone"
-                                        class="form-control" value="{{$prop->cellphone }}" readonly>
+                                        class="form-control" value="{{ $prop->cellphone }}" readonly>
                                 </div>
                             </div>
 
@@ -165,7 +169,7 @@
                                 </div>
                                 <div class="col-12 col-md-9">
                                     <input type="text" id="faxnumber" name="faxnumber" placeholder="Fax Number"
-                                        class="form-control" value="{{ $prop->faxnumber  }}" readonly>
+                                        class="form-control" value="{{ $prop->faxnumber }}" readonly>
                                 </div>
                             </div>
 
@@ -185,8 +189,9 @@
                                     <label class="form-control-label">Research Title</label>
                                 </div>
                                 <div class="col-12 col-md-9">
-                                    <input type="text" id="researchtitle" name="researchtitle" placeholder="Research Title"
-                                        class="form-control" value="{{ isset($prop) ? $prop->researchtitle : '' }}" readonly>
+                                    <input type="text" id="researchtitle" name="researchtitle"
+                                        placeholder="Research Title" class="form-control"
+                                        value="{{ isset($prop) ? $prop->researchtitle : '' }}" readonly>
                                 </div>
                             </div>
                             <div class="row form-group">
@@ -194,8 +199,9 @@
                                         Commencing Date</label>
                                 </div>
                                 <div class="col-12 col-md-9">
-                                    <input type="date" id="commencingdate" name="commencingdate" placeholder="DD/MM/YYYY"
-                                        class="form-control" value="{{ $prop->commencingdate }}" readonly>
+                                    <input type="date" id="commencingdate" name="commencingdate"
+                                        placeholder="DD/MM/YYYY" class="form-control"
+                                        value="{{ $prop->commencingdate }}" readonly>
                                 </div>
                             </div>
                             <div class="row form-group">
@@ -203,12 +209,13 @@
                                         Termination Date</label>
                                 </div>
                                 <div class="col-12 col-md-9">
-                                    <input type="date" id="terminationdate" name="terminationdate" placeholder="DD/MM/YYYY"
-                                        class="form-control" value="{{ $prop->terminationdate}}" readonly>
+                                    <input type="date" id="terminationdate" name="terminationdate"
+                                        placeholder="DD/MM/YYYY" class="form-control"
+                                        value="{{ $prop->terminationdate }}" readonly>
                                 </div>
                             </div>
                             <script>
-                                $(document).ready(function () {
+                                $(document).ready(function() {
                                     // Get today's date in YYYY-MM-DD format
                                     const today = new Date().toISOString().split('T')[0];
 
@@ -223,8 +230,7 @@
                                     <label class="form-control-label">Objectives</label>
                                 </div>
                                 <div class="col-12 col-md-9">
-                                    <textarea name="objectives" placeholder="Objectives" class="form-control"
-                                        readonly>{{ isset($prop) ? $prop->objectives : '' }}</textarea>
+                                    <textarea name="objectives" placeholder="Objectives" class="form-control" readonly>{{ isset($prop) ? $prop->objectives : '' }}</textarea>
                                 </div>
                             </div>
                             <div class="row form-group">
@@ -232,8 +238,7 @@
                                     <label class="form-control-label">Question/Hypothesis</label>
                                 </div>
                                 <div class="col-12 col-md-9">
-                                    <textarea name="hypothesis" placeholder="Question or Hypothesis" class="form-control"
-                                        disabled readonly>{{ isset($prop) ? $prop->hypothesis : '' }}</textarea>
+                                    <textarea name="hypothesis" placeholder="Question or Hypothesis" class="form-control" disabled readonly>{{ isset($prop) ? $prop->hypothesis : '' }}</textarea>
                                 </div>
                             </div>
                             <div class="row form-group">
@@ -241,8 +246,7 @@
                                     <label class="form-control-label">Significance</label>
                                 </div>
                                 <div class="col-12 col-md-9">
-                                    <textarea name="significance" placeholder="Significance or Justification"
-                                        class="form-control" readonly>{{ isset($prop) ? $prop->significance : '' }}</textarea>
+                                    <textarea name="significance" placeholder="Significance or Justification" class="form-control" readonly>{{ isset($prop) ? $prop->significance : '' }}</textarea>
                                 </div>
                             </div>
                             <div class="row form-group">
@@ -250,8 +254,7 @@
                                     <label class="form-control-label">Ethical Considerations</label>
                                 </div>
                                 <div class="col-12 col-md-9">
-                                    <textarea name="ethicals" placeholder="Ethical Considerations" class="form-control"
-                                        readonly>{{ isset($prop) ? $prop->ethicals : '' }}</textarea>
+                                    <textarea name="ethicals" placeholder="Ethical Considerations" class="form-control" readonly>{{ isset($prop) ? $prop->ethicals : '' }}</textarea>
                                 </div>
                             </div>
                             <div class="row form-group">
@@ -259,8 +262,7 @@
                                     <label class="form-control-label">Expected Outputs</label>
                                 </div>
                                 <div class="col-12 col-md-9">
-                                    <textarea name="outputs" placeholder="Expected Outputs" class="form-control"
-                                        readonly>{{ isset($prop) ? $prop->expoutput : '' }}</textarea>
+                                    <textarea name="outputs" placeholder="Expected Outputs" class="form-control" readonly>{{ isset($prop) ? $prop->expoutput : '' }}</textarea>
                                 </div>
                             </div>
                             <div class="row form-group">
@@ -268,8 +270,7 @@
                                     <label class="form-control-label">Socio-Economic Impact</label>
                                 </div>
                                 <div class="col-12 col-md-9">
-                                    <textarea name="economicimpact" placeholder="Socio-Economic Impact" class="form-control"
-                                        readonly>{{ isset($prop) ? $prop->socio_impact : '' }}</textarea>
+                                    <textarea name="economicimpact" placeholder="Socio-Economic Impact" class="form-control" readonly>{{ isset($prop) ? $prop->socio_impact : '' }}</textarea>
                                 </div>
                             </div>
                             <div class="row form-group">
@@ -277,8 +278,7 @@
                                     <label class="form-control-label">Research Findings</label>
                                 </div>
                                 <div class="col-12 col-md-9">
-                                    <textarea name="res_findings" placeholder="Dissemination of Research Findings"
-                                        class="form-control" readonly>{{ isset($prop) ? $prop->res_findings : '' }}</textarea>
+                                    <textarea name="res_findings" placeholder="Dissemination of Research Findings" class="form-control" readonly>{{ isset($prop) ? $prop->res_findings : '' }}</textarea>
                                 </div>
                             </div>
                         </form>
@@ -320,10 +320,11 @@
 
                         <!-- Collaborators details table -->
                         <div class="row form-group">
-                            <div>collaborators</div>
+                            <div>Collaborators</div>
                             <div style="max-height: 300px; overflow-y: auto;">
                                 <table id="collaboratorstable"
-                                    class="table table-responsive table-bordered table-striped table-hover" style="margin:4px">
+                                    class="table table-responsive table-bordered table-striped table-hover"
+                                    style="margin:4px">
                                     <thead class="bg-light text-dark">
                                         <tr>
                                             <th scope="col">Name</th>
@@ -344,11 +345,12 @@
                         </div>
                         <!-- publications table -->
                         <div class="row form-group">
-                            <div>publications</div>
+                            <div>Publications</div>
                             <div style="max-height: 300px; overflow-y: auto;">
 
                                 <table id="publicationstable"
-                                    class="table table-responsive table-bordered table-striped table-hover" style="margin:4px">
+                                    class="table table-responsive table-bordered table-striped table-hover"
+                                    style="margin:4px">
                                     <thead class="bg-light text-dark">
                                         <tr>
                                             <th scope="col">Authors (s)</th>
@@ -372,12 +374,14 @@
 
 
                         <script>
-                            $(document).ready(function () {
+                            $(document).ready(function() {
 
                                 let proposalId = "{{ isset($prop) ? $prop->proposalid : '' }}"; // Check if proposalId is set
                                 // Assuming prop is passed to the Blade view from the Laravel controller
-                                const collaboratorsurl = `{{ route('api.proposals.fetchcollaborators', ['id' => ':id']) }}`.replace(':id', proposalId);
-                                const punlicationsurl = `{{ route('api.proposals.fetchpublications', ['id' => ':id']) }}`.replace(':id', proposalId);
+                                const collaboratorsurl = `{{ route('api.proposals.fetchcollaborators', ['id' => ':id']) }}`.replace(
+                                    ':id', proposalId);
+                                const punlicationsurl = `{{ route('api.proposals.fetchpublications', ['id' => ':id']) }}`.replace(
+                                    ':id', proposalId);
 
                                 // Function to fetch collaborators data 
                                 function fetchcollaborators() {
@@ -385,10 +389,10 @@
                                         url: collaboratorsurl,
                                         type: 'GET',
                                         dataType: 'json',
-                                        success: function (response) {
+                                        success: function(response) {
                                             populatecollaborators(response);
                                         },
-                                        error: function (xhr, status, error) {
+                                        error: function(xhr, status, error) {
                                             console.error('Error fetching data:', error);
                                         }
                                     });
@@ -399,7 +403,7 @@
                                     var tbody = $('#collaboratorstable tbody');
                                     tbody.empty(); // Clear existing table rows
                                     if (data.length > 0) {
-                                        $.each(data, function (index, data) {
+                                        $.each(data, function(index, data) {
                                             var row = '<tr>' +
                                                 '<td>' + data.collaboratorname + '</td>' +
                                                 '<td>' + data.position + '</td>' +
@@ -411,8 +415,7 @@
                                                 '</tr>';
                                             tbody.append(row);
                                         });
-                                    }
-                                    else {
+                                    } else {
                                         var row = '<tr><td colspan="7" class="text-center">No Collaborators found</td></tr>';
                                         tbody.append(row);
                                     }
@@ -424,10 +427,10 @@
                                         url: punlicationsurl,
                                         type: 'GET',
                                         dataType: 'json',
-                                        success: function (response) {
+                                        success: function(response) {
                                             populatepublications(response);
                                         },
-                                        error: function (xhr, status, error) {
+                                        error: function(xhr, status, error) {
                                             console.error('Error fetching data:', error);
                                         }
                                     });
@@ -437,7 +440,7 @@
                                     var tbody = $('#publicationstable tbody');
                                     tbody.empty(); // Clear existing table rows
                                     if (data.length > 0) {
-                                        $.each(data, function (index, data) {
+                                        $.each(data, function(index, data) {
                                             var row = '<tr>' +
                                                 '<td>' + data.authors + '</td>' +
                                                 '<td>' + data.year + '</td>' +
@@ -451,8 +454,7 @@
                                                 '</tr>';
                                             tbody.append(row);
                                         });
-                                    }
-                                    else {
+                                    } else {
                                         var row = '<tr><td colspan="9" class="text-center">No Publications found</td></tr>';
                                         tbody.append(row);
                                     }
@@ -516,7 +518,8 @@
                         <div>
 
                             <table id="expenditurestable"
-                                class="table table-responsive table-bordered table-striped table-hover" style="margin:4px">
+                                class="table table-responsive table-bordered table-striped table-hover"
+                                style="margin:4px">
                                 <thead class="bg-light text-dark">
                                     <tr>
                                         <th scope="col">Item</th>
@@ -535,7 +538,7 @@
                         <div class="container mt-5">
 
                             <script>
-                                $(document).ready(function () {
+                                $(document).ready(function() {
                                     // Calculate total when quantity or price changes
                                     document.getElementById('quantity')?.addEventListener('input', calculateTotal);
                                     document.getElementById('unitprice')?.addEventListener('input', calculateTotal);
@@ -552,7 +555,8 @@
 
                                     let proposalId = "{{ isset($prop) ? $prop->proposalid : '' }}"; // Check if proposalId is set
                                     // Assuming prop is passed to the Blade view from the Laravel controller
-                                    const expenditureurl = `{{ route('api.proposals.fetchexpenditures', ['id' => ':id']) }}`.replace(':id', proposalId);
+                                    const expenditureurl = `{{ route('api.proposals.fetchexpenditures', ['id' => ':id']) }}`.replace(':id',
+                                        proposalId);
 
 
 
@@ -563,11 +567,11 @@
                                             url: expenditureurl,
                                             type: 'GET',
                                             dataType: 'json',
-                                            success: function (response) {
+                                            success: function(response) {
                                                 populateexpenditures(response);
                                                 populatetopfields(response);
                                             },
-                                            error: function (xhr, status, error) {
+                                            error: function(xhr, status, error) {
                                                 console.error('Error fetching data:', error);
                                             }
                                         });
@@ -580,18 +584,15 @@
                                             let facilities = 0;
                                             let others = 0;
                                             let total = 0;
-                                            $.each(data, function (index, data) {
+                                            $.each(data, function(index, data) {
                                                 total += parseFloat(data.total);
                                                 if (data.itemtype == "Facilities") {
                                                     facilities += parseFloat(data.total);
-                                                }
-                                                else if (data.itemtype == "Consumables") {
+                                                } else if (data.itemtype == "Consumables") {
                                                     consumables += parseFloat(data.total);
-                                                }
-                                                else if (data.itemtype == "Travels") {
+                                                } else if (data.itemtype == "Travels") {
                                                     travel += parseFloat(data.total);
-                                                }
-                                                else if (data.itemtype == "Others") {
+                                                } else if (data.itemtype == "Others") {
                                                     others += parseFloat(data.total);
                                                 }
                                             });
@@ -608,7 +609,7 @@
                                         var tbody = $('#expenditurestable tbody');
                                         tbody.empty(); // Clear existing table rows
                                         if (data.length > 0) {
-                                            $.each(data, function (index, data) {
+                                            $.each(data, function(index, data) {
                                                 var row = '<tr>' +
                                                     '<td>' + data.item + '</td>' +
                                                     '<td>' + data.itemtype + '</td>' +
@@ -620,8 +621,7 @@
                                                     '</tr>';
                                                 tbody.append(row);
                                             });
-                                        }
-                                        else {
+                                        } else {
                                             var row = '<tr><td colspan="6" class="text-center">No Expenditures found</td></tr>';
                                             tbody.append(row);
                                         }
@@ -642,7 +642,8 @@
                         </div>
                         <div class="row form-group">
                             <table id="reserchdesignitemstable"
-                                class="table table-responsive table-bordered table-striped table-hover" style="margin:4px">
+                                class="table table-responsive table-bordered table-striped table-hover"
+                                style="margin:4px">
                                 <thead class="bg-light text-dark">
                                     <tr>
                                         <th scope="col">Summary</th>
@@ -659,12 +660,13 @@
                             </table>
                         </div>
                         <script>
-                            $(document).ready(function () {
+                            $(document).ready(function() {
 
 
                                 let proposalId = "{{ isset($prop) ? $prop->proposalid : '' }}"; // Check if proposalId is set
                                 // Assuming prop is passed to the Blade view from the Laravel controller
-                                const researchurl = `{{ route('api.proposals.researchdesignitems', ['id' => ':id']) }}`.replace(':id', proposalId);
+                                const researchurl = `{{ route('api.proposals.researchdesignitems', ['id' => ':id']) }}`.replace(':id',
+                                    proposalId);
 
 
                                 // Function to fetch expenditures data 
@@ -673,10 +675,10 @@
                                         url: researchurl,
                                         type: 'GET',
                                         dataType: 'json',
-                                        success: function (response) {
+                                        success: function(response) {
                                             populateresearchdesignitems(response);
                                         },
-                                        error: function (xhr, status, error) {
+                                        error: function(xhr, status, error) {
                                             console.error('Error fetching data:', error);
                                         }
                                     });
@@ -687,7 +689,7 @@
                                     var tbody = $('#reserchdesignitemstable tbody');
                                     tbody.empty(); // Clear existing table rows
                                     if (data.length > 0) {
-                                        $.each(data, function (index, data) {
+                                        $.each(data, function(index, data) {
                                             var row = '<tr>' +
                                                 '<td>' + data.summary + '</td>' +
                                                 '<td>' + data.indicators + '</td>' +
@@ -698,8 +700,7 @@
                                                 '</tr>';
                                             tbody.append(row);
                                         });
-                                    }
-                                    else {
+                                    } else {
                                         var row = '<tr><td colspan="6" class="text-center">No Research Design Items found</td></tr>';
                                         tbody.append(row);
                                     }
@@ -718,7 +719,8 @@
                         </div>
                         <div class="row form-group">
                             <table id="workplaitemstable"
-                                class="table table-responsive table-bordered table-striped table-hover" style="margin:4px">
+                                class="table table-responsive table-bordered table-striped table-hover"
+                                style="margin:4px">
                                 <thead class="bg-light text-dark">
                                     <tr>
                                         <th scope="col">Activity</th>
@@ -735,12 +737,13 @@
                             </table>
                         </div>
                         <script>
-                            $(document).ready(function () {
+                            $(document).ready(function() {
 
 
                                 let proposalId = "{{ isset($prop) ? $prop->proposalid : '' }}"; // Check if proposalId is set
                                 // Assuming prop is passed to the Blade view from the Laravel controller
-                                const workplanurl = `{{ route('api.proposals.fetchworkplanitems', ['id' => ':id']) }}`.replace(':id', proposalId);
+                                const workplanurl = `{{ route('api.proposals.fetchworkplanitems', ['id' => ':id']) }}`.replace(':id',
+                                    proposalId);
 
 
                                 // Function to fetch expenditures data 
@@ -749,10 +752,10 @@
                                         url: workplanurl,
                                         type: 'GET',
                                         dataType: 'json',
-                                        success: function (response) {
+                                        success: function(response) {
                                             populateworkplanitems(response);
                                         },
-                                        error: function (xhr, status, error) {
+                                        error: function(xhr, status, error) {
                                             console.error('Error fetching data:', error);
                                         }
                                     });
@@ -763,7 +766,7 @@
                                     var tbody = $('#workplaitemstable tbody');
                                     tbody.empty(); // Clear existing table rows
                                     if (data.length > 0) {
-                                        $.each(data, function (index, data) {
+                                        $.each(data, function(index, data) {
                                             var row = '<tr>' +
                                                 '<td>' + data.activity + '</td>' +
                                                 '<td>' + data.time + '</td>' +
@@ -774,8 +777,7 @@
                                                 '</tr>';
                                             tbody.append(row);
                                         });
-                                    }
-                                    else {
+                                    } else {
                                         var row = '<tr><td colspan="6" class="text-center">No WorkPlan Items found</td></tr>';
                                         tbody.append(row);
                                     }
@@ -790,7 +792,7 @@
                     <!-- Office Use -->
                     <div role="tabpanel" class="tab-pane" id="panel-officeuse">
                         <div class="row form-group">
-                            @if(Auth::user()->canreceiveproposal($prop->proposalid))
+                            @if (Auth::user()->canreceiveproposal($prop->proposalid))
                                 <div class="col text-center">
                                     <button id="btn_receiveproposal" type="button" class="btn btn-info ">Receive
                                         Proposal</button>
@@ -806,7 +808,7 @@
 
 
 
-                            @if(Auth::user()->canenableediting($prop->proposalid))
+                            @if (Auth::user()->canenableediting($prop->proposalid))
                                 <div class="col text-center">
                                     <button id="btn_enableproposalediting" type="button" class="btn btn-info ">Enable
                                         Editing</button>
@@ -822,7 +824,7 @@
 
 
 
-                            @if(Auth::user()->candisableediting($prop->proposalid))
+                            @if (Auth::user()->candisableediting($prop->proposalid))
                                 <div class="col text-center">
                                     <button id="btn_disableproposalediting" type="button" class="btn btn-info ">Disable
                                         Editing</button>
@@ -838,10 +840,11 @@
 
 
 
-                            @if(Auth::user()->canproposechanges($prop->proposalid))
+                            @if (Auth::user()->canproposechanges($prop->proposalid))
                                 <div class="col text-center">
                                     <button id="btn_open_proposalchangeform" type="button" class="btn btn-info "
-                                        data-bs-toggle="modal" data-bs-target="#proposalchangeModal">Propose Changes</button>
+                                        data-bs-toggle="modal" data-bs-target="#proposalchangeModal">Propose
+                                        Changes</button>
                                 </div>
                             @endif
 
@@ -854,10 +857,11 @@
 
 
 
-                            @if(Auth::user()->canrejectproposal($prop->proposalid))
+                            @if (Auth::user()->canrejectproposal($prop->proposalid))
                                 <div class="col text-center">
                                     <button id="btn_openreject_proposalmodal" type="button" class="btn btn-danger "
-                                        data-bs-toggle="modal" data-bs-target="#approveproposalModal" data-action="reject">Reject
+                                        data-bs-toggle="modal" data-bs-target="#approveproposalModal"
+                                        data-action="reject">Reject
                                         Application</button>
                                 </div>
                             @endif
@@ -871,7 +875,7 @@
 
 
 
-                            @if(Auth::user()->canapproveproposal($prop->proposalid))
+                            @if (Auth::user()->canapproveproposal($prop->proposalid))
                                 <div class="col text-center">
                                     <button id="btn_openapprove_proposalmodal" type="button" class="btn btn-success "
                                         data-bs-toggle="modal" data-bs-target="#approveproposalModal"
@@ -885,8 +889,9 @@
 
 
                             <div class="col text-center">
-                                <form action="{{ route('api.proposal.printpdf', ['id' => $prop->proposalid])}}">
-                                    <button id="btn_printproposall" type="submit" class="btn btn-success ">Download Pdf</button>
+                                <form action="{{ route('api.proposal.printpdf', ['id' => $prop->proposalid]) }}">
+                                    <button id="btn_printproposall" type="submit" class="btn btn-success ">Download
+                                        Pdf</button>
 
                                 </form>
                             </div>
@@ -901,7 +906,8 @@
                         </div>
                         <div>
                             <table id="proposalchangestable"
-                                class="table table-responsive table-bordered table-striped table-hover" style="margin:4px">
+                                class="table table-responsive table-bordered table-striped table-hover"
+                                style="margin:4px">
                                 <thead class="bg-secondary text-white">
                                     <tr>
                                         <th scope="col">#No</th>
@@ -934,17 +940,16 @@
                                             @csrf
                                             <div class="form-group">
                                                 <label for="item">Issue</label>
-                                                <textarea type="text" class="form-control" id="issue" name="issue"
-                                                    required></textarea>
+                                                <textarea type="text" class="form-control" id="issue" name="issue" required></textarea>
                                             </div>
                                             <div class="form-group">
                                                 <label for="quantity">Suggestion</label>
-                                                <textarea type="text" class="form-control" id="suggestion" name="suggestion"
-                                                    required></textarea>
+                                                <textarea type="text" class="form-control" id="suggestion" name="suggestion" required></textarea>
                                             </div>
                                             <div class="form-group">
                                                 <label for="unitprice">Status</label>
-                                                <input type="text" class="form-control" value="Pending" id="unitprice" readonly>
+                                                <input type="text" class="form-control" value="Pending"
+                                                    id="unitprice" readonly>
                                             </div>
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary"
@@ -974,8 +979,7 @@
                                             @csrf
                                             <div class="form-group">
                                                 <label for="comment">Comment</label>
-                                                <textarea type="text" class="form-control" id="comment" name="comment"
-                                                    required></textarea>
+                                                <textarea type="text" class="form-control" id="comment" name="comment" required></textarea>
                                             </div>
                                             <div class="form-group">
                                                 <label for="comment">Funding Year</label>
@@ -983,11 +987,12 @@
                                                     class="form-control">
                                                     <option value="">Select a Financial Year</option>
                                                     @foreach ($finyears as $year)
-                                                                                                                    <option value="{{ $year->id }}" {{ (isset($currentsettings) && $currentsettings['current_year'] == $year->id) ? 'selected' : '' }}>
-                                                            {{ $year->id . ' -- (' . $year->finyear . ')'}}
+                                                        <option value="{{ $year->id }}"
+                                                            {{ isset($currentsettings) && $currentsettings['current_year'] == $year->id ? 'selected' : '' }}>
+                                                            {{ $year->id . ' -- (' . $year->finyear . ')' }}
                                                         </option>
-                                                    @endforeach 
-                                                                                    </select>
+                                                    @endforeach
+                                                </select>
                                             </div>
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary"
@@ -1003,7 +1008,7 @@
                             </div>
                             <script>
                                 // Script to handle the data attributes and pass them to the modal
-                                $('#approveproposalModal').on('show.bs.modal', function (event) {
+                                $('#approveproposalModal').on('show.bs.modal', function(event) {
                                     var button = $(event.relatedTarget); // Button that triggered the modal
                                     var action = button.data('action'); // Extract info from data-* attributes 
                                     console.log(action);
@@ -1012,34 +1017,39 @@
                                         $('button_reject_proposal')?.setAttribute('visibility', 'hidden')
                                     }
                                 });
-
                             </script>
                         </div>
 
                         <script>
-                            $(document).ready(function () {
+                            $(document).ready(function() {
 
 
                                 let proposalId = "{{ isset($prop) ? $prop->proposalid : '' }}"; // Check if proposalId is set
-                                const receiveproposalurl = `{{ route('api.proposals.receiveproposal', ['id' => ':id']) }}`.replace(':id', proposalId.toString());
-                                const proposalchangeurl = `{{ route('api.proposals.proposalchanges', ['id' => ':id']) }}`.replace(':id', proposalId.toString());
-                                const approverejecturl = `{{ route('api.proposals.approvereject', ['id' => ':id']) }}`.replace(':id', proposalId.toString());
-                                const enableediting = `{{ route('api.proposals.changeeditstatus', ['id' => ':id']) }}`.replace(':id', proposalId.toString());
+                                const receiveproposalurl = `{{ route('api.proposals.receiveproposal', ['id' => ':id']) }}`.replace(
+                                    ':id', proposalId.toString());
+                                const proposalchangeurl = `{{ route('api.proposals.proposalchanges', ['id' => ':id']) }}`.replace(
+                                    ':id', proposalId.toString());
+                                const approverejecturl = `{{ route('api.proposals.approvereject', ['id' => ':id']) }}`.replace(':id',
+                                    proposalId.toString());
+                                const enableediting = `{{ route('api.proposals.changeeditstatus', ['id' => ':id']) }}`.replace(':id',
+                                    proposalId.toString());
                                 var csrfToken = document.getElementsByName('_token')[0].value;
 
-                               
+
                                 //receive proposal
-                                document.getElementById('btn_receiveproposal')?.addEventListener('click', function () {
+                                document.getElementById('btn_receiveproposal')?.addEventListener('click', function() {
                                     // Function to fetch data using AJAX
                                     $.ajax({
                                         url: receiveproposalurl,
                                         type: 'POST',
-                                        data: { _token: csrfToken },
+                                        data: {
+                                            _token: csrfToken
+                                        },
                                         dataType: 'json',
-                                        success: function (response) {
+                                        success: function(response) {
                                             showtoastmessage(response);
                                         },
-                                        error: function (xhr, status, error) {
+                                        error: function(xhr, status, error) {
                                             var mess = JSON.stringify(xhr.responseJSON.message);
                                             var type = JSON.stringify(xhr.responseJSON.type);
                                             var result = {
@@ -1054,17 +1064,19 @@
                                 });
 
                                 //enable editing proposal
-                                document.getElementById('_btn_enableproposalediting')?.addEventListener('click', function () {
+                                document.getElementById('_btn_enableproposalediting')?.addEventListener('click', function() {
                                     // Function to fetch data using AJAX
                                     $.ajax({
                                         url: enableediting,
                                         type: 'POST',
-                                        data: { _token: csrfToken },
+                                        data: {
+                                            _token: csrfToken
+                                        },
                                         dataType: 'json',
-                                        success: function (response) {
+                                        success: function(response) {
                                             showtoastmessage(response);
                                         },
-                                        error: function (xhr, status, error) {
+                                        error: function(xhr, status, error) {
                                             var mess = JSON.stringify(xhr.responseJSON.message);
                                             var type = JSON.stringify(xhr.responseJSON.type);
                                             var result = {
@@ -1079,7 +1091,7 @@
                                 });
 
                                 //save proposal change
-                                document.getElementById('button_save_proposalchange')?.addEventListener('click', function () {
+                                document.getElementById('button_save_proposalchange')?.addEventListener('click', function() {
 
                                     var formData = $('#proposalchangeForm').serialize();
                                     if (proposalId) {
@@ -1091,13 +1103,15 @@
                                         type: 'POST',
                                         data: formData,
                                         dataType: 'json',
-                                        success: function (response) {
+                                        success: function(response) {
                                             var closebtn = document.getElementById('btn_close_proposalchangemodal');
-                                            if (closebtn) { closebtn.click(); }
+                                            if (closebtn) {
+                                                closebtn.click();
+                                            }
                                             showtoastmessage(response);
                                             fetchproposalchanges();
                                         },
-                                        error: function (xhr, status, error) {
+                                        error: function(xhr, status, error) {
                                             var mess = JSON.stringify(xhr.responseJSON.message);
                                             var type = JSON.stringify(xhr.responseJSON.type);
                                             var result = {
@@ -1111,21 +1125,21 @@
                                     });
                                 });
 
-                                document.getElementById('btn_openreject_proposalmodal')?.addEventListener('click', function () {
+                                document.getElementById('btn_openreject_proposalmodal')?.addEventListener('click', function() {
                                     var rejectbtn = document.getElementById('button_reject_proposal').hidden = false;
                                     var approvebtn = document.getElementById('button_approve_proposal').hidden = true;
                                     document.getElementById('approverejectproposalLabel').innerText = "Reject Proposal";
                                 });
-                                document.getElementById('btn_openapprove_proposalmodal')?.addEventListener('click', function () {
+                                document.getElementById('btn_openapprove_proposalmodal')?.addEventListener('click', function() {
                                     var rejectbtn = document.getElementById('button_reject_proposal').hidden = true;
                                     var approvebtn = document.getElementById('button_approve_proposal').hidden = false;
                                     document.getElementById('approverejectproposalLabel').innerText = "Approve Proposal";
 
                                 });
-                                document.getElementById('button_approve_proposal')?.addEventListener('click', function () {
+                                document.getElementById('button_approve_proposal')?.addEventListener('click', function() {
                                     approverejectproposal('Approved');
                                 });
-                                document.getElementById('button_reject_proposal')?.addEventListener('click', function () {
+                                document.getElementById('button_reject_proposal')?.addEventListener('click', function() {
                                     approverejectproposal('Rejected');
                                 });
 
@@ -1143,13 +1157,15 @@
                                         type: 'POST',
                                         data: formData,
                                         dataType: 'json',
-                                        success: function (response) {
+                                        success: function(response) {
                                             var closebtn = document.getElementById('btn_close_approveproposalmodal');
-                                            if (closebtn) { closebtn.click(); }
+                                            if (closebtn) {
+                                                closebtn.click();
+                                            }
                                             showtoastmessage(response);
                                             fetchproposalchanges();
                                         },
-                                        error: function (xhr, status, error) {
+                                        error: function(xhr, status, error) {
                                             var mess = JSON.stringify(xhr.responseJSON.message);
                                             var type = JSON.stringify(xhr.responseJSON.type);
                                             var result = {
@@ -1170,10 +1186,10 @@
                                         url: proposalchangeurl,
                                         type: 'GET',
                                         dataType: 'json',
-                                        success: function (response) {
+                                        success: function(response) {
                                             populateproposalchanges(response);
                                         },
-                                        error: function (xhr, status, error) {
+                                        error: function(xhr, status, error) {
                                             console.error('Error fetching data:', error);
                                         }
                                     });
@@ -1184,7 +1200,7 @@
                                     var tbody = $('#proposalchangestable tbody');
                                     tbody.empty(); // Clear existing table rows
                                     if (data.length > 0) {
-                                        $.each(data, function (index, data) {
+                                        $.each(data, function(index, data) {
                                             var row = '<tr>' +
                                                 '<td>' + data.changeid + '</td>' +
                                                 '<td>' + data.triggerissue + '</td>' +
@@ -1195,8 +1211,7 @@
                                                 '</tr>';
                                             tbody.append(row);
                                         });
-                                    }
-                                    else {
+                                    } else {
                                         var row = '<tr><td colspan="6" class="text-center">No Proposal Changes found</td></tr>';
                                         tbody.append(row);
                                     }
@@ -1209,5 +1224,5 @@
                 </div>
             </div>
         </div>
-    @endif 
+    @endif
 @endsection
