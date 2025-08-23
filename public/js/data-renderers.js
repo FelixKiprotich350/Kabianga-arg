@@ -105,14 +105,26 @@ function renderRecentActivity(activities) {
 }
 
 // Proposals List Renderer
-function renderProposalsList(proposals) {
+function renderProposalsList(response) {
     const tableBody = document.getElementById('applicationsTableBody');
+    const loadingState = document.getElementById('loadingState');
+    const emptyState = document.getElementById('emptyState');
+    
+    if (loadingState) loadingState.style.display = 'none';
     if (!tableBody) return;
 
+    const proposals = response?.data || response || [];
+    
     if (!proposals || proposals.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No proposals found</td></tr>';
+        if (emptyState) {
+            emptyState.style.display = 'block';
+        } else {
+            tableBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No proposals found</td></tr>';
+        }
         return;
     }
+
+    if (emptyState) emptyState.style.display = 'none';
 
     const html = proposals.map(proposal => `
         <tr>
@@ -121,9 +133,9 @@ function renderProposalsList(proposals) {
                 <div class="fw-medium">${proposal.title || proposal.researchtitle || 'Untitled'}</div>
                 <div class="text-muted small">${(proposal.abstract || proposal.objectives || '').substring(0, 100)}...</div>
             </td>
-            <td>${proposal.theme_name || 'N/A'}</td>
-            <td>${proposal.grant_name || 'N/A'}</td>
-            <td>KSh ${(proposal.requested_amount || 0).toLocaleString()}</td>
+            <td>${proposal.theme_name || (proposal.themeitem?.themename) || 'N/A'}</td>
+            <td>${proposal.grant_name || (proposal.grantitem?.grantname) || 'N/A'}</td>
+            <td>KSh ${(proposal.requested_amount || proposal.grantitem?.amount || 0).toLocaleString()}</td>
             <td>
                 <span class="badge bg-${getStatusColor(proposal.approvalstatus)}">${proposal.approvalstatus || 'Unknown'}</span>
             </td>
@@ -147,10 +159,15 @@ function renderProposalsList(proposals) {
 }
 
 // Users List Renderer
-function renderUsersList(users) {
+function renderUsersList(response) {
     const tableBody = document.getElementById('usersTableBody');
+    const loadingState = document.getElementById('loadingState');
+    
+    if (loadingState) loadingState.style.display = 'none';
     if (!tableBody) return;
 
+    const users = response?.data || response || [];
+    
     if (!users || users.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No users found</td></tr>';
         return;
@@ -158,26 +175,35 @@ function renderUsersList(users) {
 
     const html = users.map(user => `
         <tr>
-            <td>${user.userid || 'N/A'}</td>
             <td>
                 <div class="fw-medium">${user.name || 'N/A'}</div>
                 <div class="text-muted small">${user.email || 'N/A'}</div>
             </td>
-            <td>${user.pfno || 'N/A'}</td>
-            <td>${user.phonenumber || 'N/A'}</td>
-            <td>${user.department || 'N/A'}</td>
+            <td>${user.email || 'N/A'}</td>
+            <td>N/A</td>
+            <td>${getRoleName(user.role)}</td>
             <td>
                 <span class="badge bg-${user.isactive ? 'success' : 'danger'}">
                     ${user.isactive ? 'Active' : 'Inactive'}
                 </span>
             </td>
+            <td>${user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}</td>
             <td>
                 <div class="btn-group btn-group-sm">
-                    <a href="/users/view/${user.userid}" class="btn btn-outline-primary">
+                    <a href="/users/view/${user.userid}" class="btn btn-outline-primary" title="View">
                         <i class="bi bi-eye"></i>
                     </a>
-                    <button class="btn btn-outline-secondary" onclick="editUser(${user.userid})">
+                    <button class="btn btn-outline-secondary" onclick="editUser('${user.userid}')" title="Edit">
                         <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-outline-info" onclick="managePermissions('${user.userid}')" title="Permissions">
+                        <i class="bi bi-shield-check"></i>
+                    </button>
+                    <button class="btn btn-outline-warning" onclick="resetPassword('${user.userid}')" title="Reset Password">
+                        <i class="bi bi-key"></i>
+                    </button>
+                    <button class="btn btn-outline-${user.isactive ? 'danger' : 'success'}" onclick="toggleUserStatus('${user.userid}', ${user.isactive})" title="${user.isactive ? 'Disable' : 'Enable'}">
+                        <i class="bi bi-${user.isactive ? 'x-circle' : 'check-circle'}"></i>
                     </button>
                 </div>
             </td>
@@ -185,6 +211,15 @@ function renderUsersList(users) {
     `).join('');
 
     tableBody.innerHTML = html;
+}
+
+function getRoleName(role) {
+    switch(role) {
+        case 1: return 'Admin';
+        case 2: return 'Researcher';
+        case 3: return 'Guest';
+        default: return 'Unknown';
+    }
 }
 
 // Helper function to get status color
@@ -252,5 +287,6 @@ window.DataRenderers = {
     renderProposalsList,
     renderUsersList,
     renderProjectsList,
-    getStatusColor
+    getStatusColor,
+    getRoleName
 };

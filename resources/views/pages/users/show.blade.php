@@ -78,9 +78,9 @@
             <div class="form-card mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0"><i class="bi bi-shield-check me-2"></i>Permissions</h5>
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#permissionsModal">
+                    <a href="{{ route('users.permissions', $user->userid) }}" class="btn btn-sm btn-outline-primary">
                         <i class="bi bi-gear me-2"></i>Manage
-                    </button>
+                    </a>
                 </div>
                 <div class="row" id="permissionsList">
                     <!-- Permissions loaded via AJAX -->

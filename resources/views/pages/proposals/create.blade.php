@@ -9,7 +9,7 @@
             <h2 class="mb-1">New Research Proposal</h2>
             <p class="text-muted mb-0">Submit your research proposal for grant consideration</p>
         </div>
-        <a href="{{ route('pages.proposals.myapplications') }}" class="btn btn-outline-secondary">
+        <a href="{{ route('pages.proposals.index') }}" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-2"></i>Back to Applications
         </a>
     </div>

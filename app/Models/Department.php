@@ -24,6 +24,18 @@ class Department extends Model
      */
     protected $primaryKey = 'depid';
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'depid',
+        'shortname',
+        'description',
+        'schoolfk'
+    ];
+
     // Boot method to auto-generate UUIDs
     protected static function boot()
     {

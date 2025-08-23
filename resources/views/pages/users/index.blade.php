@@ -131,12 +131,254 @@
         </div>
     </div>
 </div>
+
+<!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editUserForm">
+                @csrf
+                <div class="modal-body">
+                    <input type="hidden" id="editUserId">
+                    <div class="mb-3">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="editUserName" name="fullname" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="editUserEmail" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Phone</label>
+                        <input type="tel" class="form-control" id="editUserPhone" name="phonenumber">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">PF Number</label>
+                        <input type="text" class="form-control" id="editUserPF" name="pfno">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Reset Password Modal -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Reset Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="resetPasswordForm">
+                @csrf
+                <div class="modal-body">
+                    <input type="hidden" id="resetPasswordUserId">
+                    <div class="mb-3">
+                        <label class="form-label">New Password</label>
+                        <input type="password" class="form-control" name="password" required minlength="6">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" name="password_confirmation" required minlength="6">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Reset Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    PageLoaders.loadUsersData();
+    loadUsersData();
+    
+    // Edit User Form
+    document.getElementById('editUserForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const userId = document.getElementById('editUserId').value;
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData);
+        
+        try {
+            const response = await API.updateUser(userId, data);
+            if (response.type === 'success') {
+                bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
+                loadUsersData();
+                showAlert('User updated successfully', 'success');
+            } else {
+                showAlert(response.message, 'error');
+            }
+        } catch (error) {
+            showAlert('Failed to update user', 'error');
+        }
+    });
+    
+    // Permissions Form
+    document.getElementById('permissionsForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const userId = document.getElementById('permissionsUserId').value;
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData);
+        
+        try {
+            const response = await API.updateUserRole(userId, data);
+            if (response.type === 'success') {
+                bootstrap.Modal.getInstance(document.getElementById('permissionsModal')).hide();
+                loadUsersData();
+                showAlert('Permissions updated successfully', 'success');
+            } else {
+                showAlert(response.message, 'error');
+            }
+        } catch (error) {
+            showAlert('Failed to update permissions', 'error');
+        }
+    });
+    
+    // Reset Password Form
+    document.getElementById('resetPasswordForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const userId = document.getElementById('resetPasswordUserId').value;
+        const password = this.password.value;
+        const confirmation = this.password_confirmation.value;
+        
+        if (password !== confirmation) {
+            showAlert('Passwords do not match', 'error');
+            return;
+        }
+        
+        try {
+            const response = await API.resetUserPassword(userId, password);
+            if (response.type === 'success') {
+                bootstrap.Modal.getInstance(document.getElementById('resetPasswordModal')).hide();
+                showAlert('Password reset successfully', 'success');
+                this.reset();
+            } else {
+                showAlert(response.message, 'error');
+            }
+        } catch (error) {
+            showAlert('Failed to reset password', 'error');
+        }
+    });
 });
+
+// User Management Functions
+window.viewUser = function(userId) {
+    window.location.href = `/users/${userId}`;
+};
+
+window.editUser = function(userId) {
+    // Get user data and populate form
+    const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+    document.getElementById('editUserId').value = userId;
+    modal.show();
+};
+
+window.managePermissions = function(userId) {
+    window.location.href = `/users/${userId}/permissions`;
+};
+
+window.resetPassword = function(userId) {
+    const modal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+    document.getElementById('resetPasswordUserId').value = userId;
+    modal.show();
+};
+
+window.toggleUserStatus = async function(userId, isActive) {
+    const action = isActive ? 'disable' : 'enable';
+    if (!confirm(`Are you sure you want to ${action} this user?`)) return;
+    
+    try {
+        const response = isActive ? await API.disableUser(userId) : await API.enableUser(userId);
+        if (response.type === 'success') {
+            loadUsersData();
+            showAlert(`User ${action}d successfully`, 'success');
+        } else {
+            showAlert(response.message, 'error');
+        }
+    } catch (error) {
+        showAlert(`Failed to ${action} user`, 'error');
+    }
+};
+
+async function loadUsersData() {
+    const loadingState = document.getElementById('loadingState');
+    const tableBody = document.getElementById('usersTableBody');
+    
+    try {
+        loadingState.style.display = 'block';
+        const response = await fetch('/api/users');
+        const result = await response.json();
+        
+        if (result.success) {
+            tableBody.innerHTML = '';
+            result.data.forEach(user => {
+                const roleNames = {1: 'Admin', 2: 'Researcher', 3: 'Guest'};
+                const row = `
+                    <tr>
+                        <td>${user.name || ''}</td>
+                        <td>${user.email || ''}</td>
+                        <td>-</td>
+                        <td><span class="badge bg-primary">${roleNames[user.role] || 'Unknown'}</span></td>
+                        <td><span class="badge ${user.isactive ? 'bg-success' : 'bg-danger'}">${user.isactive ? 'Active' : 'Inactive'}</span></td>
+                        <td>-</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="viewUser('${user.userid}')" title="View User">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="editUser('${user.userid}')" title="Edit User">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-info" onclick="managePermissions('${user.userid}')" title="Manage Permissions">
+                                <i class="bi bi-shield-check"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning" onclick="resetPassword('${user.userid}')" title="Reset Password">
+                                <i class="bi bi-key"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row;
+            });
+        } else {
+            tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Failed to load users</td></tr>';
+        }
+    } catch (error) {
+        tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Error loading users</td></tr>';
+    } finally {
+        loadingState.style.display = 'none';
+    }
+}
+
+function showAlert(message, type) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const alertHtml = `<div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>`;
+    
+    const container = document.querySelector('.container-fluid');
+    container.insertAdjacentHTML('afterbegin', alertHtml);
+    
+    setTimeout(() => {
+        const alert = container.querySelector('.alert');
+        if (alert) alert.remove();
+    }, 5000);
+}
 </script>
 @endpush

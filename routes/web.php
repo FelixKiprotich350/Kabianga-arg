@@ -11,6 +11,7 @@ use App\Http\Controllers\{
     Proposals\ProposalsController,
     GrantsController,
     UsersController,
+    UserRoleController,
     Proposals\CollaboratorsController,
     Proposals\PublicationsController,
     Proposals\ExpendituresController,
@@ -112,15 +113,13 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/dashboard/chart', [DashboardController::class, 'chartdata'])->name('api.dashboard.chartdata');
 
     //proposals
+    Route::get('/proposals', [ProposalsController::class, 'index'])->name('pages.proposals.index');
     Route::get('/proposals/newproposal', [ProposalsController::class, 'modernNewProposal'])->name('pages.proposals.viewnewproposal');
-Route::get('/proposals/myapplications', [ProposalsController::class, 'modernMyApplications'])->name('pages.proposals.myapplications');
-    Route::get('/proposals/allproposals', [ProposalsController::class, 'viewallproposals'])->name('pages.proposals.allproposals');
+
     Route::get('/proposals/view/{id}', [ProposalsController::class, 'getsingleproposalpage'])->name('pages.proposals.viewproposal');
     Route::post('/proposals/post', [ProposalsController::class, 'postnewproposal'])->name('route.proposals.post');
     Route::post('/proposals/updatebasicdetails/{id}', [ProposalsController::class, 'updatebasicdetails'])->name('route.proposals.updatebasicdetails');
     Route::post('/proposals/updateresearch/{id}', [ProposalsController::class, 'updateresearchdetails'])->name('route.proposals.updateresearchdetails');
-    Route::get('/proposals/allproposals', [ProposalsController::class, 'viewallproposals'])->name('pages.proposals.allproposals');
-    Route::get('/proposals/myapplications', [ProposalsController::class, 'viewmyapplications'])->name('pages.proposals.myapplications');
     Route::get('/proposals/fetchmyapplications', [ProposalsController::class, 'fetchmyapplications'])->name('api.proposals.fetchmyapplications');
     Route::get('/proposals/fetchsearchproposals', [ProposalsController::class, 'fetchsearchproposals'])->name('api.proposals.fetchsearchproposals');
     Route::get('/proposals/fetchallproposals', [ProposalsController::class, 'fetchallproposals'])->name('api.proposals.fetchallproposals');
@@ -154,9 +153,10 @@ Route::get('/proposals/myapplications', [ProposalsController::class, 'modernMyAp
     Route::get('/schools/edit/{id}', [SchoolsController::class, 'geteditschoolpage'])->name('pages.schools.editschool');
     Route::post('/schools/edit/{id}', [SchoolsController::class, 'updateschool'])->name('api.schools.updateschool');
 
-    //departments
+    //departments (redirect to schools page)
+    Route::get('/departments/home', function() { return redirect()->route('pages.schools.home'); })->name('pages.departments.home');
+    Route::get('/departments', function() { return redirect()->route('pages.schools.home'); });
     Route::post('/departments/post', [DepartmentsController::class, 'postnewdepartment'])->name('api.departments.post');
-    Route::get('/departments/home', [DepartmentsController::class, 'viewalldepartments'])->name('pages.departments.home');
     Route::get('/departments/fetchsearchdepartments', [DepartmentsController::class, 'fetchsearchdepartments'])->name('api.departments.fetchsearchdepartments');
     Route::get('/departments/fetchalldepartments', [DepartmentsController::class, 'fetchalldepartments'])->name('api.departments.fetchalldepartments');
     Route::get('/departments/view/{id}', [DepartmentsController::class, 'getviewdepartmentpage'])->name('pages.departments.viewdepartment');
@@ -188,7 +188,14 @@ Route::get('/proposals/myapplications', [ProposalsController::class, 'modernMyAp
 
     //users
     Route::get('/users/manage', [UsersController::class, 'viewallusers'])->name('pages.users.manage');
-    Route::get('/users/view/{id}', [UsersController::class, 'viewsingleuser'])->name('pages.users.viewsingleuser');
+    Route::get('/users', [UsersController::class, 'viewallusers'])->name('users.index');
+    Route::get('/users/{id}', [UsersController::class, 'viewsingleuser'])->name('pages.users.viewsingleuser');
+    Route::get('/users/{id}/permissions', [UsersController::class, 'showPermissions'])->name('users.permissions');
+    Route::put('/users/{id}/role', [UsersController::class, 'updateUserRole'])->name('users.update-role');
+    Route::put('/users/{id}/permissions', [UsersController::class, 'updatePermissions'])->name('users.update-permissions');
+    Route::post('/users/{id}/assign-role', [UserRoleController::class, 'assignRole'])->name('users.assign-role');
+    Route::get('/users/{id}/roles', [UserRoleController::class, 'getUserRoles'])->name('users.roles');
+    Route::post('/roles/{id}/deactivate', [UserRoleController::class, 'deactivateRole'])->name('roles.deactivate');
     Route::get('/users/fetchsearchusers', [UsersController::class, 'fetchsearchusers'])->name('api.users.fetchsearchusers');
     Route::get('/users/fetchallusers', [UsersController::class, 'fetchallusers'])->name('api.users.fetchallusers');
     Route::get('/notificationtype/fetchalltypes', [UsersController::class, 'fetchallnotificationtypes'])->name('api.users.fetchallnotificationtypes');
@@ -241,12 +248,12 @@ Route::get('/proposals/myapplications', [ProposalsController::class, 'modernMyAp
 
 
     //projects
-//projects
-    Route::get('/projects/myprojects', [ProjectsController::class, 'myprojects'])->name('pages.projects.myprojects');
+    Route::get('/projects', [ProjectsController::class, 'index'])->name('pages.projects.index');
+
     Route::get('/projects/fetchmyactiveprojects', [ProjectsController::class, 'fetchmyactiveprojects'])->name('api.projects.fetchmyactiveprojects');
     Route::get('/projects/fetchmyallprojects', [ProjectsController::class, 'fetchmyallprojects'])->name('api.projects.fetchmyallprojects');
     Route::get('/projects/myprojects/{id}', [ProjectsController::class, 'viewmyproject'])->name('pages.projects.viewmyproject');
-    Route::get('/projects/allprojects', [ProjectsController::class, 'allprojects'])->name('pages.projects.allprojects');
+
     Route::get('/projects/fetchallactiveprojects', [ProjectsController::class, 'fetchallactiveprojects'])->name('api.projects.fetchallactiveprojects');
     Route::get('/projects/fetchallprojects', [ProjectsController::class, 'fetchallprojects'])->name('api.projects.fetchallprojects');
     Route::get('/projects/fetchsearchallprojects', [ProjectsController::class, 'fetchsearchallprojects'])->name('api.projects.fetchsearchallprojects');

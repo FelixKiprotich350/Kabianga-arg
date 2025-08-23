@@ -4,7 +4,7 @@
  */
 class APIService {
     constructor() {
-        this.baseURL = '/api/v1';
+        this.baseURL = '';
         this.token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     }
 
@@ -56,7 +56,7 @@ class APIService {
 
     // User Management APIs
     async getAllUsers(search = '') {
-        return this.fetch(`/users${search ? `?search=${search}` : ''}`);
+        return this.fetch(`/users/fetchallusers${search ? `?search=${search}` : ''}`);
     }
 
     async getUser(id) {
@@ -71,19 +71,52 @@ class APIService {
     }
 
     async updateUser(id, userData) {
-        return this.fetch(`/users/${id}`, {
-            method: 'PUT',
+        return this.fetch(`/users/updatebasicdetails/${id}`, {
+            method: 'POST',
             body: JSON.stringify(userData)
+        });
+    }
+
+    async updateUserPermissions(id, permissions) {
+        return this.fetch(`/users/permissions/${id}`, {
+            method: 'POST',
+            body: JSON.stringify({ permissions })
+        });
+    }
+
+    async updateUserRole(id, roleData) {
+        return this.fetch(`/users/updaterole/${id}`, {
+            method: 'POST',
+            body: JSON.stringify(roleData)
+        });
+    }
+
+    async resetUserPassword(id, password) {
+        return this.fetch(`/users/resetpassword/${id}`, {
+            method: 'POST',
+            body: JSON.stringify({ password })
+        });
+    }
+
+    async disableUser(id) {
+        return this.fetch(`/users/disable/${id}`, {
+            method: 'POST'
+        });
+    }
+
+    async enableUser(id) {
+        return this.fetch(`/users/enable/${id}`, {
+            method: 'POST'
         });
     }
 
     // Proposals APIs
     async getAllProposals(search = '') {
-        return this.fetch(`/proposals${search ? `?search=${search}` : ''}`);
+        return this.fetch(`/proposals/fetchallproposals${search ? `?search=${search}` : ''}`);
     }
 
     async getMyProposals() {
-        return this.fetch('/proposals/my');
+        return this.fetch('/proposals/fetchmyapplications');
     }
 
     async getProposal(id) {
@@ -196,19 +229,19 @@ class APIService {
 
     // Projects APIs
     async getAllProjects(search = '') {
-        return this.fetch(`/projects${search ? `?search=${search}` : ''}`);
+        return this.fetch(`/projects/fetchallprojects${search ? `?search=${search}` : ''}`);
     }
 
     async getMyProjects() {
-        return this.fetch('/projects/my');
+        return this.fetch('/projects/fetchmyallprojects');
     }
 
     async getActiveProjects() {
-        return this.fetch('/projects/active');
+        return this.fetch('/projects/fetchallactiveprojects');
     }
 
     async getMyActiveProjects() {
-        return this.fetch('/projects/my-active');
+        return this.fetch('/projects/fetchmyactiveprojects');
     }
 
     async getProject(id) {
@@ -239,47 +272,83 @@ class APIService {
 
     // Schools APIs
     async getAllSchools(search = '') {
-        return this.fetch(`/schools${search ? `?search=${search}` : ''}`);
+        return this.fetch(`/schools/fetchallschools${search ? `?search=${search}` : ''}`);
+    }
+
+    async searchSchools(search) {
+        return this.fetch(`/schools/fetchsearchschools?search=${search}`);
     }
 
     async createSchool(data) {
-        return this.fetch('/schools', {
+        const formData = new FormData();
+        Object.keys(data).forEach(key => formData.append(key, data[key]));
+        
+        return this.fetch('/schools/post', {
             method: 'POST',
-            body: JSON.stringify(data)
+            headers: {
+                'X-CSRF-TOKEN': this.token,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
         });
     }
 
     async getSchool(id) {
-        return this.fetch(`/schools/${id}`);
+        return this.fetch(`/schools/view/${id}`);
     }
 
     async updateSchool(id, data) {
-        return this.fetch(`/schools/${id}`, {
-            method: 'PUT',
-            body: JSON.stringify(data)
+        const formData = new FormData();
+        Object.keys(data).forEach(key => formData.append(key, data[key]));
+        
+        return this.fetch(`/schools/edit/${id}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': this.token,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
         });
     }
 
     // Departments APIs
     async getAllDepartments(search = '') {
-        return this.fetch(`/departments${search ? `?search=${search}` : ''}`);
+        return this.fetch(`/departments/fetchalldepartments${search ? `?search=${search}` : ''}`);
+    }
+
+    async searchDepartments(search) {
+        return this.fetch(`/departments/fetchsearchdepartments?search=${search}`);
     }
 
     async createDepartment(data) {
-        return this.fetch('/departments', {
+        const formData = new FormData();
+        Object.keys(data).forEach(key => formData.append(key, data[key]));
+        
+        return this.fetch('/departments/post', {
             method: 'POST',
-            body: JSON.stringify(data)
+            headers: {
+                'X-CSRF-TOKEN': this.token,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
         });
     }
 
     async getDepartment(id) {
-        return this.fetch(`/departments/${id}`);
+        return this.fetch(`/departments/view/${id}`);
     }
 
     async updateDepartment(id, data) {
-        return this.fetch(`/departments/${id}`, {
-            method: 'PUT',
-            body: JSON.stringify(data)
+        const formData = new FormData();
+        Object.keys(data).forEach(key => formData.append(key, data[key]));
+        
+        return this.fetch(`/departments/edit/${id}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': this.token,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
         });
     }
 

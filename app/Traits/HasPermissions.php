@@ -2,29 +2,37 @@
 
 namespace App\Traits;
 
+use App\Services\AccessControlService;
+
 trait HasPermissions
 {
     public function hasAnyPermission(array $permissions)
     {
-        if ($this->isadmin) return true;
-        
-        foreach ($permissions as $permission) {
-            if ($this->hasPermission($permission)) {
-                return true;
-            }
-        }
-        return false;
+        return AccessControlService::hasAccess($permissions, $this);
     }
 
     public function hasAllPermissions(array $permissions)
     {
-        if ($this->isadmin) return true;
-        
-        foreach ($permissions as $permission) {
-            if (!$this->hasPermission($permission)) {
-                return false;
-            }
-        }
-        return true;
+        return AccessControlService::hasAllAccess($permissions, $this);
+    }
+    
+    public function hasAccess($requirement)
+    {
+        return AccessControlService::hasAccess($requirement, $this);
+    }
+    
+    public function getEffectivePermissions()
+    {
+        return AccessControlService::getEffectivePermissions($this);
+    }
+    
+    public function hasRole($role)
+    {
+        return $this->role == $role;
+    }
+    
+    public function hasAnyRole(array $roles)
+    {
+        return in_array($this->role, $roles);
     }
 }

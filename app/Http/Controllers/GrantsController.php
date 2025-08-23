@@ -82,7 +82,7 @@ class GrantsController extends Controller
         $grant = Grant::findOrFail($id); // Ensure the model name matches your actual model class name
         // Assign values from the request
         $grant->title = $request->input('title');
-        $grant->finyear = $request->input('finyear');
+        $grant->finyearfk = $request->input('finyear');
         $grant->status = $request->input('status');
         $grant->save();
 

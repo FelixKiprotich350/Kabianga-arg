@@ -33,6 +33,11 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class ProposalsController extends Controller
 {
+    public function index()
+    {
+        return view('pages.proposals.index');
+    }
+    
     //
     public function modernNewProposal()
     {
@@ -481,10 +486,24 @@ class ProposalsController extends Controller
         }
         
         try {
-            $data = Proposal::with('department', 'grantitem', 'themeitem', 'applicant')->get();
+            $proposals = Proposal::with('department', 'grantitem', 'themeitem', 'applicant')->get();
+            $data = $proposals->map(function ($proposal) {
+                return [
+                    'proposalid' => $proposal->proposalid,
+                    'researchtitle' => $proposal->researchtitle,
+                    'objectives' => $proposal->objectives,
+                    'approvalstatus' => $proposal->approvalstatus,
+                    'theme_name' => $proposal->themeitem->themename ?? 'N/A',
+                    'grant_name' => $proposal->grantitem->grantname ?? 'N/A',
+                    'requested_amount' => $proposal->grantitem->amount ?? 0,
+                    'created_at' => $proposal->created_at,
+                    'applicant_name' => $proposal->applicant->name ?? 'N/A',
+                    'department_name' => $proposal->department->departmentname ?? 'N/A'
+                ];
+            });
             return response()->json(['success' => true, 'data' => $data]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Failed to fetch proposals', 'data' => []], 500);
+            return response()->json(['success' => false, 'message' => $e->getMessage(), 'data' => []], 500);
         }
     }
 

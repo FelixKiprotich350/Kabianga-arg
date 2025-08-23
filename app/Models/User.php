@@ -125,7 +125,7 @@ class User extends Authenticatable
     public function haspermission($shortname)
     {
         // Super admin has all permissions
-        if (isset($this->isadmin) && $this->isadmin) {
+        if ((isset($this->isadmin) && $this->isadmin) || $this->role == 1) {
             return true;
         }
 
@@ -230,5 +230,66 @@ class User extends Authenticatable
             return false;
         }
 
+    }
+
+    public function userRoles()
+    {
+        return $this->hasMany(UserRole::class, 'user_id', 'userid');
+    }
+
+    public function activeRoles()
+    {
+        return $this->userRoles()->active();
+    }
+
+    public function hasActiveRole($roleType)
+    {
+        return $this->activeRoles()->where('role_type', $roleType)->exists();
+    }
+
+    public function isCommitteeMember()
+    {
+        return $this->hasActiveRole('committee_member');
+    }
+
+    public function getCurrentRoles()
+    {
+        return $this->activeRoles()->pluck('role_type')->toArray();
+    }
+
+    public function getEffectivePermissions()
+    {
+        $permissions = [];
+        
+        // Base researcher permissions
+        $permissions = array_merge($permissions, $this->getResearcherPermissions());
+        
+        // Committee member permissions
+        if ($this->isCommitteeMember()) {
+            $permissions = array_merge($permissions, $this->getCommitteePermissions());
+        }
+        
+        // Additional assigned permissions
+        $userPermissions = $this->permissions()->pluck('shortname')->toArray();
+        $permissions = array_merge($permissions, $userPermissions);
+        
+        return array_unique($permissions);
+    }
+
+    private function getResearcherPermissions()
+    {
+        return ['cansubmitproposal', 'canviewmyproposals', 'caneditmyproposal'];
+    }
+
+    private function getCommitteePermissions()
+    {
+        return ['canviewallproposals', 'canapproveproposal', 'canrejectproposal', 'canproposechanges'];
+    }
+
+    public function hasPermissionDynamic($permission)
+    {
+        if ($this->isadmin) return true;
+        
+        return in_array($permission, $this->getEffectivePermissions());
     }
 }

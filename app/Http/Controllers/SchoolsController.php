@@ -89,7 +89,7 @@ class SchoolsController extends Controller
         if(!auth()->user()->haspermission('canviewdepartmentsandschools')){
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to View Schools!");
         }
-        return view('pages.departments.schools');
+        return view('pages.schools.index');
     }
     public function getviewschoolpage($id)
     {
@@ -104,14 +104,14 @@ class SchoolsController extends Controller
     public function geteditschoolpage($id)
     {
         if(!auth()->user()->haspermission('canaddoreditschool')){
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Add or Edit a Department!");
+            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Add or Edit a School!");
         }
-        // Find the grant by ID or fail with a 404 error
-        $grant = Grant::findOrFail($id);
-        $isreadonlypage = true;
+        // Find the school by ID or fail with a 404 error
+        $school = School::findOrFail($id);
+        $isreadonlypage = false;
         $isadminmode = true; 
-        // Return the view with the grant data
-        return view('pages.schools.schoolform', compact('isreadonlypage', 'isadminmode', 'grant'));
+        // Return the view with the school data
+        return view('pages.departments.schoolform', compact('isreadonlypage', 'isadminmode', 'school'));
     }
 
     public function fetchallschools()
@@ -123,9 +123,10 @@ class SchoolsController extends Controller
     public function fetchsearchschools(Request $request)
     {
         $searchTerm = $request->input('search');
-        $data = School::all()->where('schoolname', 'like', '%' . $searchTerm . '%') 
-            ->orWhere('description', 'like', '%' . $searchTerm . '%')   
+        $data = School::where('schoolname', 'like', '%' . $searchTerm . '%') 
+            ->orWhere('description', 'like', '%' . $searchTerm . '%')
+            ->withCount('departments')
             ->get();
-        return response()->json($data); // Return filtered data as JSON
+        return response()->json(['data' => $data]);
     }
 }

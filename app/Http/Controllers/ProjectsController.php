@@ -14,10 +14,15 @@ use Illuminate\Support\Facades\Validator;
 
 class ProjectsController extends Controller
 {
+    public function index()
+    {
+        return view('pages.projects.index');
+    }
+    
     //
     public function myprojects()
     {
-        if (!auth()->user()->hasPermission('canviewmyprojects')) {
+        if (!auth()->user()->haspermission('canviewmyprojects')) {
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to view your Projects!");
         }
 
@@ -25,49 +30,60 @@ class ProjectsController extends Controller
     }
     public function fetchmyactiveprojects()
     {
-        if (!auth()->user()->hasPermission('canviewmyprojects')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to view your Projects!");
+        if (!auth()->user()->haspermission('canviewmyprojects')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized', 'data' => []], 403);
         }
 
-        $userid = auth()->user()->userid;
-
-        // Fetch projects where the related proposals' useridfk matches the current user
-        $myprojects = ResearchProject::with('proposal')
-            ->whereHas('proposal', function ($query) use ($userid) {
-                $query->where('useridfk', $userid);
-            })
-            ->where('projectstatus', 'Active')
-            ->with('proposal')
-            ->with('applicant')
-            ->get();
-        // Return the view with the necessary data
-        return response()->json($myprojects);
+        try {
+            $userid = auth()->user()->userid;
+            $myprojects = ResearchProject::with(['proposal.applicant'])
+                ->whereHas('proposal', function ($query) use ($userid) {
+                    $query->where('useridfk', $userid);
+                })
+                ->where('projectstatus', 'Active')
+                ->get()
+                ->map(function($project) {
+                    return [
+                        'researchid' => $project->researchid,
+                        'researchnumber' => $project->researchnumber,
+                        'title' => $project->proposal->researchtitle ?? 'Untitled',
+                        'projectstatus' => $project->projectstatus,
+                        'created_at' => $project->created_at
+                    ];
+                });
+            return response()->json(['success' => true, 'data' => $myprojects]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage(), 'data' => []], 500);
+        }
     }
     public function fetchmyallprojects()
     {
-        if (!auth()->user()->hasPermission('canviewmyprojects')) {
-            return response()->json(['data' => []]);
+        if (!auth()->user()->haspermission('canviewmyprojects')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized', 'data' => []], 403);
         }
 
-        $userid = auth()->user()->userid;
-
-        $myprojects = ResearchProject::with(['proposal.grantitem'])
-            ->whereHas('proposal', function ($query) use ($userid) {
-                $query->where('useridfk', $userid);
-            })
-            ->get()
-            ->map(function($project) {
-                return [
-                    'researchid' => $project->researchid,
-                    'title' => $project->proposal->researchtitle ?? 'Untitled Project',
-                    'description' => $project->proposal->objectives ?? '',
-                    'projectstatus' => $project->projectstatus,
-                    'budget' => $project->proposal->grantitem->amount ?? 0,
-                    'progress' => rand(10, 90) // Mock progress - replace with actual calculation
-                ];
-            });
-        
-        return response()->json(['data' => $myprojects]);
+        try {
+            $userid = auth()->user()->userid;
+            $myprojects = ResearchProject::with(['proposal.grantitem'])
+                ->whereHas('proposal', function ($query) use ($userid) {
+                    $query->where('useridfk', $userid);
+                })
+                ->get()
+                ->map(function($project) {
+                    return [
+                        'researchid' => $project->researchid,
+                        'researchnumber' => $project->researchnumber,
+                        'title' => $project->proposal->researchtitle ?? 'Untitled Project',
+                        'description' => $project->proposal->objectives ?? '',
+                        'projectstatus' => $project->projectstatus,
+                        'created_at' => $project->created_at
+                    ];
+                });
+            
+            return response()->json(['success' => true, 'data' => $myprojects]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage(), 'data' => []], 500);
+        }
     }
     public function viewmyproject($id)
     {
@@ -77,7 +93,7 @@ class ProjectsController extends Controller
 
     public function allprojects()
     {
-        if (!auth()->user()->hasPermission('canviewallprojects')) {
+        if (!auth()->user()->haspermission('canviewallprojects')) {
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to view all Projects!");
         }
         return view('pages.projects.index');
@@ -85,36 +101,53 @@ class ProjectsController extends Controller
 
     public function fetchallactiveprojects()
     {
-        if (!auth()->user()->hasPermission('canviewallprojects')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to view all Projects!");
+        if (!auth()->user()->haspermission('canviewallprojects')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized', 'data' => []], 403);
         }
 
-        $allprojects = ResearchProject::where('projectstatus', 'Active')
-            ->with('proposal')
-            ->with('applicant')
-            ->get();
-        return response()->json($allprojects);
+        try {
+            $allprojects = ResearchProject::where('projectstatus', 'Active')
+                ->with(['proposal.applicant'])
+                ->get()
+                ->map(function($project) {
+                    return [
+                        'researchid' => $project->researchid,
+                        'researchnumber' => $project->researchnumber,
+                        'title' => $project->proposal->researchtitle ?? 'Untitled',
+                        'projectstatus' => $project->projectstatus,
+                        'researcher' => $project->proposal->applicant->name ?? 'N/A',
+                        'created_at' => $project->created_at
+                    ];
+                });
+            return response()->json(['success' => true, 'data' => $allprojects]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage(), 'data' => []], 500);
+        }
     }
 
     public function fetchallprojects()
     {
-        if (!auth()->user()->hasPermission('canviewallprojects')) {
-            return response()->json(['data' => []]);
+        if (!auth()->user()->haspermission('canviewallprojects')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized', 'data' => []], 403);
         }
 
-        $allprojects = ResearchProject::with(['proposal.applicant', 'proposal.department', 'proposal.grantitem', 'applicant'])
-            ->get()
-            ->map(function($project) {
-                return [
-                    'researchid' => $project->researchid,
-                    'researchnumber' => $project->researchnumber,
-                    'projectstatus' => $project->projectstatus,
-                    'progress' => rand(10, 90), // Mock progress
-                    'proposal' => $project->proposal,
-                    'applicant' => $project->applicant
-                ];
-            });
-        return response()->json(['data' => $allprojects]);
+        try {
+            $allprojects = ResearchProject::with(['proposal.applicant'])
+                ->get()
+                ->map(function($project) {
+                    return [
+                        'researchid' => $project->researchid,
+                        'researchnumber' => $project->researchnumber,
+                        'title' => $project->proposal->researchtitle ?? 'Untitled',
+                        'projectstatus' => $project->projectstatus,
+                        'researcher' => $project->proposal->applicant->name ?? 'N/A',
+                        'created_at' => $project->created_at
+                    ];
+                });
+            return response()->json(['success' => true, 'data' => $allprojects]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage(), 'data' => []], 500);
+        }
     }
 
     public function fetchsearchallprojects(Request $request)

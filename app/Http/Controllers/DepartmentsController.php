@@ -113,12 +113,13 @@ class DepartmentsController extends Controller
         if(!auth()->user()->haspermission('canaddoreditdepartment')){
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Add or Edit a Department!");
         }
-        // Find the grant by ID or fail with a 404 error
-        $grant = Grant::findOrFail($id);
-        $isreadonlypage = true;
+        // Find the department by ID or fail with a 404 error
+        $department = Department::with('school')->findOrFail($id);
+        $schools = School::all();
+        $isreadonlypage = false;
         $isadminmode = true; 
-        // Return the view with the grant data
-        return view('pages.proposals.proposalform', compact('isreadonlypage', 'isadminmode', 'grant'));
+        // Return the view with the department data
+        return view('pages.departments.edit', compact('isreadonlypage', 'isadminmode', 'department', 'schools'));
     }
 
     public function fetchalldepartments()
@@ -130,9 +131,11 @@ class DepartmentsController extends Controller
     public function fetchsearchdepartments(Request $request)
     {
         $searchTerm = $request->input('search');
-        $data = Department::all()->where('shortname', 'like', '%' . $searchTerm . '%') 
-            ->orWhere('description', 'like', '%' . $searchTerm . '%')   
+        $data = Department::where('shortname', 'like', '%' . $searchTerm . '%') 
+            ->orWhere('description', 'like', '%' . $searchTerm . '%')
+            ->with('school')
+            ->withCount('users as staff_count')
             ->get();
-        return response()->json($data); // Return filtered data as JSON
+        return response()->json(['data' => $data]);
     }
 }

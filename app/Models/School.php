@@ -41,4 +41,9 @@ class School extends Model
         'schoolname',         
         'description'
     ];
+
+    public function departments()
+    {
+        return $this->hasMany(Department::class, 'schoolfk', 'schoolid');
+    }
 }

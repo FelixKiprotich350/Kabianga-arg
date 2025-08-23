@@ -59,26 +59,30 @@ async function loadProposalsData(type = 'all') {
                 proposals = await API.getAllProposals();
         }
 
-        if (loadingState) loadingState.style.display = 'none';
-        
-        if (proposals && proposals.success && proposals.data) {
-            if (proposals.data.length === 0) {
-                if (emptyState) emptyState.style.display = 'block';
-            } else {
-                renderProposalsList(proposals.data);
-            }
+        if (proposals && (proposals.success || proposals.data)) {
+            DataRenderers.renderProposalsList(proposals);
         } else {
-            if (emptyState) emptyState.style.display = 'block';
+            if (loadingState) loadingState.style.display = 'none';
+            if (emptyState) {
+                emptyState.innerHTML = '<div class="alert alert-danger">Failed to load proposals</div>';
+                emptyState.style.display = 'block';
+            } else if (tableBody) {
+                tableBody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Failed to load proposals</td></tr>';
+            }
         }
         
     } catch (error) {
         console.error('Proposals load error:', error);
         const loadingState = document.getElementById('loadingState');
         const emptyState = document.getElementById('emptyState');
+        const tableBody = document.getElementById('applicationsTableBody');
+        
         if (loadingState) loadingState.style.display = 'none';
         if (emptyState) {
-            emptyState.innerHTML = '<div class="alert alert-danger">Failed to load proposals</div>';
+            emptyState.innerHTML = '<div class="alert alert-danger">Error loading proposals</div>';
             emptyState.style.display = 'block';
+        } else if (tableBody) {
+            tableBody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Error loading proposals</td></tr>';
         }
     }
 }
@@ -319,18 +323,31 @@ async function performSearch(query, type) {
 // Users Data Loader
 async function loadUsersData() {
     try {
-        ARGPortal.showLoading(document.getElementById('usersTableBody'));
+        const loadingState = document.getElementById('loadingState');
+        const tableBody = document.getElementById('usersTableBody');
         
-        const [users, departments] = await Promise.all([
-            API.getAllUsers(),
-            API.getAllDepartments()
-        ]);
-
-        DataRenderers.renderUsersList(users);
-        populateDepartmentSelect(departments);
+        if (loadingState) loadingState.style.display = 'block';
+        if (tableBody) tableBody.innerHTML = '';
+        
+        const users = await API.getAllUsers();
+        
+        if (users && users.success) {
+            DataRenderers.renderUsersList(users);
+        } else {
+            if (loadingState) loadingState.style.display = 'none';
+            if (tableBody) {
+                tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Failed to load users</td></tr>';
+            }
+        }
         
     } catch (error) {
-        ARGPortal.showError('Failed to load users');
+        const loadingState = document.getElementById('loadingState');
+        const tableBody = document.getElementById('usersTableBody');
+        
+        if (loadingState) loadingState.style.display = 'none';
+        if (tableBody) {
+            tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading users</td></tr>';
+        }
         console.error('Users load error:', error);
     }
 }

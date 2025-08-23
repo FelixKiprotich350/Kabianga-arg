@@ -45,21 +45,19 @@ class RegisterController extends Controller
 
     public function resetuserpassword(Request $request, $id)
     {
-        $user = User::findOrFail($id);
-        $recipientEmail = [$user->email];
-        $details = [
-            'title' => 'Password Reset Request',
-            'body' => 'Your password reset link is here.'
-        ];
-
-        // Create an instance of MailingController and call the sendMail function
-        $mailingController = new MailingController();
-        $mailresponse = $mailingController->sendMail($recipientEmail, $details);
-        if ($mailresponse['issuccess']) {
-            return response(['message' => 'Password reset mail sent Successfully!', 'type' => 'success']);
-        } else {
-            return response(['message' => $mailresponse['message'], 'type' => 'danger']);
+        if (!auth()->user()->haspermission('canresetuserpasswordordisablelogin')) {
+            return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
         }
+        
+        $request->validate([
+            'password' => 'required|string|min:6'
+        ]);
+        
+        $user = User::findOrFail($id);
+        $user->password = Hash::make($request->password);
+        $user->save();
+        
+        return response()->json(['message' => 'Password reset successfully!', 'type' => 'success']);
     }
 
     // API Methods

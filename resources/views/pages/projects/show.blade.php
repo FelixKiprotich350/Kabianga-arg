@@ -15,7 +15,7 @@
                 <i class="bi bi-plus-circle me-2"></i>Add Progress
             </button>
             @endif
-            <a href="{{ route('pages.projects.allprojects') }}" class="btn btn-outline-secondary">
+            <a href="{{ route('pages.projects.index') }}" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left me-2"></i>Back
             </a>
         </div>

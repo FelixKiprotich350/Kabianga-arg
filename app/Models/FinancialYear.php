@@ -12,5 +12,15 @@ class FinancialYear extends Model
  
     protected $primaryKey = 'id';
 
-    
+    protected $fillable = [
+        'finyear',
+        'startdate', 
+        'enddate',
+        'description'
+    ];
+
+    public function grants()
+    {
+        return $this->hasMany(Grant::class, 'finyearfk', 'id');
+    }
 }

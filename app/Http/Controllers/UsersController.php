@@ -67,21 +67,21 @@ class UsersController extends Controller
     }
     public function updaterole(Request $request, $id)
     {
-        if (!auth()->user()->hasPermission('canChangeUserRoleOrRights')) {
+        if (!auth()->user()->haspermission('canchangeuserroleorrights')) {
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not authorized to change user role or rights!");
         }
 
         // Find the user by ID or fail with a 404 error
         $user = User::findOrFail($id);
 
-        if ($user->isSuperAdmin()) {
+        if ($user->issuperadmin()) {
             return response()->json(['message' => 'Super Administrator has exclusively all rights!', 'type' => 'warning']);
         }
 
         DB::transaction(function () use ($user, $request) {
             // Detach all permissions
             $user->permissions()->detach();
-            DB::table('userpermissions')->where('useridfk', $user->id)->delete();
+            DB::table('userpermissions')->where('useridfk', $user->userid)->delete();
 
             // Update role and admin status
             if ($request->has('isadmin') && $request->input('isadmin') == 'on') {
@@ -175,7 +175,9 @@ class UsersController extends Controller
         $prop = User::findOrFail($id);
         $isreadonlypage = false;
         $isadminmode = true;
-        $grants = User::all();
+        $grants = [];
+        $departments = [];
+        $themes = [];
         // Return the view with the proposal data
         return view('pages.users.proposalform', compact('prop', 'isreadonlypage', 'isadminmode', 'departments', 'grants', 'themes'));
     }
@@ -187,24 +189,23 @@ class UsersController extends Controller
         }
         
         try {
-            $data = User::with(['department'])->get()->map(function ($user) {
+            $data = User::all()->map(function ($user) {
                 return [
                     'userid' => $user->userid,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'pfno' => $user->pfno,
-                    'phonenumber' => $user->phonenumber,
-                    'role' => $user->role,
-                    'isadmin' => $user->isadmin,
-                    'isactive' => $user->isactive,
-                    'department' => $user->department ? $user->department->departmentname : null,
+                    'name' => $user->name ?? '',
+                    'email' => $user->email ?? '',
+                    'pfno' => $user->pfno ?? '',
+                    'phonenumber' => $user->phonenumber ?? '',
+                    'role' => $user->role ?? 0,
+                    'isadmin' => $user->isadmin ?? false,
+                    'isactive' => $user->isactive ?? true,
                     'created_at' => $user->created_at,
                     'updated_at' => $user->updated_at
                 ];
             });
             return response()->json(['success' => true, 'data' => $data]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Failed to fetch users', 'data' => []], 500);
+            return response()->json(['success' => false, 'message' => $e->getMessage(), 'data' => []], 500);
         }
     }
 
@@ -415,7 +416,7 @@ class UsersController extends Controller
 
     public function disableUser($id)
     {
-        if (!auth()->user()->haspermission('canenabledisableuser')) {
+        if (!auth()->user()->haspermission('canresetuserpasswordordisablelogin')) {
             return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
         }
 
@@ -432,7 +433,7 @@ class UsersController extends Controller
 
     public function enableUser($id)
     {
-        if (!auth()->user()->haspermission('canenabledisableuser')) {
+        if (!auth()->user()->haspermission('canresetuserpasswordordisablelogin')) {
             return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
         }
 
@@ -441,5 +442,77 @@ class UsersController extends Controller
         $user->save();
 
         return response()->json(['message' => 'User enabled successfully!', 'type' => 'success']);
+    }
+
+    public function showPermissions($id)
+    {
+        if (!auth()->user()->haspermission('canchangeuserroleorrights')) {
+            return redirect()->route('pages.unauthorized');
+        }
+
+        $user = User::findOrFail($id);
+        $roles = [1 => 'Admin', 2 => 'Researcher', 3 => 'Guest'];
+        $roleNames = $roles;
+        
+        // Get role-based permissions
+        $rolePermissions = Permission::where('targetrole', $user->role)->get();
+        
+        // Get available permissions for additional assignment
+        $availablePermissions = Permission::where('targetrole', '!=', $user->role)
+            ->orWhereNull('targetrole')
+            ->get();
+        
+        // Get user's current additional permissions
+        $userPermissions = $user->permissions;
+        
+        return view('pages.users.permissions', compact(
+            'user', 'roles', 'roleNames', 'rolePermissions', 
+            'availablePermissions', 'userPermissions'
+        ));
+    }
+
+    public function updateUserRole(Request $request, $id)
+    {
+        if (!auth()->user()->haspermission('canchangeuserroleorrights')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $user = User::findOrFail($id);
+        
+        if ($user->issuperadmin() && !auth()->user()->issuperadmin()) {
+            return response()->json(['success' => false, 'message' => 'Cannot modify super administrator']);
+        }
+
+        $user->role = $request->input('role');
+        $user->isactive = $request->input('isactive', 0);
+        $user->isadmin = $request->has('isadmin');
+        $user->save();
+
+        return response()->json(['success' => true, 'message' => 'Role updated successfully']);
+    }
+
+    public function updatePermissions(Request $request, $id)
+    {
+        if (!auth()->user()->haspermission('canchangeuserroleorrights')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $user = User::findOrFail($id);
+        
+        if ($user->issuperadmin()) {
+            return response()->json(['success' => false, 'message' => 'Super admin has all permissions']);
+        }
+
+        $permissions = $request->input('permissions', []);
+        
+        DB::transaction(function () use ($user, $permissions) {
+            $user->permissions()->detach();
+            
+            foreach ($permissions as $permissionId) {
+                $user->permissions()->attach($permissionId, ['id' => (string) Str::uuid()]);
+            }
+        });
+
+        return response()->json(['success' => true, 'message' => 'Permissions updated successfully']);
     }
 }
