@@ -16,7 +16,7 @@
 
     <div class="row">
         <div class="col-lg-12">
-            <form action="{{ route('route.proposals.post') }}" method="POST">
+            <form action="/api/v1/proposals" method="POST">
                 @csrf
                 
                 <!-- Basic Information -->

@@ -62,7 +62,7 @@
                         <div class="card-body">
                             <h5>Basic Details</h5>
                             <form method="POST"
-                                action="{{ isset($prop) ? route('route.proposals.updatebasicdetails', ['id' => $prop->proposalid]) : route('route.proposals.post') }}">
+                                action="{{ isset($prop) ? '/api/v1/proposals/' . $prop->proposalid . '/basic' : '/api/v1/proposals' }}">
                                 @csrf
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
@@ -134,7 +134,7 @@
                         <div class="card-body">
                             <h5>Research Details</h5>
                             <form method="POST"
-                                action="{{ isset($prop) ? route('route.proposals.updateresearchdetails', ['id' => $prop->proposalid]) : '' }}">
+                                action="{{ isset($prop) ? '/api/v1/proposals/' . $prop->proposalid . '/research' : '' }}">
                                 @csrf
                                 <div class="mb-3">
                                     <label class="form-label">Research Title</label>
@@ -743,7 +743,7 @@
                 });
 
             // Load expenditures
-            fetch(`/expenditures/fetchall?proposalid=${proposalId}`)
+            fetch(`/api/v1/proposals/${proposalId}/expenditures`)
                 .then(response => response.json())
                 .then(data => {
                     budgetItems = data.map(item => ({
@@ -762,7 +762,7 @@
                 });
 
             // Load research design
-            fetch(`/researchdesign/fetchall?proposalid=${proposalId}`)
+            fetch(`/api/v1/proposals/${proposalId}/research-design`)
                 .then(response => response.json())
                 .then(data => {
                     designItems = data.map(item => ({
@@ -781,7 +781,7 @@
                 });
 
             // Load workplan
-            fetch(`/workplan/fetchall?proposalid=${proposalId}`)
+            fetch(`/api/v1/proposals/${proposalId}/workplans`)
                 .then(response => response.json())
                 .then(data => {
                     workplanItems = data.map(item => ({
@@ -995,7 +995,7 @@
                 formData.set('total', item.total);
                 formData.append('proposalidfk', proposalId);
 
-                fetch('/expenditures/post', {
+                fetch('/api/v1/expenditures', {
                         method: 'POST',
                         body: formData,
                         headers: {
@@ -1051,8 +1051,8 @@
             const item = budgetItems[index];
             if (item.expenditureid) {
                 // Delete from database
-                fetch(`/expenditures/delete/${item.expenditureid}`, {
-                        method: 'POST',
+                fetch(`/api/v1/expenditures/${item.expenditureid}`, {
+                        method: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                         }
@@ -1120,7 +1120,7 @@
                 // Save to database
                 formData.append('proposalidfk', proposalId);
 
-                fetch('/researchdesign/post', {
+                fetch('/api/v1/research-design', {
                         method: 'POST',
                         body: formData,
                         headers: {
@@ -1172,8 +1172,8 @@
             const item = designItems[index];
             if (item.designid) {
                 // Delete from database
-                fetch(`/researchdesign/delete/${item.designid}`, {
-                        method: 'POST',
+                fetch(`/api/v1/research-design/${item.designid}`, {
+                        method: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                         }
@@ -1199,7 +1199,7 @@
                 // Save to database
                 formData.append('proposalidfk', proposalId);
 
-                fetch('/workplan/post', {
+                fetch('/api/v1/workplans', {
                         method: 'POST',
                         body: formData,
                         headers: {
@@ -1252,8 +1252,8 @@
             const item = workplanItems[index];
             if (item.workplanid) {
                 // Delete from database
-                fetch(`/workplan/delete/${item.workplanid}`, {
-                        method: 'POST',
+                fetch(`/api/v1/workplans/${item.workplanid}`, {
+                        method: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                         }
@@ -1304,7 +1304,7 @@
                     'Are you sure you want to submit this proposal? You will not be able to edit it after submission.'
                 )) {
                 if (proposalId) {
-                    fetch(`/proposals/submit/${proposalId}`, {
+                    fetch(`/api/v1/proposals/${proposalId}/submit`, {
                             method: 'POST',
                             headers: {
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(

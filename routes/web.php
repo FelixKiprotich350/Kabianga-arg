@@ -62,7 +62,7 @@ Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('pages.register');
 Route::post('/register', [RegisterController::class, 'register'])->name('register.submit');
 Route::match(['post', 'get'], '/logout', [LogoutController::class, 'logout'])->name('route.logout');
-Route::get('/permission', [LoginController::class, 'subpermission'])->name('route.permission');
+
 
 // Protected Routes
 //custom account verification
@@ -92,10 +92,7 @@ Route::group(['middleware' => 'auth'], function () {
 
     Route::get('/proposals/edit/{id}', [ProposalsController::class, 'geteditsingleproposalpage'])->name('pages.proposals.editproposal');
 
-    // Legacy routes for forms that haven't been updated to use API yet
-    Route::post('/proposals/post', [ProposalsController::class, 'postnewproposal'])->name('route.proposals.post');
-    Route::post('/proposals/updatebasicdetails/{id}', [ProposalsController::class, 'updatebasicdetails'])->name('route.proposals.updatebasicdetails');
-    Route::post('/proposals/updateresearch/{id}', [ProposalsController::class, 'updateresearchdetails'])->name('route.proposals.updateresearchdetails');
+
 
 
 
@@ -139,30 +136,16 @@ Route::group(['middleware' => 'auth'], function () {
     //collaborators
     Route::get('/collaborators/edit/{id}', [CollaboratorsController::class, 'geteditsingleuserpage'])->name('pages.collaborators.editcollaborator');
 
-    //publications
-    Route::post('/publications/post', [PublicationsController::class, 'postpublication'])->name('api.publications.post');
-    Route::get('/publications/fetchall', [PublicationsController::class, 'fetchall'])->name('api.publications.fetchall');
-    Route::post('/publications/delete/{id}', [PublicationsController::class, 'deletePublication'])->name('api.publications.delete');
+    //publications - page routes only
     Route::get('/publications/edit/{id}', [PublicationsController::class, 'geteditsinglepublicationpage'])->name('pages.publications.editpublication');
 
-
-    //expenditures
-    Route::post('/expenditures/post', [ExpendituresController::class, 'postexpenditure'])->name('api.expenditures.post');
-    Route::get('/expenditures/fetchall', [ExpendituresController::class, 'fetchall'])->name('api.expenditures.fetchall');
-    Route::post('/expenditures/delete/{id}', [ExpendituresController::class, 'deleteExpenditure'])->name('api.expenditures.delete');
+    //expenditures - page routes only
     Route::get('/expenditures/edit/{id}', [ExpendituresController::class, 'geteditsingleexpenditurepage'])->name('pages.expenditures.editexpenditures');
 
-    //workplanitems
-    Route::post('/workplan/post', [WorkplanController::class, 'postworkplanitem'])->name('api.workplan.post');
-    Route::get('/workplan/fetchall', [WorkplanController::class, 'fetchall'])->name('api.workplan.fetchall');
-    Route::post('/workplan/delete/{id}', [WorkplanController::class, 'deleteWorkplan'])->name('api.workplan.delete');
+    //workplanitems - page routes only
     Route::get('/workplan/edit/{id}', [WorkplanController::class, 'geteditsingleexpenditurepage'])->name('pages.expenditures.editexpenditures');
 
-
-    //researchdesignitems
-    Route::post('/researchdesign/post', [ResearchdesignController::class, 'postresearchdesignitem'])->name('api.researchdesign.post');
-    Route::get('/researchdesign/fetchall', [ResearchdesignController::class, 'fetchall'])->name('api.researchdesign.fetchall');
-    Route::post('/researchdesign/delete/{id}', [ResearchdesignController::class, 'deleteResearchdesign'])->name('api.researchdesign.delete');
+    //researchdesignitems - page routes only
     Route::get('/researchdesign/edit/{id}', [ResearchdesignController::class, 'geteditsingleexpenditurepage'])->name('pages.researchdesign.editexpenditures');
 
 

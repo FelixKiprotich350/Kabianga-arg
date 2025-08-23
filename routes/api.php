@@ -43,6 +43,7 @@ Route::prefix('v1')->group(function () {
     Route::post('/auth/login', [LoginController::class, 'apiLogin']);
     Route::post('/auth/register', [RegisterController::class, 'apiRegister']);
     Route::post('/auth/forgot-password', [RegisterController::class, 'apiForgotPassword']);
+    Route::get('/auth/permission', [LoginController::class, 'subpermission']);
     
     // Public Data
     Route::get('/users', [UsersController::class, 'apiGetAllUsers']);

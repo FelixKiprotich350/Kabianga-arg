@@ -181,7 +181,7 @@
                     <!-- Research tab -->
                     <div role="tabpanel" class="tab-pane" id="panel-research">
                         <form id="form_researchinfo" method="POST"
-                            action="{{ isset($prop) ? route('route.proposals.updateresearchdetails', ['id' => $prop->proposalid]) : route('route.proposals.post') }}"
+                            action="{{ isset($prop) ? '/api/v1/proposals/' . $prop->proposalid . '/research' : '/api/v1/proposals' }}"
                             enctype="multipart/form-data" class="form-horizontal">
                             @csrf
                             <div class="row form-group">
