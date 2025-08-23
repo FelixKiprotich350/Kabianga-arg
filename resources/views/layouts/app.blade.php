@@ -43,6 +43,9 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Custom JS -->
     <script src="{{ asset('js/modern-app.js') }}"></script>
+    <script src="{{ asset('js/api-service.js') }}"></script>
+    <script src="{{ asset('js/page-loaders.js') }}"></script>
+    <script src="{{ asset('js/data-renderers.js') }}"></script>
     @stack('scripts')
 </body>
 </html>

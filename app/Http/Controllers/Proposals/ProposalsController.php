@@ -400,7 +400,7 @@ class ProposalsController extends Controller
         if (!auth()->user()->haspermission('canviewallapplications')) {
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to view all Proposals!");
         }
-        return view('pages.proposals.modern-all');
+        return view('pages.proposals.modern-all-api');
     }
     public function modernMyApplications()
     {

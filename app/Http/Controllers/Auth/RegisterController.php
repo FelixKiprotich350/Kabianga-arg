@@ -61,4 +61,63 @@ class RegisterController extends Controller
             return response(['message' => $mailresponse['message'], 'type' => 'danger']);
         }
     }
+
+    // API Methods
+    public function apiRegister(Request $request)
+    {
+        $validatedData = $request->validate([
+            'fullname' => 'required|string|max:255',
+            'phonenumber' => 'required|string|max:255',
+            'pfno' => 'required|string|max:20|unique:users',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8',
+        ]);
+
+        $user = new User();
+        $user->name = $validatedData['fullname'];
+        $user->email = $validatedData['email'];
+        $user->pfno = $validatedData['pfno'];
+        $user->phonenumber = $validatedData['phonenumber'];
+        $user->password = Hash::make($validatedData['password']);
+        $user->role = 3;
+        $user->isadmin = 0;
+        $user->isactive = 1;
+        $user->save();
+
+        $token = $user->createToken('auth-token')->plainTextToken;
+
+        return response()->json([
+            'success' => true,
+            'token' => $token,
+            'user' => $user,
+            'message' => 'Registration successful'
+        ], 201);
+    }
+
+    public function apiForgotPassword(Request $request)
+    {
+        $request->validate(['email' => 'required|email|exists:users']);
+        
+        $user = User::where('email', $request->email)->first();
+        $recipientEmail = [$user->email];
+        $details = [
+            'title' => 'Password Reset Request',
+            'body' => 'Your password reset link is here.'
+        ];
+
+        $mailingController = new MailingController();
+        $mailresponse = $mailingController->sendMail($recipientEmail, $details);
+        
+        if ($mailresponse['issuccess']) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Password reset email sent successfully'
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => $mailresponse['message']
+            ], 500);
+        }
+    }
 }
