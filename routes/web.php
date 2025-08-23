@@ -91,7 +91,7 @@ Route::group(['middleware' => 'auth'], function () {
 
 
     Route::get('/proposals/edit/{id}', [ProposalsController::class, 'geteditsingleproposalpage'])->name('pages.proposals.editproposal');
-    
+
     // Legacy routes for forms that haven't been updated to use API yet
     Route::post('/proposals/post', [ProposalsController::class, 'postnewproposal'])->name('route.proposals.post');
     Route::post('/proposals/updatebasicdetails/{id}', [ProposalsController::class, 'updatebasicdetails'])->name('route.proposals.updatebasicdetails');
@@ -99,14 +99,15 @@ Route::group(['middleware' => 'auth'], function () {
 
 
 
-//schools
+    //schools
     Route::get('/schools/home', [SchoolsController::class, 'modernViewAllSchools'])->name('pages.schools.home');
     Route::get('/schools', [SchoolsController::class, 'modernViewAllSchools'])->name('pages.schools.home');
     Route::get('/schools/view/{id}', [SchoolsController::class, 'getviewschoolpage'])->name('pages.schools.viewschool');
     Route::get('/schools/edit/{id}', [SchoolsController::class, 'geteditschoolpage'])->name('pages.schools.editschool');
 
     //departments
-    Route::get('/departments', function() { return redirect()->route('pages.schools.home'); });
+    Route::get('/departments', function () {
+        return redirect()->route('pages.schools.home'); });
     Route::get('/departments/view/{id}', [DepartmentsController::class, 'getviewdepartmentpage'])->name('pages.departments.viewdepartment');
     Route::get('/departments/edit/{id}', [DepartmentsController::class, 'geteditdepartmentpage'])->name('pages.departments.editdepartment');
 
@@ -139,17 +140,29 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/collaborators/edit/{id}', [CollaboratorsController::class, 'geteditsingleuserpage'])->name('pages.collaborators.editcollaborator');
 
     //publications
+    Route::post('/publications/post', [PublicationsController::class, 'postpublication'])->name('api.publications.post');
+    Route::get('/publications/fetchall', [PublicationsController::class, 'fetchall'])->name('api.publications.fetchall');
+    Route::post('/publications/delete/{id}', [PublicationsController::class, 'deletePublication'])->name('api.publications.delete');
     Route::get('/publications/edit/{id}', [PublicationsController::class, 'geteditsinglepublicationpage'])->name('pages.publications.editpublication');
 
 
     //expenditures
+    Route::post('/expenditures/post', [ExpendituresController::class, 'postexpenditure'])->name('api.expenditures.post');
+    Route::get('/expenditures/fetchall', [ExpendituresController::class, 'fetchall'])->name('api.expenditures.fetchall');
+    Route::post('/expenditures/delete/{id}', [ExpendituresController::class, 'deleteExpenditure'])->name('api.expenditures.delete');
     Route::get('/expenditures/edit/{id}', [ExpendituresController::class, 'geteditsingleexpenditurepage'])->name('pages.expenditures.editexpenditures');
 
     //workplanitems
+    Route::post('/workplan/post', [WorkplanController::class, 'postworkplanitem'])->name('api.workplan.post');
+    Route::get('/workplan/fetchall', [WorkplanController::class, 'fetchall'])->name('api.workplan.fetchall');
+    Route::post('/workplan/delete/{id}', [WorkplanController::class, 'deleteWorkplan'])->name('api.workplan.delete');
     Route::get('/workplan/edit/{id}', [WorkplanController::class, 'geteditsingleexpenditurepage'])->name('pages.expenditures.editexpenditures');
 
 
     //researchdesignitems
+    Route::post('/researchdesign/post', [ResearchdesignController::class, 'postresearchdesignitem'])->name('api.researchdesign.post');
+    Route::get('/researchdesign/fetchall', [ResearchdesignController::class, 'fetchall'])->name('api.researchdesign.fetchall');
+    Route::post('/researchdesign/delete/{id}', [ResearchdesignController::class, 'deleteResearchdesign'])->name('api.researchdesign.delete');
     Route::get('/researchdesign/edit/{id}', [ResearchdesignController::class, 'geteditsingleexpenditurepage'])->name('pages.researchdesign.editexpenditures');
 
 
@@ -171,5 +184,8 @@ Route::group(['middleware' => 'auth'], function () {
     //reports
     Route::get('/reports/home', [ReportsController::class, 'home'])->name('pages.reports.home');
 
+    //themes
+    Route::get('/themes', [ResearchThemeController::class, 'index'])->name('pages.themes.index');
 
-});;
+});
+;

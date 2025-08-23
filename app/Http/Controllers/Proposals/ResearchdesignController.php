@@ -22,7 +22,7 @@ class ResearchdesignController extends Controller
              'proposalidfk' => 'required|string',
          ];
          
-         $rules['projectsummary'] = 'required|string';
+         $rules['summary'] = 'required|string';
          $rules['indicators'] = 'required|string';
          $rules['verification'] = 'required|string';
          $rules['assumptions'] = 'required|string';
@@ -36,7 +36,7 @@ class ResearchdesignController extends Controller
    
          $reditem = new ResearchDesignItem();
          
-         $reditem->summary = $request->input('projectsummary');
+         $reditem->summary = $request->input('summary');
          $reditem->indicators = $request->input('indicators');
          $reditem->verification = $request->input('verification');
          $reditem->assumptions = $request->input('assumptions');
@@ -93,7 +93,7 @@ class ResearchdesignController extends Controller
      public function updateResearchDesign(Request $request, $id)
      {
          $rules = [
-             'projectsummary' => 'required|string',
+             'summary' => 'required|string',
              'indicators' => 'required|string',
              'verification' => 'required|string',
              'assumptions' => 'required|string',
@@ -107,7 +107,7 @@ class ResearchdesignController extends Controller
          }
 
          $reditem = ResearchDesignItem::findOrFail($id);
-         $reditem->summary = $request->input('projectsummary');
+         $reditem->summary = $request->input('summary');
          $reditem->indicators = $request->input('indicators');
          $reditem->verification = $request->input('verification');
          $reditem->assumptions = $request->input('assumptions');

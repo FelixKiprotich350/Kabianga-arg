@@ -10,6 +10,7 @@ The system is made up various modules.
 - **User Management**
 - **Robust Dashboards**
 - **Research Applications**
+- **Research Themes**
 - **Mailed Notifications**
 - **Reports**
 

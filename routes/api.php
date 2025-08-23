@@ -108,6 +108,7 @@ Route::prefix('v1')->middleware(['web', 'auth'])->group(function () {
         Route::get('/{id}/expenditures', [ProposalsController::class, 'fetchexpenditures']);
         Route::get('/{id}/workplans', [ProposalsController::class, 'fetchworkplanitems']);
         Route::get('/{id}/research-design', [ProposalsController::class, 'fetchresearchdesign']);
+        Route::get('/{id}/budget-validation', [ProposalsController::class, 'budgetValidation']);
     });
     
     // Proposal Changes

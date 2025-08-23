@@ -8,7 +8,6 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="mb-1">Dashboard</h2>
-            <p class="text-muted mb-0">Welcome back, {{ Auth::user()->name }}!</p>
         </div>
         <div>
             <span class="badge bg-primary">{{ now()->format('M d, Y') }}</span>
@@ -68,36 +67,7 @@
         </div>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="row">
-        <div class="col-12">
-            <div class="stats-card">
-                <h5 class="mb-3">Quick Actions</h5>
-                <div class="row">
-                    <div class="col-md-3 mb-2">
-                        <a href="{{ route('pages.proposals.viewnewproposal') }}" class="btn btn-outline-primary w-100">
-                            <i class="bi bi-plus-circle me-2"></i>New Proposal
-                        </a>
-                    </div>
-                    <div class="col-md-3 mb-2">
-                        <a href="{{ route('pages.proposals.index') }}" class="btn btn-outline-secondary w-100">
-                            <i class="bi bi-files me-2"></i>View Proposals
-                        </a>
-                    </div>
-                    <div class="col-md-3 mb-2">
-                        <a href="{{ route('pages.reports.home') }}" class="btn btn-outline-info w-100">
-                            <i class="bi bi-graph-up me-2"></i>Reports
-                        </a>
-                    </div>
-                    <div class="col-md-3 mb-2">
-                        <a href="{{ route('pages.users.manage') }}" class="btn btn-outline-success w-100">
-                            <i class="bi bi-people me-2"></i>Manage Users
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+
     @else
     <!-- User Dashboard -->
     <div class="row">

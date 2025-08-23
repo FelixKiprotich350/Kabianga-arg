@@ -8,20 +8,16 @@ use Illuminate\Database\Eloquent\Model;
 class ResearchTheme extends Model
 {
     use HasFactory;
+    
     protected $table = 'researchthemes';
+    protected $primaryKey = 'themeid';
+    public $incrementing = false;
+    protected $keyType = 'int';
+    
     protected $fillable = [
+        'themeid',
         'themename',        
         'applicablestatus',         
         'themedescription'
     ];
-
-
-
-
-    //property functions
-    //functions
-    public function relatedproposals()
-    {
-        return $this->belongsToMany(Proposal::class, 'userpermissions', 'useridfk', 'permissionidfk');
-    }
 }

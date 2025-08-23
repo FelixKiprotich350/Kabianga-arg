@@ -207,8 +207,8 @@
                                         <tr>
                                             <th>Name</th>
                                             <th>Institution</th>
-                                            <th>Role</th>
-                                            <th>Email</th>
+                                            <th>Position</th>
+                                            <th>Research Area</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
@@ -246,7 +246,7 @@
                                         <tr>
                                             <th>Title</th>
                                             <th>Authors</th>
-                                            <th>Journal</th>
+                                            <th>Publisher</th>
                                             <th>Year</th>
                                             <th>Actions</th>
                                         </tr>
@@ -284,11 +284,10 @@
                                     <input type="number" id="totalBudget" class="form-control" readonly>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Currency</label>
-                                    <select class="form-select">
-                                        <option value="KES">KES</option>
-                                        <option value="USD">USD</option>
-                                    </select>
+                                    <label class="form-label">Budget Rule Status</label>
+                                    <div class="form-control" id="budgetRuleStatus" style="background-color: #e9ecef;">
+                                        <span class="text-success">✓ Compliant (60% rule met)</span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -296,15 +295,17 @@
                                 <table class="table table-striped" id="budgetTable">
                                     <thead>
                                         <tr>
-                                            <th>Category</th>
-                                            <th>Description</th>
-                                            <th>Amount</th>
+                                            <th>Item Type</th>
+                                            <th>Item</th>
+                                            <th>Quantity</th>
+                                            <th>Unit Price</th>
+                                            <th>Total</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr class="text-center">
-                                            <td colspan="4" class="text-muted">No budget items added yet</td>
+                                            <td colspan="6" class="text-muted">No budget items added yet</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -313,8 +314,7 @@
                             <div class="d-flex justify-content-between">
                                 <button type="button" class="btn btn-secondary"
                                     onclick="showStep('publications')">Previous</button>
-                                <button type="button" class="btn btn-primary"
-                                    onclick="showStep('design')">Save</button>
+                                <button type="button" class="btn btn-primary" onclick="showStep('design')">Save</button>
                             </div>
                         </div>
                     </div>
@@ -371,9 +371,9 @@
                                     <thead>
                                         <tr>
                                             <th>Activity</th>
-                                            <th>Start Date</th>
-                                            <th>End Date</th>
-                                            <th>Duration</th>
+                                            <th>Time Period</th>
+                                            <th>Responsible Person</th>
+                                            <th>Expected Outcome</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
@@ -388,8 +388,7 @@
                             <div class="d-flex justify-content-between">
                                 <button type="button" class="btn btn-secondary"
                                     onclick="showStep('design')">Previous</button>
-                                <button type="button" class="btn btn-primary"
-                                    onclick="showStep('submit')">Save</button>
+                                <button type="button" class="btn btn-primary" onclick="showStep('submit')">Save</button>
                             </div>
                         </div>
                     </div>
@@ -415,6 +414,8 @@
                                             <p><strong>Activities:</strong> <span id="workplanCount">0</span></p>
                                             <p><strong>Total Budget:</strong> KES <span id="totalBudgetDisplay">0</span>
                                             </p>
+                                            <p><strong>Budget Rule:</strong> <span id="budgetRuleStatus"
+                                                    class="text-success">✓ Compliant</span></p>
                                         </div>
                                     </div>
                                 </div>
@@ -464,24 +465,24 @@
                     <form id="collaboratorForm">
                         <div class="mb-3">
                             <label class="form-label">Name</label>
-                            <input type="text" class="form-control" name="name" required>
+                            <input type="text" class="form-control" name="collaboratorname" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Institution</label>
                             <input type="text" class="form-control" name="institution" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Role</label>
-                            <select class="form-select" name="role" required>
-                                <option value="">Select Role</option>
-                                <option value="Co-Investigator">Co-Investigator</option>
-                                <option value="Research Assistant">Research Assistant</option>
-                                <option value="Consultant">Consultant</option>
-                            </select>
+                            <label class="form-label">Position</label>
+                            <input type="text" class="form-control" name="position" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Email</label>
-                            <input type="email" class="form-control" name="email" required>
+                            <label class="form-label">Research Area</label>
+                            <input type="text" class="form-control" name="researcharea" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Experience</label>
+                            <textarea class="form-control" name="experience" rows="2"
+                                placeholder="Brief description of relevant experience" required></textarea>
                         </div>
                     </form>
                 </div>
@@ -512,24 +513,26 @@
                             <input type="text" class="form-control" name="authors" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Journal/Conference</label>
-                            <input type="text" class="form-control" name="journal" required>
+                            <label class="form-label">Publisher</label>
+                            <input type="text" class="form-control" name="publisher" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Research Area</label>
+                            <input type="text" class="form-control" name="researcharea" required>
                         </div>
                         <div class="row">
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label class="form-label">Year</label>
                                 <input type="number" class="form-control" name="year" min="1900" max="2030"
                                     required>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Type</label>
-                                <select class="form-select" name="type" required>
-                                    <option value="">Select Type</option>
-                                    <option value="Journal Article">Journal Article</option>
-                                    <option value="Conference Paper">Conference Paper</option>
-                                    <option value="Book Chapter">Book Chapter</option>
-                                    <option value="Book">Book</option>
-                                </select>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Volume</label>
+                                <input type="text" class="form-control" name="volume" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Pages</label>
+                                <input type="number" class="form-control" name="pages" required>
                             </div>
                         </div>
                     </form>
@@ -553,22 +556,32 @@
                 <div class="modal-body">
                     <form id="budgetForm">
                         <div class="mb-3">
-                            <label class="form-label">Category</label>
-                            <select class="form-select" name="category" required>
-                                <option value="">Select Category</option>
-                                <option value="Personnel">Personnel</option>
-                                <option value="Equipment">Equipment</option>
-                                <option value="Supplies">Supplies</option>
-                                <option value="Travel">Travel</option>
+                            <label class="form-label">Item Type</label>
+                            <select class="form-select" name="itemtype" required>
+                                <option value="">Select Item Type</option>
+                                <option value="Facilities/Equipment">Facilities/Equipment</option>
+                                <option value="Consumables">Consumables</option>
+                                <option value="Personnel/Subsistence">Personnel/Subsistence</option>
+                                <option value="Travel/Other">Travel/Other</option>
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Description</label>
-                            <input type="text" class="form-control" name="description" required>
+                            <label class="form-label">Item Description</label>
+                            <input type="text" class="form-control" name="item" required>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Amount</label>
-                            <input type="number" class="form-control" name="amount" step="0.01" required>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Quantity</label>
+                                <input type="number" class="form-control" name="quantity" min="1" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Unit Price</label>
+                                <input type="number" class="form-control" name="unitprice" step="0.01" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Total</label>
+                                <input type="number" class="form-control" name="total" step="0.01" readonly>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -592,7 +605,7 @@
                     <form id="designForm">
                         <div class="mb-3">
                             <label class="form-label">Summary</label>
-                            <textarea class="form-control" name="projectsummary" rows="2" required></textarea>
+                            <textarea class="form-control" name="summary" rows="2" required></textarea>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Indicators</label>
@@ -640,19 +653,26 @@
                             <label class="form-label">Activity</label>
                             <input type="text" class="form-control" name="activity" required>
                         </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Start Date</label>
-                                <input type="date" class="form-control" name="start_date" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">End Date</label>
-                                <input type="date" class="form-control" name="end_date" required>
-                            </div>
+                        <div class="mb-3">
+                            <label class="form-label">Time Period</label>
+                            <input type="text" class="form-control" name="time" placeholder="e.g., Month 1-3"
+                                required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Description</label>
-                            <textarea class="form-control" name="description" rows="2" required></textarea>
+                            <label class="form-label">Input Required</label>
+                            <textarea class="form-control" name="input" rows="2" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Facilities Needed</label>
+                            <textarea class="form-control" name="facilities" rows="2" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Responsible Person</label>
+                            <input type="text" class="form-control" name="bywhom" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Expected Outcome</label>
+                            <textarea class="form-control" name="outcome" rows="2" required></textarea>
                         </div>
                     </form>
                 </div>
@@ -701,7 +721,7 @@
 
         function loadExistingData() {
             // Load collaborators
-            fetch(`/collaborators/fetchall?proposalid=${proposalId}`)
+            fetch(`/api/v1/collaborators?proposalid=${proposalId}`)
                 .then(response => response.json())
                 .then(data => {
                     collaborators = data;
@@ -712,7 +732,7 @@
                 });
 
             // Load publications
-            fetch(`/publications/fetchall?proposalid=${proposalId}`)
+            fetch(`/api/v1/publications?proposalid=${proposalId}`)
                 .then(response => response.json())
                 .then(data => {
                     publications = data;
@@ -727,9 +747,11 @@
                 .then(response => response.json())
                 .then(data => {
                     budgetItems = data.map(item => ({
-                        category: item.itemtype,
-                        description: item.item,
-                        amount: item.total,
+                        itemtype: item.itemtype,
+                        item: item.item,
+                        quantity: item.quantity,
+                        unitprice: item.unitprice,
+                        total: item.total,
                         expenditureid: item.expenditureid
                     }));
                     updateBudgetTable();
@@ -762,24 +784,15 @@
             fetch(`/workplan/fetchall?proposalid=${proposalId}`)
                 .then(response => response.json())
                 .then(data => {
-                    workplanItems = data.map(item => {
-                        const dates = item.time ? item.time.split(' to ') : ['', ''];
-                        const startDate = dates[0] || '';
-                        const endDate = dates[1] || '';
-                        let duration = 0;
-                        if (startDate && endDate) {
-                            duration = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 *
-                                24));
-                        }
-                        return {
-                            activity: item.activity,
-                            start_date: startDate,
-                            end_date: endDate,
-                            description: item.input,
-                            duration: duration,
-                            workplanid: item.workplanid
-                        };
-                    });
+                    workplanItems = data.map(item => ({
+                        activity: item.activity,
+                        time: item.time,
+                        input: item.input,
+                        facilities: item.facilities,
+                        bywhom: item.bywhom,
+                        outcome: item.outcome,
+                        workplanid: item.workplanid
+                    }));
                     updateWorkplanTable();
                 })
                 .catch(error => {
@@ -818,8 +831,8 @@
 
             if (proposalId) {
                 // Save to database
-                formData.append('proposalidfk', proposalId);
-                fetch('/collaborators/post', {
+                formData.append('proposalidfk', String(proposalId));
+                fetch('/api/v1/collaborators', {
                         method: 'POST',
                         body: formData,
                         headers: {
@@ -859,10 +872,10 @@
 
             tbody.innerHTML = collaborators.map((collab, index) => `
         <tr>
-            <td>${collab.collaboratorname || collab.name}</td>
+            <td>${collab.collaboratorname}</td>
             <td>${collab.institution}</td>
-            <td>${collab.position || collab.role}</td>
-            <td>${collab.researcharea || collab.email}</td>
+            <td>${collab.position}</td>
+            <td>${collab.researcharea}</td>
             <td><button class="btn btn-sm btn-danger" onclick="removeCollaborator(${index})">Remove</button></td>
         </tr>
     `).join('');
@@ -872,8 +885,8 @@
             const collaborator = collaborators[index];
             if (collaborator.collaboratorid) {
                 // Delete from database
-                fetch(`/collaborators/delete/${collaborator.collaboratorid}`, {
-                        method: 'POST',
+                fetch(`/api/v1/collaborators/${collaborator.collaboratorid}`, {
+                        method: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                         }
@@ -897,8 +910,8 @@
 
             if (proposalId) {
                 // Save to database
-                formData.append('proposalidfk', proposalId);
-                fetch('/publications/post', {
+                formData.append('proposalidfk', String(proposalId));
+                fetch('/api/v1/publications', {
                         method: 'POST',
                         body: formData,
                         headers: {
@@ -951,8 +964,8 @@
             const publication = publications[index];
             if (publication.publicationid) {
                 // Delete from database
-                fetch(`/publications/delete/${publication.publicationid}`, {
-                        method: 'POST',
+                fetch(`/api/v1/publications/${publication.publicationid}`, {
+                        method: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                         }
@@ -974,12 +987,13 @@
             const formData = new FormData(form);
             const item = Object.fromEntries(formData);
 
+            // Calculate total
+            item.total = parseFloat(item.quantity) * parseFloat(item.unitprice);
+
             if (proposalId) {
                 // Save to database
+                formData.set('total', item.total);
                 formData.append('proposalidfk', proposalId);
-                formData.append('itemtype', item.category);
-                formData.append('itemdescription', item.description);
-                formData.append('total', item.amount);
 
                 fetch('/expenditures/post', {
                         method: 'POST',
@@ -1017,15 +1031,17 @@
             const tbody = document.querySelector('#budgetTable tbody');
             if (budgetItems.length === 0) {
                 tbody.innerHTML =
-                    '<tr class="text-center"><td colspan="4" class="text-muted">No budget items added yet</td></tr>';
+                    '<tr class="text-center"><td colspan="6" class="text-muted">No budget items added yet</td></tr>';
                 return;
             }
 
             tbody.innerHTML = budgetItems.map((item, index) => `
         <tr>
-            <td>${item.category || item.itemtype}</td>
-            <td>${item.description || item.item}</td>
-            <td>${parseFloat(item.amount || item.total).toLocaleString()}</td>
+            <td>${item.itemtype}</td>
+            <td>${item.item}</td>
+            <td>${item.quantity}</td>
+            <td>${parseFloat(item.unitprice).toLocaleString()}</td>
+            <td>${parseFloat(item.total).toLocaleString()}</td>
             <td><button class="btn btn-sm btn-danger" onclick="removeBudgetItem(${index})">Remove</button></td>
         </tr>
     `).join('');
@@ -1055,9 +1071,45 @@
         }
 
         function updateTotalBudget() {
-            const total = budgetItems.reduce((sum, item) => sum + parseFloat(item.amount || item.total || 0), 0);
-            document.getElementById('totalBudget').value = total.toLocaleString();
+
+
+            // Get validation status from API if proposal exists
+            if (proposalId) {
+                fetch(`/api/v1/proposals/${proposalId}/budget-validation`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const statusDiv = document.getElementById('budgetRuleStatus');
+                        if (data.is_compliant) {
+                            document.getElementById('totalBudget').value = data.total_budget;
+                            statusDiv.innerHTML =
+                                `<span class="text-success">✓ ${data.status} (${data.message})</span>`;
+                        } else {
+                            statusDiv.innerHTML = `<span class="text-danger">✗ ${data.status} (${data.message})</span>`;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching budget validation:', error);
+                    });
+            }
         }
+
+        // Add event listeners for budget calculation
+        document.addEventListener('DOMContentLoaded', function() {
+            const quantityInput = document.querySelector('input[name="quantity"]');
+            const unitPriceInput = document.querySelector('input[name="unitprice"]');
+            const totalInput = document.querySelector('input[name="total"]');
+
+            function calculateTotal() {
+                const quantity = parseFloat(quantityInput.value) || 0;
+                const unitPrice = parseFloat(unitPriceInput.value) || 0;
+                totalInput.value = (quantity * unitPrice).toFixed(2);
+            }
+
+            if (quantityInput && unitPriceInput && totalInput) {
+                quantityInput.addEventListener('input', calculateTotal);
+                unitPriceInput.addEventListener('input', calculateTotal);
+            }
+        });
 
         function addDesignItem() {
             const form = document.getElementById('designForm');
@@ -1143,18 +1195,9 @@
             const formData = new FormData(form);
             const item = Object.fromEntries(formData);
 
-            const startDate = new Date(item.start_date);
-            const endDate = new Date(item.end_date);
-            const duration = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
-            item.duration = duration;
-
             if (proposalId) {
                 // Save to database
                 formData.append('proposalidfk', proposalId);
-                formData.append('activityname', item.activity);
-                formData.append('startdate', item.start_date);
-                formData.append('enddate', item.end_date);
-                formData.append('activitydescription', item.description);
 
                 fetch('/workplan/post', {
                         method: 'POST',
@@ -1197,9 +1240,9 @@
             tbody.innerHTML = workplanItems.map((item, index) => `
         <tr>
             <td>${item.activity}</td>
-            <td>${item.start_date || (item.time ? item.time.split(' to ')[0] : 'N/A')}</td>
-            <td>${item.end_date || (item.time ? item.time.split(' to ')[1] : 'N/A')}</td>
-            <td>${item.duration} days</td>
+            <td>${item.time}</td>
+            <td>${item.bywhom}</td>
+            <td>${item.outcome}</td>
             <td><button class="btn btn-sm btn-danger" onclick="removeWorkplanItem(${index})">Remove</button></td>
         </tr>
     `).join('');
@@ -1233,19 +1276,33 @@
             document.getElementById('designCount').textContent = designItems.length;
             document.getElementById('workplanCount').textContent = workplanItems.length;
 
-            const total = budgetItems.reduce((sum, item) => sum + parseFloat(item.amount || item.total || 0), 0);
+            const total = budgetItems.reduce((sum, item) => sum + parseFloat(item.total || 0), 0);
             document.getElementById('totalBudgetDisplay').textContent = total.toLocaleString();
         }
 
-        function submitProposal() {
+        async function submitProposal() {
             const declaration = document.getElementById('declaration').checked;
             if (!declaration) {
                 alert('Please accept the declaration before submitting.');
                 return;
             }
 
+            // Validate 60% rule using API
+            if (proposalId) {
+                const response = await fetch(`/api/v1/proposals/${proposalId}/budget-validation`);
+                const budgetData = await response.json();
+
+                if (!budgetData.is_compliant) {
+                    alert(
+                        'Cannot submit proposal: Facilities/Equipment and Consumables must be at least 60% of total budget. Please adjust your budget allocation.'
+                    );
+                    return;
+                }
+            }
+
             if (confirm(
-                'Are you sure you want to submit this proposal? You will not be able to edit it after submission.')) {
+                    'Are you sure you want to submit this proposal? You will not be able to edit it after submission.'
+                )) {
                 if (proposalId) {
                     fetch(`/proposals/submit/${proposalId}`, {
                             method: 'POST',

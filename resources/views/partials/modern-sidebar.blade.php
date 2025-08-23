@@ -5,9 +5,19 @@
                 <a class="nav-link {{ request()->routeIs('pages.home') ? 'active' : '' }}"
                     href="{{ route('pages.home') }}">
                     <i class="bi bi-house-door"></i>
-                    Dashboard
+                    Home
                 </a>
             </li>
+
+            @if (Auth::user()->haspermission('canviewadmindashboard'))
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('pages.dashboard') ? 'active' : '' }}"
+                        href="{{ route('pages.dashboard') }}">
+                        <i class="bi bi-speedometer2"></i>
+                        Dashboard
+                    </a>
+                </li>
+            @endif
 
             @if (Auth::user()->haspermission('canmakenewproposal'))
                 <li class="nav-item">
@@ -74,6 +84,14 @@
                     </a>
                 </li>
             @endif
+
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('pages.themes.*') ? 'active' : '' }}"
+                    href="{{ route('pages.themes.index') }}">
+                    <i class="bi bi-lightbulb"></i>
+                    Research Themes
+                </a>
+            </li>
 
             @if (Auth::user()->haspermission('cansupervise'))
                 <li class="nav-item">

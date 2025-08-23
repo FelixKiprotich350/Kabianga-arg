@@ -19,26 +19,16 @@ class PublicationsController extends Controller
             return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
         }
         
-        // Handle both form field names
         $rules = [
             'proposalidfk' => 'required|string',
+            'title' => 'required|string',
+            'authors' => 'required|string',
+            'publisher' => 'required|string',
+            'researcharea' => 'required|string',
+            'year' => 'required|string',
+            'volume' => 'required|string',
+            'pages' => 'required|integer',
         ];
-        
-        if ($request->has('title')) {
-            $rules['title'] = 'required|string';
-            $rules['authors'] = 'required|string';
-            $rules['journal'] = 'required|string';
-            $rules['year'] = 'required|integer';
-            $rules['type'] = 'required|string';
-        } else {
-            $rules['authors'] = 'required|string';
-            $rules['year'] = 'required|string';
-            $rules['pubtitle'] = 'required|string';
-            $rules['researcharea'] = 'required|string';
-            $rules['publisher'] = 'required|string';
-            $rules['volume'] = 'required|string';
-            $rules['pubpages'] = 'required|integer';
-        }
 
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {
@@ -51,25 +41,13 @@ class PublicationsController extends Controller
         }
 
         $publication = new Publication();
-        
-        // Handle both field name formats
-        if ($request->has('title')) {
-            $publication->title = $request->input('title');
-            $publication->authors = $request->input('authors');
-            $publication->publisher = $request->input('journal');
-            $publication->year = $request->input('year');
-            $publication->researcharea = $request->input('type');
-            $publication->volume = 'N/A';
-            $publication->pages = 0;
-        } else {
-            $publication->title = $request->input('pubtitle');
-            $publication->authors = $request->input('authors');
-            $publication->year = $request->input('year');
-            $publication->volume = $request->input('volume');
-            $publication->researcharea = $request->input('researcharea');
-            $publication->pages = $request->input('pubpages');
-            $publication->publisher = $request->input('publisher');
-        }
+        $publication->title = $request->input('title');
+        $publication->authors = $request->input('authors');
+        $publication->publisher = $request->input('publisher');
+        $publication->researcharea = $request->input('researcharea');
+        $publication->year = $request->input('year');
+        $publication->volume = $request->input('volume');
+        $publication->pages = $request->input('pages');
         
         $publication->proposalidfk = $request->input('proposalidfk');
         $publication->save();

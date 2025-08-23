@@ -35,7 +35,7 @@ class DashboardController extends Controller
 
     public function modernHome()
     {
-        // Get the current user's ID
+        // Get the current user's personal stats - accessible to all users
         $userid = auth()->user()->userid;
         $proposals = Proposal::where('useridfk', $userid)->get();
         $proposalsids = $proposals->pluck('proposalid');
@@ -43,29 +43,21 @@ class DashboardController extends Controller
         $projectsids = $projects->pluck('researchid');
         $fundings = ResearchFunding::whereIn('researchidfk', $projectsids)->get();
 
-        // Get  proposals count
-        $totalProposals = $proposals->count();
-        $approvedProposals = $proposals->where('approvalstatus', 'approved')->count();
-        $rejectedProposals = $proposals->where('approvalstatus', 'rejected')->count();
-        $pendingProposals = $proposals->where('approvalstatus', 'pending')->count();
-        //get projects counts
-        $activeprojects = $projects->where('projectstatus', 'Active')->count();
-        $cancelledprojects = $projects->where('projectstatus', 'Cancelled')->count();
-        $completedprojects = $projects->where('projectstatus', 'Completed')->count();
-        //total funds
-        $totalAmountReceived = $fundings->sum('amount');
-        $dashboardmetrics = [
-            'totalProposals' => $totalProposals,
-            'approvedProposals' => $approvedProposals,
-            'pendingProposals' => $pendingProposals,
-            'totalAmountReceived' => $totalAmountReceived,
-            'rejectedProposals' => $rejectedProposals,
-            'activeprojects' => $activeprojects,
-            'cancelledprojects' => $cancelledprojects,
-            'completedprojects' => $completedprojects,
+        // Personal stats
+        $personalStats = [
+            'totalProposals' => $proposals->count(),
+            'approvedProposals' => $proposals->where('approvalstatus', 'approved')->count(),
+            'pendingProposals' => $proposals->where('approvalstatus', 'pending')->count(),
+            'rejectedProposals' => $proposals->where('approvalstatus', 'rejected')->count(),
+            'activeProjects' => $projects->where('projectstatus', 'Active')->count(),
+            'completedProjects' => $projects->where('projectstatus', 'Completed')->count(),
+            'cancelledProjects' => $projects->where('projectstatus', 'Cancelled')->count(),
+            'totalFunding' => $fundings->sum('amount'),
+            'recentProposals' => $proposals->sortByDesc('created_at')->take(5),
+            'recentProjects' => $projects->sortByDesc('created_at')->take(5)
         ];
 
-        return view('pages.dashboard', $dashboardmetrics);
+        return view('pages.home', $personalStats);
     }
 
     public function dashboard()

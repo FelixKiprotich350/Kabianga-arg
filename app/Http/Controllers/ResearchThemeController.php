@@ -14,63 +14,78 @@ class ResearchThemeController extends Controller
         return response()->json(['data' => $themes]);
     }
 
+    public function index()
+    {
+        return view('pages.themes.index');
+    }
+
     public function createTheme(Request $request)
     {
-        if (!auth()->user()->haspermission('canaddoredittheme')) {
-            return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
-        }
-
         $rules = [
-            'themename' => 'required|string|max:255',
-            'description' => 'required|string'
+            'themename' => 'required|string|max:255|unique:researchthemes',
+            'themedescription' => 'required|string',
+            'applicablestatus' => 'required|string|in:Active,Inactive'
         ];
 
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {
-            return response()->json(['message' => $validator->errors(), 'type' => 'danger'], 400);
+            return response()->json(['message' => $validator->errors()->first(), 'type' => 'error'], 400);
         }
 
-        $theme = new ResearchTheme();
-        $theme->themename = $request->input('themename');
-        $theme->description = $request->input('description');
-        $theme->save();
+        // Get next available ID
+        $nextId = ResearchTheme::max('themeid') + 1;
+        
+        $theme = ResearchTheme::create([
+            'themeid' => $nextId,
+            'themename' => $request->themename,
+            'themedescription' => $request->themedescription,
+            'applicablestatus' => $request->applicablestatus
+        ]);
 
-        return response()->json(['message' => 'Theme created successfully!', 'type' => 'success']);
+        return response()->json([
+            'success' => true,
+            'message' => 'Theme created successfully!', 
+            'type' => 'success',
+            'id' => $theme->themeid
+        ]);
     }
 
     public function updateTheme(Request $request, $id)
     {
-        if (!auth()->user()->haspermission('canaddoredittheme')) {
-            return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
-        }
-
         $rules = [
-            'themename' => 'required|string|max:255',
-            'description' => 'required|string'
+            'themename' => 'required|string|max:255|unique:researchthemes,themename,' . $id . ',themeid',
+            'themedescription' => 'required|string',
+            'applicablestatus' => 'required|string|in:Active,Inactive'
         ];
 
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {
-            return response()->json(['message' => $validator->errors(), 'type' => 'danger'], 400);
+            return response()->json(['message' => $validator->errors()->first(), 'type' => 'error'], 400);
         }
 
         $theme = ResearchTheme::findOrFail($id);
-        $theme->themename = $request->input('themename');
-        $theme->description = $request->input('description');
-        $theme->save();
+        $theme->update([
+            'themename' => $request->themename,
+            'themedescription' => $request->themedescription,
+            'applicablestatus' => $request->applicablestatus
+        ]);
 
-        return response()->json(['message' => 'Theme updated successfully!', 'type' => 'success']);
+        return response()->json([
+            'success' => true,
+            'message' => 'Theme updated successfully!', 
+            'type' => 'success'
+        ]);
     }
 
     public function deleteTheme($id)
     {
-        if (!auth()->user()->haspermission('candeletetheme')) {
-            return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
-        }
-
         $theme = ResearchTheme::findOrFail($id);
         $theme->delete();
 
-        return response()->json(['message' => 'Theme deleted successfully!', 'type' => 'success']);
+        return response()->json([
+            'success' => true,
+            'message' => 'Theme deleted successfully!', 
+            'type' => 'success'
+        ]);
     }
 }

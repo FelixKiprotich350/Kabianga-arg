@@ -23,24 +23,14 @@ class CollaboratorsController extends Controller
             return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
         }
         
-        // Handle both form field names (name/collaboratorname)
         $rules = [
             'proposalidfk' => 'required|string',
+            'collaboratorname' => 'required|string',
+            'institution' => 'required|string',
+            'position' => 'required|string',
+            'researcharea' => 'required|string',
+            'experience' => 'required|string',
         ];
-        
-        // Check which field names are being used
-        if ($request->has('name')) {
-            $rules['name'] = 'required|string';
-            $rules['institution'] = 'required|string';
-            $rules['role'] = 'required|string';
-            $rules['email'] = 'required|email';
-        } else {
-            $rules['collaboratorname'] = 'required|string';
-            $rules['institution'] = 'required|string';
-            $rules['position'] = 'required|string';
-            $rules['researcharea'] = 'required|string';
-            $rules['experience'] = 'required|string';
-        }
 
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {
@@ -54,20 +44,11 @@ class CollaboratorsController extends Controller
         
         $collaborator = new Collaborator();
         
-        // Handle both field name formats
-        if ($request->has('name')) {
-            $collaborator->collaboratorname = $request->input('name');
-            $collaborator->institution = $request->input('institution');
-            $collaborator->position = $request->input('role');
-            $collaborator->researcharea = $request->input('email'); // Store email in researcharea for now
-            $collaborator->experience = 'N/A';
-        } else {
-            $collaborator->collaboratorname = $request->input('collaboratorname');
-            $collaborator->institution = $request->input('institution');
-            $collaborator->position = $request->input('position');
-            $collaborator->researcharea = $request->input('researcharea');
-            $collaborator->experience = $request->input('experience');
-        }
+        $collaborator->collaboratorname = $request->input('collaboratorname');
+        $collaborator->institution = $request->input('institution');
+        $collaborator->position = $request->input('position');
+        $collaborator->researcharea = $request->input('researcharea');
+        $collaborator->experience = $request->input('experience');
         
         $collaborator->proposalidfk = $request->input('proposalidfk');
         $collaborator->save();

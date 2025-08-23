@@ -643,5 +643,34 @@ class ProposalsController extends Controller
         $data = ProposalChanges::where('proposalidfk', $id)->with('suggestedby')->get();
         return response()->json($data);
     }
+
+    public function budgetValidation($id)
+    {
+        $expenditures = Expenditureitem::where('proposalidfk', $id)->get();
+        
+        $facilitiesTotal = $expenditures->where('itemtype', 'Facilities/Equipment')->sum('total');
+        $consumablesTotal = $expenditures->where('itemtype', 'Consumables')->sum('total');
+        $personnelTotal = $expenditures->where('itemtype', 'Personnel/Subsistence')->sum('total');
+        $travelTotal = $expenditures->where('itemtype', 'Travel/Other')->sum('total');
+        
+        $researchTotal = $facilitiesTotal + $consumablesTotal;
+        $totalBudget = $facilitiesTotal + $consumablesTotal + $personnelTotal + $travelTotal;
+        
+        $researchPercentage = $totalBudget > 0 ? ($researchTotal / $totalBudget) * 100 : 0;
+        $isCompliant = $researchPercentage >= 60;
+        
+        return response()->json([
+            'total_budget' => $totalBudget,
+            'facilities_equipment' => $facilitiesTotal,
+            'consumables' => $consumablesTotal,
+            'personnel_subsistence' => $personnelTotal,
+            'travel_other' => $travelTotal,
+            'research_total' => $researchTotal,
+            'research_percentage' => round($researchPercentage, 2),
+            'is_compliant' => $isCompliant,
+            'status' => $isCompliant ? 'Compliant' : 'Non-compliant',
+            'message' => $isCompliant ? '60% rule met' : 'Research items < 60%'
+        ]);
+    }
 }
 
