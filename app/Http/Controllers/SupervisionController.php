@@ -16,7 +16,7 @@ class SupervisionController extends Controller
         if (!auth()->user()->hasPermission('cansupervise')) {
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Monitor Projects!");
         }
-        return view('pages.monitoring.modern-home');
+        return view('pages.monitoring.index');
     }
 
     public function viewmonitoringpage($id)
@@ -27,7 +27,7 @@ class SupervisionController extends Controller
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Monitor this Project!");
         }
 
-        return view('pages.monitoring.modern-project', compact('project'));
+        return view('pages.monitoring.show', compact('project'));
     }
     public function fetchmonitoringreport($id)
     {

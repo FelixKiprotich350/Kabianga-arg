@@ -149,67 +149,74 @@
 
 @push('scripts')
 <script>
-$(document).ready(function() {
+document.addEventListener('DOMContentLoaded', function() {
     let currentData = [];
     let schools = [];
     
     loadData();
     
-    $('#schoolFilter').on('change', filterDepartments);
-    $('#searchInput').on('input', ARGPortal.debounce(filterDepartments, 300));
-    $('#clearFilters').on('click', clearFilters);
+    document.getElementById('schoolFilter').addEventListener('change', filterDepartments);
+    document.getElementById('searchInput').addEventListener('input', ARGPortal.debounce(filterDepartments, 300));
+    document.getElementById('clearFilters').addEventListener('click', clearFilters);
     
-    function loadData() {
-        $('#loadingState').show();
+    async function loadData() {
+        document.getElementById('loadingState').style.display = 'block';
         
-        // Load schools and departments
-        Promise.all([
-            $.get("{{ route('api.schools.fetchallschools') }}"),
-            $.get("{{ route('api.departments.fetchalldepartments') }}")
-        ]).then(function([schoolsResponse, departmentsResponse]) {
-            schools = schoolsResponse.data || [];
-            currentData = departmentsResponse.data || [];
+        try {
+            const [schoolsData, departmentsData] = await Promise.all([
+                API.getAllSchools(),
+                API.getAllDepartments()
+            ]);
+            
+            schools = schoolsData;
+            currentData = departmentsData;
             
             populateSchoolFilters();
             displayDepartments(currentData);
             updateStats();
-        }).catch(function() {
+        } catch (error) {
             ARGPortal.showError('Failed to load data');
-            $('#loadingState').hide();
-        });
+            document.getElementById('loadingState').style.display = 'none';
+        }
     }
     
     function populateSchoolFilters() {
-        const schoolFilter = $('#schoolFilter');
-        const schoolSelect = $('#schoolSelect');
+        const schoolFilter = document.getElementById('schoolFilter');
+        const schoolSelect = document.getElementById('schoolSelect');
         
         schools.forEach(function(school) {
-            const option = `<option value="${school.schoolid}">${school.schoolname}</option>`;
-            schoolFilter.append(option);
-            schoolSelect.append(option);
+            const option1 = document.createElement('option');
+            option1.value = school.id || school.schoolid;
+            option1.textContent = school.name || school.schoolname;
+            schoolFilter.appendChild(option1);
+            
+            const option2 = document.createElement('option');
+            option2.value = school.id || school.schoolid;
+            option2.textContent = school.name || school.schoolname;
+            schoolSelect.appendChild(option2);
         });
     }
     
     function displayDepartments(data) {
-        $('#loadingState').hide();
-        const grid = $('#departmentsGrid');
-        grid.empty();
+        document.getElementById('loadingState').style.display = 'none';
+        const grid = document.getElementById('departmentsGrid');
+        grid.innerHTML = '';
         
         if (data.length === 0) {
-            grid.append(`
+            grid.innerHTML = `
                 <div class="col-12 text-center py-5">
                     <i class="bi bi-building display-1 text-muted"></i>
                     <h5 class="mt-3">No Departments Found</h5>
                     <p class="text-muted">Add your first department to get started.</p>
                 </div>
-            `);
+            `;
             return;
         }
         
         data.forEach(function(dept) {
-            const school = schools.find(s => s.schoolid == dept.schoolidfk);
+            const school = schools.find(s => (s.id || s.schoolid) == (dept.school_id || dept.schoolidfk));
             
-            grid.append(`
+            grid.innerHTML += `
                 <div class="col-lg-4 col-md-6 mb-4">
                     <div class="stats-card h-100">
                         <div class="d-flex justify-content-between align-items-start mb-3">
@@ -221,17 +228,17 @@ $(document).ready(function() {
                                     <i class="bi bi-three-dots"></i>
                                 </button>
                                 <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="{{ route('pages.departments.viewdepartment', '') }}/${dept.departmentid}">
+                                    <li><a class="dropdown-item" href="/departments/view/${dept.id || dept.departmentid}">
                                         <i class="bi bi-eye me-2"></i>View Details
                                     </a></li>
-                                    <li><a class="dropdown-item" href="{{ route('pages.departments.editdepartment', '') }}/${dept.departmentid}">
+                                    <li><a class="dropdown-item" href="/departments/edit/${dept.id || dept.departmentid}">
                                         <i class="bi bi-pencil me-2"></i>Edit
                                     </a></li>
                                 </ul>
                             </div>
                         </div>
-                        <h6 class="fw-bold">${dept.departmentname}</h6>
-                        <p class="text-muted small mb-2">${school ? school.schoolname : 'N/A'}</p>
+                        <h6 class="fw-bold">${dept.name || dept.departmentname}</h6>
+                        <p class="text-muted small mb-2">${school ? (school.name || school.schoolname) : 'N/A'}</p>
                         <p class="text-muted small">${dept.description || 'No description available'}</p>
                         <div class="mt-auto">
                             <div class="d-flex justify-content-between text-muted small">
@@ -241,18 +248,18 @@ $(document).ready(function() {
                         </div>
                     </div>
                 </div>
-            `);
+            `;
         });
     }
     
     function filterDepartments() {
-        const schoolId = $('#schoolFilter').val();
-        const search = $('#searchInput').val().toLowerCase();
+        const schoolId = document.getElementById('schoolFilter').value;
+        const search = document.getElementById('searchInput').value.toLowerCase();
         
         let filtered = currentData.filter(function(dept) {
-            const matchesSchool = !schoolId || dept.schoolidfk == schoolId;
+            const matchesSchool = !schoolId || (dept.school_id || dept.schoolidfk) == schoolId;
             const matchesSearch = !search || 
-                dept.departmentname.toLowerCase().includes(search) ||
+                (dept.name || dept.departmentname).toLowerCase().includes(search) ||
                 (dept.description && dept.description.toLowerCase().includes(search));
             
             return matchesSchool && matchesSearch;
@@ -262,52 +269,48 @@ $(document).ready(function() {
     }
     
     function clearFilters() {
-        $('#schoolFilter').val('');
-        $('#searchInput').val('');
+        document.getElementById('schoolFilter').value = '';
+        document.getElementById('searchInput').value = '';
         displayDepartments(currentData);
     }
     
     function updateStats() {
-        $('#totalSchools').text(schools.length);
-        $('#totalDepartments').text(currentData.length);
-        $('#totalStaff').text(currentData.reduce((sum, dept) => sum + (dept.staff_count || 0), 0));
+        document.getElementById('totalSchools').textContent = schools.length;
+        document.getElementById('totalDepartments').textContent = currentData.length;
+        document.getElementById('totalStaff').textContent = currentData.reduce((sum, dept) => sum + (dept.staff_count || 0), 0);
     }
     
     // Form submissions
-    $('#addSchoolForm').on('submit', function(e) {
+    document.getElementById('addSchoolForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        $.ajax({
-            url: "{{ route('api.schools.post') }}",
-            type: 'POST',
-            data: $(this).serialize(),
-            success: function() {
-                ARGPortal.showSuccess('School added successfully');
-                $('#addSchoolModal').modal('hide');
-                loadData();
-            },
-            error: function() {
-                ARGPortal.showError('Failed to add school');
-            }
-        });
+        try {
+            const formData = new FormData(this);
+            const schoolData = Object.fromEntries(formData);
+            await API.createSchool(schoolData);
+            ARGPortal.showSuccess('School added successfully');
+            bootstrap.Modal.getInstance(document.getElementById('addSchoolModal')).hide();
+            this.reset();
+            loadData();
+        } catch (error) {
+            ARGPortal.showError('Failed to add school');
+        }
     });
     
-    $('#addDepartmentForm').on('submit', function(e) {
+    document.getElementById('addDepartmentForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        $.ajax({
-            url: "{{ route('api.departments.post') }}",
-            type: 'POST',
-            data: $(this).serialize(),
-            success: function() {
-                ARGPortal.showSuccess('Department added successfully');
-                $('#addDepartmentModal').modal('hide');
-                loadData();
-            },
-            error: function() {
-                ARGPortal.showError('Failed to add department');
-            }
-        });
+        try {
+            const formData = new FormData(this);
+            const deptData = Object.fromEntries(formData);
+            await API.createDepartment(deptData);
+            ARGPortal.showSuccess('Department added successfully');
+            bootstrap.Modal.getInstance(document.getElementById('addDepartmentModal')).hide();
+            this.reset();
+            loadData();
+        } catch (error) {
+            ARGPortal.showError('Failed to add department');
+        }
     });
 });
 </script>

@@ -14,7 +14,7 @@ class CommonPagesController extends Controller
         if (Auth::check()) {
             return redirect()->route('pages.dashboard');
         }
-        return view('pages.common.home');
+        return view('pages.common.index');
     }
 
     //

@@ -30,7 +30,7 @@ class DashboardController extends Controller
             'rejectedProposalsCount' => $rejectedProposalsCount,
         ];
 
-        return view('pages.modern-dashboard', $dashboardmetrics);
+        return view('pages.dashboard', $dashboardmetrics);
     }
 
     public function modernHome()
@@ -65,7 +65,7 @@ class DashboardController extends Controller
             'completedprojects' => $completedprojects,
         ];
 
-        return view('pages.modern-dashboard', $dashboardmetrics);
+        return view('pages.dashboard', $dashboardmetrics);
     }
 
     public function dashboard()
@@ -231,71 +231,79 @@ class DashboardController extends Controller
     public function getStats()
     {
         if (!auth()->user()->haspermission('canviewadmindashboard')) {
-            return response()->json(['data' => []]);
+            return response()->json(['success' => false, 'message' => 'Unauthorized', 'data' => []], 403);
         }
 
-        $stats = [
-            'proposals' => [
-                'total' => Proposal::count(),
-                'approved' => Proposal::where('approvalstatus', 'Approved')->count(),
-                'pending' => Proposal::where('approvalstatus', 'Pending')->count(),
-                'rejected' => Proposal::where('approvalstatus', 'Rejected')->count()
-            ],
-            'projects' => [
-                'total' => ResearchProject::count(),
-                'active' => ResearchProject::where('projectstatus', 'Active')->count(),
-                'completed' => ResearchProject::where('projectstatus', 'Completed')->count(),
-                'cancelled' => ResearchProject::where('projectstatus', 'Cancelled')->count()
-            ],
-            'funding' => [
-                'total' => ResearchFunding::sum('amount'),
-                'count' => ResearchFunding::count()
-            ]
-        ];
+        try {
+            $stats = [
+                'proposals' => [
+                    'total' => Proposal::count(),
+                    'approved' => Proposal::where('approvalstatus', 'Approved')->count(),
+                    'pending' => Proposal::where('approvalstatus', 'Pending')->count(),
+                    'rejected' => Proposal::where('approvalstatus', 'Rejected')->count()
+                ],
+                'projects' => [
+                    'total' => ResearchProject::count(),
+                    'active' => ResearchProject::where('projectstatus', 'Active')->count(),
+                    'completed' => ResearchProject::where('projectstatus', 'Completed')->count(),
+                    'cancelled' => ResearchProject::where('projectstatus', 'Cancelled')->count()
+                ],
+                'funding' => [
+                    'total' => ResearchFunding::sum('amount') ?? 0,
+                    'count' => ResearchFunding::count()
+                ]
+            ];
 
-        return response()->json(['data' => $stats]);
+            return response()->json(['success' => true, 'data' => $stats]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to fetch stats', 'data' => []], 500);
+        }
     }
 
     public function getRecentActivity()
     {
         if (!auth()->user()->haspermission('canviewadmindashboard')) {
-            return response()->json(['data' => []]);
+            return response()->json(['success' => false, 'message' => 'Unauthorized', 'data' => []], 403);
         }
 
-        $recentProposals = Proposal::with('applicant')
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get()
-            ->map(function($proposal) {
-                return [
-                    'type' => 'proposal',
-                    'title' => $proposal->researchtitle ?? 'New Proposal',
-                    'user' => $proposal->applicant->name,
-                    'status' => $proposal->approvalstatus,
-                    'date' => $proposal->created_at->format('M d, Y')
-                ];
-            });
+        try {
+            $recentProposals = Proposal::with('applicant')
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get()
+                ->map(function($proposal) {
+                    return [
+                        'type' => 'proposal',
+                        'title' => $proposal->researchtitle ?? 'New Proposal',
+                        'user' => $proposal->applicant->name ?? 'Unknown',
+                        'status' => $proposal->approvalstatus,
+                        'date' => $proposal->created_at->format('M d, Y')
+                    ];
+                });
 
-        $recentProjects = ResearchProject::with('applicant')
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get()
-            ->map(function($project) {
-                return [
-                    'type' => 'project',
-                    'title' => $project->researchnumber,
-                    'user' => $project->applicant->name,
-                    'status' => $project->projectstatus,
-                    'date' => $project->created_at->format('M d, Y')
-                ];
-            });
+            $recentProjects = ResearchProject::with(['proposal.applicant'])
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get()
+                ->map(function($project) {
+                    return [
+                        'type' => 'project',
+                        'title' => $project->researchnumber,
+                        'user' => $project->proposal->applicant->name ?? 'Unknown',
+                        'status' => $project->projectstatus,
+                        'date' => $project->created_at->format('M d, Y')
+                    ];
+                });
 
-        $activities = $recentProposals->concat($recentProjects)
-            ->sortByDesc('date')
-            ->take(10)
-            ->values();
+            $activities = $recentProposals->concat($recentProjects)
+                ->sortByDesc('date')
+                ->take(10)
+                ->values();
 
-        return response()->json(['data' => $activities]);
+            return response()->json(['success' => true, 'data' => $activities]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to fetch recent activity', 'data' => []], 500);
+        }
     }
 
 }

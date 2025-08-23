@@ -33,6 +33,12 @@ use App\Http\Controllers\{
 
 // Public API Routes (No Authentication)
 Route::prefix('v1')->group(function () {
+    // Test endpoints
+    Route::get('/test/connection', [\App\Http\Controllers\ApiTestController::class, 'testConnection']);
+    
+    // Auth check
+    Route::get('/auth/check', [\App\Http\Controllers\Auth\AuthController::class, 'check']);
+    
     // Authentication
     Route::post('/auth/login', [LoginController::class, 'apiLogin']);
     Route::post('/auth/register', [RegisterController::class, 'apiRegister']);
@@ -48,11 +54,16 @@ Route::prefix('v1')->group(function () {
 });
 
 // Protected API Routes (Authentication Required)
-Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
+Route::prefix('v1')->middleware(['web', 'auth'])->group(function () {
+    
+    // Test endpoints (authenticated)
+    Route::get('/test/users', [\App\Http\Controllers\ApiTestController::class, 'testUsers']);
+    Route::get('/test/proposals', [\App\Http\Controllers\ApiTestController::class, 'testProposals']);
     
     // Authentication
     Route::post('/auth/logout', [LoginController::class, 'apiLogout']);
     Route::get('/auth/me', [LoginController::class, 'apiMe']);
+    Route::get('/auth/permissions', [\App\Http\Controllers\Auth\AuthController::class, 'permissions']);
     Route::post('/auth/refresh', [LoginController::class, 'apiRefresh']);
     
     // Dashboard

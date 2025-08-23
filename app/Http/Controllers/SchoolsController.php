@@ -89,7 +89,7 @@ class SchoolsController extends Controller
         if(!auth()->user()->haspermission('canviewdepartmentsandschools')){
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to View Schools!");
         }
-        return view('pages.departments.modern-schools');
+        return view('pages.departments.schools');
     }
     public function getviewschoolpage($id)
     {

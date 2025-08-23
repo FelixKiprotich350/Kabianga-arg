@@ -124,80 +124,77 @@
 
 @push('scripts')
 <script>
-$(document).ready(function() {
+document.addEventListener('DOMContentLoaded', function() {
     let currentData = [];
     
     loadProposals();
     
-    $('#statusFilter, #themeFilter, #departmentFilter').on('change', filterProposals);
-    $('#searchInput').on('input', ARGPortal.debounce(filterProposals, 300));
-    $('#clearFilters').on('click', clearFilters);
+    document.getElementById('statusFilter').addEventListener('change', filterProposals);
+    document.getElementById('themeFilter').addEventListener('change', filterProposals);
+    document.getElementById('departmentFilter').addEventListener('change', filterProposals);
+    document.getElementById('searchInput').addEventListener('input', ARGPortal.debounce(filterProposals, 300));
+    document.getElementById('clearFilters').addEventListener('click', clearFilters);
     
-    function loadProposals() {
-        $('#loadingState').show();
+    async function loadProposals() {
+        document.getElementById('loadingState').style.display = 'block';
         
-        $.ajax({
-            url: "{{ route('api.proposals.fetchallproposals') }}",
-            type: 'GET',
-            success: function(response) {
-                currentData = response.data || response || [];
-                displayProposals(currentData);
-                updateStats();
-                populateFilters();
-            },
-            error: function() {
-                ARGPortal.showError('Failed to load proposals');
-                $('#loadingState').hide();
-            }
-        });
+        try {
+            currentData = await API.getAllProposals();
+            displayProposals(currentData);
+            updateStats();
+            populateFilters();
+        } catch (error) {
+            ARGPortal.showError('Failed to load proposals');
+            document.getElementById('loadingState').style.display = 'none';
+        }
     }
     
     function displayProposals(data) {
-        $('#loadingState').hide();
-        const tbody = $('#proposalsTableBody');
-        tbody.empty();
+        document.getElementById('loadingState').style.display = 'none';
+        const tbody = document.getElementById('proposalsTableBody');
+        tbody.innerHTML = '';
         
         data.forEach(function(proposal) {
-            const statusBadge = getStatusBadge(proposal.approvalstatus);
+            const statusBadge = getStatusBadge(proposal.status || proposal.approvalstatus);
             const submittedDate = new Date(proposal.created_at).toLocaleDateString();
             
-            tbody.append(`
+            tbody.innerHTML += `
                 <tr>
-                    <td><span class="badge bg-light text-dark">#${proposal.proposalid}</span></td>
+                    <td><span class="badge bg-light text-dark">#${proposal.id || proposal.proposalid}</span></td>
                     <td>
-                        <div class="fw-medium">${proposal.researchtitle || 'Untitled'}</div>
-                        <small class="text-muted">${proposal.objectives ? proposal.objectives.substring(0, 50) + '...' : ''}</small>
+                        <div class="fw-medium">${proposal.title || proposal.researchtitle || 'Untitled'}</div>
+                        <small class="text-muted">${proposal.abstract || proposal.objectives ? (proposal.abstract || proposal.objectives).substring(0, 50) + '...' : ''}</small>
                     </td>
                     <td>
                         <div class="d-flex align-items-center">
                             <div class="stats-icon primary me-2" style="width: 30px; height: 30px; font-size: 0.8rem;">
                                 <i class="bi bi-person"></i>
                             </div>
-                            ${proposal.applicant ? proposal.applicant.name : 'N/A'}
+                            ${proposal.principal_investigator || (proposal.applicant ? proposal.applicant.name : 'N/A')}
                         </div>
                     </td>
-                    <td>${proposal.department ? proposal.department.shortname : 'N/A'}</td>
-                    <td>${proposal.themeitem ? proposal.themeitem.themename : 'N/A'}</td>
+                    <td>${proposal.department_name || (proposal.department ? proposal.department.shortname : 'N/A')}</td>
+                    <td>${proposal.theme_name || (proposal.themeitem ? proposal.themeitem.themename : 'N/A')}</td>
                     <td>${statusBadge}</td>
                     <td>${submittedDate}</td>
                     <td>
                         <div class="btn-group btn-group-sm">
-                            <a href="{{ route('pages.proposals.viewproposal', '') }}/${proposal.proposalid}" 
+                            <a href="/proposals/view/${proposal.id || proposal.proposalid}" 
                                class="btn btn-outline-primary" title="View">
                                 <i class="bi bi-eye"></i>
                             </a>
-                            ${proposal.approvalstatus === 'Pending' && proposal.submittedstatus ? 
-                                `<button class="btn btn-outline-success" onclick="approveProposal(${proposal.proposalid})" title="Approve">
+                            ${(proposal.status === 'submitted' || (proposal.approvalstatus === 'Pending' && proposal.submittedstatus)) ? 
+                                `<button class="btn btn-outline-success" onclick="approveProposal(${proposal.id || proposal.proposalid})" title="Approve">
                                     <i class="bi bi-check"></i>
                                 </button>
-                                <button class="btn btn-outline-danger" onclick="rejectProposal(${proposal.proposalid})" title="Reject">
+                                <button class="btn btn-outline-danger" onclick="rejectProposal(${proposal.id || proposal.proposalid})" title="Reject">
                                     <i class="bi bi-x"></i>
                                 </button>` : ''
                             }
                         </div>
                     </td>
                 </tr>
-            `);
+            `;
         });
     }
     
@@ -212,45 +209,52 @@ $(document).ready(function() {
     
     function updateStats() {
         const total = currentData.length;
-        const pending = currentData.filter(p => p.approvalstatus.toLowerCase() === 'pending').length;
-        const approved = currentData.filter(p => p.approvalstatus.toLowerCase() === 'approved').length;
-        const rejected = currentData.filter(p => p.approvalstatus.toLowerCase() === 'rejected').length;
+        const pending = currentData.filter(p => (p.status || p.approvalstatus || '').toLowerCase().includes('pending') || (p.status || p.approvalstatus || '').toLowerCase() === 'submitted').length;
+        const approved = currentData.filter(p => (p.status || p.approvalstatus || '').toLowerCase() === 'approved').length;
+        const rejected = currentData.filter(p => (p.status || p.approvalstatus || '').toLowerCase() === 'rejected').length;
         
-        $('#totalProposals').text(total);
-        $('#pendingProposals').text(pending);
-        $('#approvedProposals').text(approved);
-        $('#rejectedProposals').text(rejected);
+        document.getElementById('totalProposals').textContent = total;
+        document.getElementById('pendingProposals').textContent = pending;
+        document.getElementById('approvedProposals').textContent = approved;
+        document.getElementById('rejectedProposals').textContent = rejected;
     }
     
     function populateFilters() {
-        const themes = [...new Set(currentData.map(p => p.themeitem?.themename).filter(Boolean))];
-        const departments = [...new Set(currentData.map(p => p.department?.shortname).filter(Boolean))];
+        const themes = [...new Set(currentData.map(p => p.theme_name || p.themeitem?.themename).filter(Boolean))];
+        const departments = [...new Set(currentData.map(p => p.department_name || p.department?.shortname).filter(Boolean))];
         
-        const themeFilter = $('#themeFilter');
-        const departmentFilter = $('#departmentFilter');
+        const themeFilter = document.getElementById('themeFilter');
+        const departmentFilter = document.getElementById('departmentFilter');
         
         themes.forEach(theme => {
-            themeFilter.append(`<option value="${theme}">${theme}</option>`);
+            const option = document.createElement('option');
+            option.value = theme;
+            option.textContent = theme;
+            themeFilter.appendChild(option);
         });
         
         departments.forEach(dept => {
-            departmentFilter.append(`<option value="${dept}">${dept}</option>`);
+            const option = document.createElement('option');
+            option.value = dept;
+            option.textContent = dept;
+            departmentFilter.appendChild(option);
         });
     }
     
     function filterProposals() {
-        const status = $('#statusFilter').val().toLowerCase();
-        const theme = $('#themeFilter').val();
-        const department = $('#departmentFilter').val();
-        const search = $('#searchInput').val().toLowerCase();
+        const status = document.getElementById('statusFilter').value.toLowerCase();
+        const theme = document.getElementById('themeFilter').value;
+        const department = document.getElementById('departmentFilter').value;
+        const search = document.getElementById('searchInput').value.toLowerCase();
         
         let filtered = currentData.filter(function(proposal) {
-            const matchesStatus = !status || proposal.approvalstatus.toLowerCase() === status;
-            const matchesTheme = !theme || proposal.themeitem?.themename === theme;
-            const matchesDepartment = !department || proposal.department?.shortname === department;
+            const proposalStatus = (proposal.status || proposal.approvalstatus || '').toLowerCase();
+            const matchesStatus = !status || proposalStatus === status || (status === 'pending' && proposalStatus === 'submitted');
+            const matchesTheme = !theme || (proposal.theme_name || proposal.themeitem?.themename) === theme;
+            const matchesDepartment = !department || (proposal.department_name || proposal.department?.shortname) === department;
             const matchesSearch = !search || 
-                (proposal.researchtitle && proposal.researchtitle.toLowerCase().includes(search)) ||
-                (proposal.applicant && proposal.applicant.name.toLowerCase().includes(search));
+                (proposal.title || proposal.researchtitle || '').toLowerCase().includes(search) ||
+                (proposal.principal_investigator || proposal.applicant?.name || '').toLowerCase().includes(search);
             
             return matchesStatus && matchesTheme && matchesDepartment && matchesSearch;
         });
@@ -259,23 +263,37 @@ $(document).ready(function() {
     }
     
     function clearFilters() {
-        $('#statusFilter, #themeFilter, #departmentFilter').val('');
-        $('#searchInput').val('');
+        document.getElementById('statusFilter').value = '';
+        document.getElementById('themeFilter').value = '';
+        document.getElementById('departmentFilter').value = '';
+        document.getElementById('searchInput').value = '';
         displayProposals(currentData);
     }
     
-    window.approveProposal = function(id) {
-        // Implementation for approval
-        ARGPortal.showSuccess('Proposal approved');
+    window.approveProposal = async function(id) {
+        if (!confirm('Are you sure you want to approve this proposal?')) return;
+        try {
+            await API.approveRejectProposal(id, 'approve');
+            ARGPortal.showSuccess('Proposal approved successfully');
+            loadProposals();
+        } catch (error) {
+            ARGPortal.showError('Failed to approve proposal');
+        }
     };
     
-    window.rejectProposal = function(id) {
-        // Implementation for rejection
-        ARGPortal.showSuccess('Proposal rejected');
+    window.rejectProposal = async function(id) {
+        if (!confirm('Are you sure you want to reject this proposal?')) return;
+        try {
+            await API.approveRejectProposal(id, 'reject');
+            ARGPortal.showSuccess('Proposal rejected successfully');
+            loadProposals();
+        } catch (error) {
+            ARGPortal.showError('Failed to reject proposal');
+        }
     };
     
     window.exportProposals = function() {
-        ARGPortal.showSuccess('Export started');
+        ARGPortal.showSuccess('Export functionality coming soon');
     };
 });
 </script>

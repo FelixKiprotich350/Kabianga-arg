@@ -17,11 +17,12 @@ use App\Models\Permission;
 use App\Models\Proposal;
 use App\Notifications\CustomResetPasswordNotification;
 use App\Notifications\CustomVerifyEmailNotification;
+use App\Traits\HasPermissions;
 
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, HasPermissions;
     // Table name (optional, if not following Laravel naming conventions)
     protected $table = 'users';
 
@@ -56,7 +57,9 @@ class User extends Authenticatable
         'email',
         'pfno',
         'password',
-        'role'
+        'role',
+        'isactive',
+        'isadmin'
     ];
 
     /**
@@ -76,6 +79,8 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'isactive' => 'boolean',
+        'isadmin' => 'boolean',
     ];
 
 
@@ -92,25 +97,24 @@ class User extends Authenticatable
     //functions 
     public function permissions()
     {
-        if ($this->isadmin) {
-            return Permission::where('issuperadminright', true)->orderBy('priorityno');
-        } else {
-
-            return $this->belongsToMany(Permission::class, 'userpermissions', 'useridfk', 'permissionidfk')->orderBy('priorityno');
-        }
+        return $this->belongsToMany(Permission::class, 'userpermissions', 'useridfk', 'permissionidfk');
     }
     public function notifiabletypes()
     {
         return $this->belongsToMany(NotificationType::class, 'notifiableusers', 'useridfk', 'notificationfk');
 
     }
-    
+
     public function department()
     {
-        return $this->hasOne(Proposal::class, 'useridfk', 'userid')
-                    ->with('department')
-                    ->select('useridfk', 'departmentidfk')
-                    ->latest();
+        return $this->hasOneThrough(
+            Department::class,
+            Proposal::class,
+            'useridfk', // Foreign key on proposals table
+            'depid', // Foreign key on departments table
+            'userid', // Local key on users table
+            'departmentidfk' // Local key on proposals table
+        )->latest();
     }
     public function defaultpermissions()
     {
@@ -120,9 +124,16 @@ class User extends Authenticatable
 
     public function haspermission($shortname)
     {
-        return $this->permissions()->where('shortname', $shortname)->exists();
+        // Super admin has all permissions
+        if (isset($this->isadmin) && $this->isadmin) {
+            return true;
+        }
 
+        // Check user permissions
+        return $this->permissions()->where('shortname', $shortname)->exists();
     }
+     
+
     // public function hasselfpermission($shortname)
     // {
     //     return $this->permissions()->where('shortname', $shortname)->exists();

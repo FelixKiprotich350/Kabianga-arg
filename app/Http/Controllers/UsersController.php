@@ -23,7 +23,7 @@ class UsersController extends Controller
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to View Users!");
         }
         $allusers = User::all();
-        return view('pages.users.modern-manage', compact('allusers'));
+        return view('pages.users.index', compact('allusers'));
     }
 
     public function updateuserpermissions(Request $request, $id)
@@ -163,7 +163,7 @@ class UsersController extends Controller
         ];
         $departments = [];
         // Return the view with the proposal data
-        return view('pages.users.modern-view', compact('user', 'userStats', 'departments'));
+        return view('pages.users.show', compact('user', 'userStats', 'departments'));
     }
 
     public function geteditsingleuserpage($id)
@@ -183,10 +183,11 @@ class UsersController extends Controller
     public function fetchallusers()
     {
         if (!auth()->user()->haspermission('canviewallusers')) {
-            return response()->json(['data' => []]);
+            return response()->json(['success' => false, 'message' => 'Unauthorized', 'data' => []], 403);
         }
-        else {
-            $data = User::with(['department.department'])->get()->map(function ($user) {
+        
+        try {
+            $data = User::with(['department'])->get()->map(function ($user) {
                 return [
                     'userid' => $user->userid,
                     'name' => $user->name,
@@ -196,12 +197,14 @@ class UsersController extends Controller
                     'role' => $user->role,
                     'isadmin' => $user->isadmin,
                     'isactive' => $user->isactive,
-                    'department' => $user->department ? $user->department->department : null,
+                    'department' => $user->department ? $user->department->departmentname : null,
                     'created_at' => $user->created_at,
                     'updated_at' => $user->updated_at
                 ];
             });
-            return response()->json(['data' => $data]);
+            return response()->json(['success' => true, 'data' => $data]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to fetch users', 'data' => []], 500);
         }
     }
 

@@ -12,7 +12,7 @@ class BusinessMailingController extends Controller
     //
     public function mailinghome()
     {
-        return view('pages.mailingmodule.home');
+        return view('pages.mailingmodule.index');
     }
     public function getalljobs()
     {

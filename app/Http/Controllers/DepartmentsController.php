@@ -97,7 +97,7 @@ class DepartmentsController extends Controller
         }
         $alldepartments = Department::all();
         $schools=School::all();
-        return view('pages.departments.modern-home', compact('alldepartments','schools'));
+        return view('pages.departments.index', compact('alldepartments','schools'));
     }
     public function getviewdepartmentpage($id)
     {
@@ -106,7 +106,7 @@ class DepartmentsController extends Controller
         }
         // Find the department by ID or fail with a 404 error
         $department = Department::with('school')->findOrFail($id);
-        return view('pages.departments.modern-view', compact('department'));
+        return view('pages.departments.show', compact('department'));
     }
     public function geteditdepartmentpage($id)
     {

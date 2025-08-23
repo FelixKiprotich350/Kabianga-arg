@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Kabianga Annual Research Grants Portal">
     <meta name="author" content="University of Kabianga">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" href="{{ asset('images/logo.png') }}" type="image/x-icon">
     <title>@yield('title', 'UoK ARG Portal')</title>
     
@@ -43,6 +44,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Custom JS -->
     <script src="{{ asset('js/modern-app.js') }}"></script>
+    <script src="{{ asset('js/auth-service.js') }}"></script>
     <script src="{{ asset('js/api-service.js') }}"></script>
     <script src="{{ asset('js/page-loaders.js') }}"></script>
     <script src="{{ asset('js/data-renderers.js') }}"></script>

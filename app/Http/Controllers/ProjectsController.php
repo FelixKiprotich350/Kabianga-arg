@@ -21,7 +21,7 @@ class ProjectsController extends Controller
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to view your Projects!");
         }
 
-        return view('pages.projects.modern-my');
+        return view('pages.projects.my-projects');
     }
     public function fetchmyactiveprojects()
     {
@@ -72,7 +72,7 @@ class ProjectsController extends Controller
     public function viewmyproject($id)
     {
         $project = ResearchProject::with(['proposal.applicant', 'proposal.department', 'applicant'])->findOrFail($id);
-        return view('pages.projects.modern-view', compact('project'));
+        return view('pages.projects.show', compact('project'));
     }
 
     public function allprojects()
@@ -80,7 +80,7 @@ class ProjectsController extends Controller
         if (!auth()->user()->hasPermission('canviewallprojects')) {
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to view all Projects!");
         }
-        return view('pages.projects.modern-all');
+        return view('pages.projects.index');
     }
 
     public function fetchallactiveprojects()
@@ -143,7 +143,7 @@ class ProjectsController extends Controller
         }
 
         $project = ResearchProject::with(['proposal.applicant', 'proposal.department', 'applicant'])->findOrFail($id);
-        return view('pages.projects.modern-view', compact('project'));
+        return view('pages.projects.show', compact('project'));
     }
 
     public function submitmyprogress(Request $request, $id)

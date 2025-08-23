@@ -22,7 +22,7 @@ class LoginController extends Controller
             // return response("authorised");
             return redirect()->route("pages.dashboard");
         } else {
-            return view('pages.auth.modern-login');
+            return view('pages.auth.login');
 
         }
     }

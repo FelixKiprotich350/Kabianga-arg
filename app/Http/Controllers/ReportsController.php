@@ -20,7 +20,7 @@ class ReportsController extends Controller
         $allgrants = Grant::all();
         $allthemes = ResearchTheme::all();
         $alldepartments = Department::all();
-        return view('pages.reports.home', compact('allgrants', 'allthemes', 'alldepartments'));
+        return view('pages.reports.index', compact('allgrants', 'allthemes', 'alldepartments'));
     }
 
     public function getallproposals(Request $request)

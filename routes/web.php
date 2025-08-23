@@ -48,6 +48,18 @@ use App\Http\Controllers\{
 
 //test controller /endpoint
 Route::get('/test', [TestController::class, 'test'])->name('api.test');
+Route::get('/api-test', function() {
+    return view('pages.api-test');
+})->name('pages.api-test')->middleware(['auth']);
+
+// Debug auth
+Route::get('/debug-auth', function() {
+    return [
+        'authenticated' => Auth::check(),
+        'user' => Auth::user(),
+        'session' => session()->all()
+    ];
+});
 
 // Public API Routes (no authentication required)
 Route::prefix('api')->group(function () {
@@ -83,13 +95,13 @@ Route::get('/permission', [LoginController::class, 'subpermission'])->name('rout
 
 // Protected Routes
 //custom account verification
-Route::middleware('auth.custom')->group(function () {
-    Route::get('email/verify', [CustomVerificationController::class, 'show'])->name('pages.account.verifyemail');
-    Route::get('email/verify/{id}/{hash}', [CustomVerificationController::class, 'verify'])->name('verification.verify');
-    Route::post('email/resend', [CustomVerificationController::class, 'resend'])->name('verification.resend');
-});
+// Email verification routes (no middleware for now)
+Route::get('email/verify', [CustomVerificationController::class, 'show'])->name('pages.account.verifyemail');
+Route::get('email/verify/{id}/{hash}', [CustomVerificationController::class, 'verify'])->name('verification.verify');
+Route::post('email/resend', [CustomVerificationController::class, 'resend'])->name('verification.resend');
 
-Route::middleware(['auth.custom', 'email.account.verification'])->group(function () {
+// Protected routes
+Route::group(['middleware' => 'auth'], function () {
 
     //Unauthorized
     Route::get('/unauthorized', [DashboardController::class, 'unauthorized'])->name('pages.unauthorized');

@@ -4,17 +4,19 @@
  */
 class APIService {
     constructor() {
-        this.baseURL = '/api';
+        this.baseURL = '/api/v1';
         this.token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     }
 
     // Generic fetch method with error handling
     async fetch(endpoint, options = {}) {
         const config = {
+            credentials: 'same-origin',
             headers: {
                 'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
                 'X-CSRF-TOKEN': this.token,
+                'Accept': 'application/json',
                 ...options.headers
             },
             ...options
@@ -24,10 +26,15 @@ class APIService {
             const response = await fetch(`${this.baseURL}${endpoint}`, config);
             
             if (!response.ok) {
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
-            return await response.json();
+            const data = await response.json();
+            return data;
         } catch (error) {
             console.error('API Error:', error);
             throw error;
@@ -40,11 +47,11 @@ class APIService {
     }
 
     async getDashboardChart() {
-        return this.fetch('/dashboard/chart');
+        return this.fetch('/dashboard/charts');
     }
 
     async getRecentActivity() {
-        return this.fetch('/dashboard/recent-activity');
+        return this.fetch('/dashboard/activity');
     }
 
     // User Management APIs

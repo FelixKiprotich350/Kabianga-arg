@@ -169,25 +169,23 @@
 
 @push('scripts')
 <script>
-$(document).ready(function() {
+document.addEventListener('DOMContentLoaded', function() {
     loadPermissions();
     
-    $('#editUserForm').on('submit', function(e) {
+    document.getElementById('editUserForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        $.ajax({
-            url: "{{ route('api.users.updatebasicdetails', $user->userid) }}",
-            type: 'POST',
-            data: $(this).serialize(),
-            success: function(response) {
-                ARGPortal.showSuccess('User updated successfully');
-                $('#editUserModal').modal('hide');
-                setTimeout(() => location.reload(), 1500);
-            },
-            error: function() {
-                ARGPortal.showError('Failed to update user');
-            }
-        });
+        try {
+            const formData = new FormData(this);
+            const userData = Object.fromEntries(formData);
+            
+            await API.updateUser({{ $user->userid }}, userData);
+            ARGPortal.showSuccess('User updated successfully');
+            bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
+            setTimeout(() => location.reload(), 1500);
+        } catch (error) {
+            ARGPortal.showError('Failed to update user');
+        }
     });
     
     function loadPermissions() {
@@ -216,15 +214,20 @@ $(document).ready(function() {
         });
     }
     
-    window.resetPassword = function() {
-        if (confirm('Reset password for this user?')) {
-            $.post("{{ route('api.users.resetpassword', $user->userid) }}", {
-                _token: $('meta[name="csrf-token"]').attr('content')
-            }).done(function() {
-                ARGPortal.showSuccess('Password reset successfully');
-            }).fail(function() {
-                ARGPortal.showError('Failed to reset password');
+    window.resetPassword = async function() {
+        if (!confirm('Reset password for this user?')) return;
+        
+        try {
+            await fetch('/api/users/{{ $user->userid }}/reset-password', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Content-Type': 'application/json'
+                }
             });
+            ARGPortal.showSuccess('Password reset successfully');
+        } catch (error) {
+            ARGPortal.showError('Failed to reset password');
         }
     };
 });

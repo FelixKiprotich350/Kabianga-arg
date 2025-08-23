@@ -97,7 +97,7 @@ class SetupController extends Controller
         }
         $alldepartments = Department::all();
         $schools = School::all();
-        return view('pages.departments.home', compact('alldepartments', 'schools'));
+        return view('pages.departments.index', compact('alldepartments', 'schools'));
     }
     public function getviewdepartmentpage($id)
     {

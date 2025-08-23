@@ -100,7 +100,7 @@ class GrantsController extends Controller
             'current_grant'=>GlobalSetting::where('item','current_open_grant')->first()->value1 ?? null,
             'current_year'=>GlobalSetting::where('item','current_fin_year')->first()->value1 ?? null
         ];
-        return view('pages.grants.home', compact('allgrants', 'finyears','currentsettings'));
+        return view('pages.grants.index', compact('allgrants', 'finyears','currentsettings'));
     }
     public function getviewsinglegrantpage($id)
     {

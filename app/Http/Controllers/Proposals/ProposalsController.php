@@ -50,7 +50,7 @@ class ProposalsController extends Controller
                 })->get();
         }
 
-        return view('pages.proposals.modern-form', compact('grants', 'themes'));
+        return view('pages.proposals.create', compact('grants', 'themes'));
     }
 
     public function postnewproposal(Request $request)
@@ -400,7 +400,7 @@ class ProposalsController extends Controller
         if (!auth()->user()->haspermission('canviewallapplications')) {
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to view all Proposals!");
         }
-        return view('pages.proposals.modern-all-api');
+        return view('pages.proposals.index');
     }
     public function modernMyApplications()
     {
@@ -408,7 +408,7 @@ class ProposalsController extends Controller
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to view My Proposals!");
         }
         $themes = ResearchTheme::all();
-        return view('pages.proposals.modern-list', compact('themes'));
+        return view('pages.proposals.my-applications', compact('themes'));
     }
     public function getsingleproposalpage($id)
     {
@@ -419,7 +419,7 @@ class ProposalsController extends Controller
         if (!$user->haspermission('canreadproposaldetails') && $user->userid != $prop->useridfk) {
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to read the requested Proposal!");
         }
-        return view('pages.proposals.modern-view', compact('prop'));
+        return view('pages.proposals.show', compact('prop'));
     }
     public function printpdf($id)
     {
@@ -477,10 +477,15 @@ class ProposalsController extends Controller
     public function fetchallproposals()
     {
         if (!auth()->user()->haspermission('canviewallapplications')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to view all Proposals!");
+            return response()->json(['success' => false, 'message' => 'Unauthorized', 'data' => []], 403);
         }
-        $data = Proposal::with('department', 'grantitem', 'themeitem', 'applicant')->get();
-        return response()->json($data); // Return  data as JSON
+        
+        try {
+            $data = Proposal::with('department', 'grantitem', 'themeitem', 'applicant')->get();
+            return response()->json(['success' => true, 'data' => $data]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to fetch proposals', 'data' => []], 500);
+        }
     }
 
     public function fetchsearchproposals(Request $request)

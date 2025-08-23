@@ -6,7 +6,13 @@
 // Dashboard Page Loader
 async function loadDashboardData() {
     try {
-        ARGPortal.showLoading(document.getElementById('dashboard-content'));
+        const statsContainer = document.getElementById('dashboard-stats');
+        const chartContainer = document.getElementById('dashboard-chart');
+        const activityContainer = document.getElementById('recent-activity');
+        
+        if (statsContainer) {
+            statsContainer.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted">Loading statistics...</p></div>';
+        }
         
         const [stats, chartData, recentActivity] = await Promise.all([
             API.getDashboardStats(),
@@ -14,20 +20,35 @@ async function loadDashboardData() {
             API.getRecentActivity()
         ]);
 
-        renderDashboardStats(stats);
-        renderDashboardChart(chartData);
-        renderRecentActivity(recentActivity);
+        if (stats && stats.success) {
+            renderDashboardStats(stats.data);
+        }
+        if (chartData) {
+            renderDashboardChart(chartData);
+        }
+        if (recentActivity && recentActivity.success) {
+            renderRecentActivity(recentActivity.data);
+        }
         
     } catch (error) {
-        ARGPortal.showError('Failed to load dashboard data');
         console.error('Dashboard load error:', error);
+        const statsContainer = document.getElementById('dashboard-stats');
+        if (statsContainer) {
+            statsContainer.innerHTML = '<div class="alert alert-danger">Failed to load dashboard data</div>';
+        }
     }
 }
 
 // Proposals Page Loader
 async function loadProposalsData(type = 'all') {
     try {
-        ARGPortal.showLoading(document.getElementById('proposals-content'));
+        const loadingState = document.getElementById('loadingState');
+        const emptyState = document.getElementById('emptyState');
+        const tableBody = document.getElementById('applicationsTableBody');
+        
+        if (loadingState) loadingState.style.display = 'block';
+        if (emptyState) emptyState.style.display = 'none';
+        if (tableBody) tableBody.innerHTML = '';
         
         let proposals;
         switch(type) {
@@ -38,11 +59,27 @@ async function loadProposalsData(type = 'all') {
                 proposals = await API.getAllProposals();
         }
 
-        renderProposalsList(proposals);
+        if (loadingState) loadingState.style.display = 'none';
+        
+        if (proposals && proposals.success && proposals.data) {
+            if (proposals.data.length === 0) {
+                if (emptyState) emptyState.style.display = 'block';
+            } else {
+                renderProposalsList(proposals.data);
+            }
+        } else {
+            if (emptyState) emptyState.style.display = 'block';
+        }
         
     } catch (error) {
-        ARGPortal.showError('Failed to load proposals');
         console.error('Proposals load error:', error);
+        const loadingState = document.getElementById('loadingState');
+        const emptyState = document.getElementById('emptyState');
+        if (loadingState) loadingState.style.display = 'none';
+        if (emptyState) {
+            emptyState.innerHTML = '<div class="alert alert-danger">Failed to load proposals</div>';
+            emptyState.style.display = 'block';
+        }
     }
 }
 
@@ -279,6 +316,37 @@ async function performSearch(query, type) {
     }
 }
 
+// Users Data Loader
+async function loadUsersData() {
+    try {
+        ARGPortal.showLoading(document.getElementById('usersTableBody'));
+        
+        const [users, departments] = await Promise.all([
+            API.getAllUsers(),
+            API.getAllDepartments()
+        ]);
+
+        DataRenderers.renderUsersList(users);
+        populateDepartmentSelect(departments);
+        
+    } catch (error) {
+        ARGPortal.showError('Failed to load users');
+        console.error('Users load error:', error);
+    }
+}
+
+function populateDepartmentSelect(departments) {
+    const select = document.querySelector('select[name="departmentidfk"]');
+    if (select) {
+        departments.forEach(dept => {
+            const option = document.createElement('option');
+            option.value = dept.id || dept.departmentid;
+            option.textContent = dept.name || dept.departmentname;
+            select.appendChild(option);
+        });
+    }
+}
+
 // Auto-load data based on current page
 document.addEventListener('DOMContentLoaded', function() {
     const currentPath = window.location.pathname;
@@ -331,5 +399,6 @@ window.PageLoaders = {
     loadReportsData,
     loadMonitoringData,
     loadSettingsData,
-    performSearch
+    performSearch,
+    populateDepartmentSelect
 };
