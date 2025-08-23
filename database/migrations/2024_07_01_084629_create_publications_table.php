@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('publisher');  
             $table->string('volume');
             $table->integer('pages');            
-            $table->foreign('proposalidfk')->references('proposalid')->on('proposals')->onDelete('restrict');   
+            $table->foreign('proposalidfk')->references('proposalid')->on('proposals')->onDelete('cascade');   
             $table->timestamps();
         });
     }

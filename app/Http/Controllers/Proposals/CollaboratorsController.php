@@ -17,6 +17,8 @@ class CollaboratorsController extends Controller
     //
     public function postcollaborator(Request $request)
     {
+        \Log::info('Collaborator request received', $request->all());
+        
         if(!auth()->user()->haspermission('canmakenewproposal')){
             return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
         }

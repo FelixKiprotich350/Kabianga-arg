@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('institution');
             $table->string('researcharea');
             $table->string('experience');  
-            $table->foreign('proposalidfk')->references('proposalid')->on('proposals')->onDelete('restrict');
+            $table->foreign('proposalidfk')->references('proposalid')->on('proposals')->onDelete('cascade');
             $table->timestamps();
         });
     }

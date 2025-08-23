@@ -13,6 +13,8 @@ class PublicationsController extends Controller
     //
     public function postpublication(Request $request)
     {
+        \Log::info('Publication request received', $request->all());
+        
         if(!auth()->user()->haspermission('canmakenewproposal')){
             return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
         }
@@ -60,9 +62,9 @@ class PublicationsController extends Controller
             $publication->volume = 'N/A';
             $publication->pages = 0;
         } else {
+            $publication->title = $request->input('pubtitle');
             $publication->authors = $request->input('authors');
             $publication->year = $request->input('year');
-            $publication->title = $request->input('pubtitle');
             $publication->volume = $request->input('volume');
             $publication->researcharea = $request->input('researcharea');
             $publication->pages = $request->input('pubpages');
@@ -98,6 +100,10 @@ class PublicationsController extends Controller
 
     public function updatePublication(Request $request, $id)
     {
+        if(!auth()->user()->haspermission('canmakenewproposal')){
+            return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
+        }
+
         $rules = [
             'authors' => 'required|string',
             'year' => 'required|string',
@@ -128,6 +134,10 @@ class PublicationsController extends Controller
 
     public function deletePublication($id)
     {
+        if(!auth()->user()->haspermission('canmakenewproposal')){
+            return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
+        }
+
         $publication = Publication::findOrFail($id);
         $publication->delete();
 

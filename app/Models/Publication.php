@@ -31,4 +31,20 @@ class Publication extends Model
             }
         });
     }
+
+    protected $fillable = [
+        'proposalidfk',
+        'authors',
+        'year',
+        'title',
+        'researcharea',
+        'publisher',
+        'volume',
+        'pages'
+    ];
+
+    public function proposal()
+    {
+        return $this->belongsTo(Proposal::class, 'proposalidfk', 'proposalid');
+    }
 }
