@@ -308,7 +308,7 @@ $(document).ready(function() {
     // Form submissions
     $('#addSchoolForm').on('submit', function(e) {
         e.preventDefault();
-        $.post("{{ route('api.schools.post') }}", $(this).serialize())
+        $.post('/api/v1/schools', $(this).serialize())
             .done(() => {
                 ARGPortal.showSuccess('School added successfully');
                 $('#addSchoolModal').modal('hide');
@@ -320,7 +320,7 @@ $(document).ready(function() {
     
     $('#addDepartmentForm').on('submit', function(e) {
         e.preventDefault();
-        $.post("{{ route('api.departments.post') }}", $(this).serialize())
+        $.post('/api/v1/departments', $(this).serialize())
             .done(() => {
                 ARGPortal.showSuccess('Department added successfully');
                 $('#addDepartmentModal').modal('hide');

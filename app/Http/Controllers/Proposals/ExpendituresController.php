@@ -13,58 +13,72 @@ class ExpendituresController extends Controller
     //
     public function postexpenditure(Request $request)
     {
-        // Validate incoming request data if needed
-        // Define validation rules
+        if(!auth()->user()->haspermission('canmakenewproposal')){
+            return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
+        }
+        
+        // Handle both form field names
         $rules = [
-            'itemtype' => 'required|string', // Example rules, adjust as needed
-            'item' => 'required|string', // Adjust data types as per your schema
-            'total' => 'required|numeric|regex:/^\d+(\.\d{1,2})?$/',
-            'quantity' => 'required|integer',
-            'unitprice' => 'required|integer',
             'proposalidfk' => 'required|string',
         ];
+        
+        if ($request->has('category')) {
+            $rules['category'] = 'required|string';
+            $rules['description'] = 'required|string';
+            $rules['amount'] = 'required|numeric';
+        } else {
+            $rules['itemtype'] = 'required|string';
+            $rules['item'] = 'required|string';
+            $rules['total'] = 'required|numeric|regex:/^\d+(\.\d{1,2})?$/';
+            $rules['quantity'] = 'required|integer';
+            $rules['unitprice'] = 'required|integer';
+        }
 
-
-
-        // Validate incoming request
         $validator = Validator::make($request->all(), $rules);
-
-        // Check if validation fails
         if ($validator->fails()) {
-            // return response()->json(['error' => $validator->errors()], 400);
-            return response(['message' => 'Fill all the required Fields!', 'type' => 'danger'], 400);
-
+            return response()->json(['message' => 'Fill all the required Fields!', 'type' => 'danger'], 400);
         }
 
-        //check if publications are more than 10
-        $currentCount = Expenditureitem::where('proposalidfk', $request->input('proposalidfk'))->count();
-        if (!$this->isvalidbudget($request->input('proposalidfk'), $request->input('total'), $request->input('itemtype'))) {
-            return response(['message' => 'The 60/40 Rule failed to Validate!', 'type' => 'danger'], 400);
+        // Handle both field name formats
+        $itemtype = $request->input('category') ?? $request->input('itemtype');
+        $total = $request->input('amount') ?? $request->input('total');
+        
+        if (!$this->isvalidbudget($request->input('proposalidfk'), $total, $itemtype)) {
+            return response()->json(['message' => 'The 60/40 Rule failed to Validate!', 'type' => 'danger'], 400);
         }
 
-        $expenditure = new Expenditureitem(); // Ensure the model name matches your actual model class name
-        // Assign values from the request
-        $expenditure->itemtype = $request->input('itemtype');
-        $expenditure->total = $request->input('total');
-        $expenditure->unitprice = $request->input('unitprice');
-        $expenditure->quantity = $request->input('quantity');
-        $expenditure->item = $request->input('item');
+        $expenditure = new Expenditureitem();
+        
+        if ($request->has('category')) {
+            $expenditure->itemtype = $request->input('category');
+            $expenditure->item = $request->input('description');
+            $expenditure->total = $request->input('amount');
+            $expenditure->unitprice = $request->input('amount');
+            $expenditure->quantity = 1;
+        } else {
+            $expenditure->itemtype = $request->input('itemtype');
+            $expenditure->total = $request->input('total');
+            $expenditure->unitprice = $request->input('unitprice');
+            $expenditure->quantity = $request->input('quantity');
+            $expenditure->item = $request->input('item');
+        }
+        
         $expenditure->proposalidfk = $request->input('proposalidfk');
-        // Save the proposal
         $expenditure->save();
 
-        // Optionally, return a response or redirect
-        // return response()->json(['message' => 'Proposal created successfully'], 201);
-        return response(['message' => 'Expenditure Saved Successfully!!', 'type' => 'success']);
-
-
+        return response()->json(['message' => 'Expenditure Saved Successfully!!', 'type' => 'success', 'success' => true, 'id' => $expenditure->expenditureid]);
     }
 
 
-    public function fetchall()
+    public function fetchall(Request $request)
     {
-        $data = Expenditureitem::all();
-        return response()->json($data); // Return  data as JSON
+        $proposalId = $request->input('proposalid');
+        if ($proposalId) {
+            $data = Expenditureitem::where('proposalidfk', $proposalId)->get();
+        } else {
+            $data = Expenditureitem::all();
+        }
+        return response()->json($data);
     }
 
     public function fetchsearch(Request $request)

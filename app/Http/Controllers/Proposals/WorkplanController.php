@@ -14,59 +14,69 @@ class WorkplanController extends Controller
     //
     public function postworkplanitem(Request $request)
     {
-        // Validate incoming request data if needed
-        // Define validation rules
+        if(!auth()->user()->haspermission('canmakenewproposal')){
+            return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
+        }
+        
+        // Handle both form field names
         $rules = [
-            'activity' => 'required|string', // Example rules, adjust as needed
-            'time' => 'required|string', // Adjust data types as per your schema
-            'input' => 'required|string',
-            'outcome' => 'required|string',
-            'facilities' => 'required|string', 
-            'bywhom' => 'required|string', 
             'proposalidfk' => 'required|string',
         ];
-
-
-
-        // Validate incoming request
-        $validator = Validator::make($request->all(), $rules);
-
-        // Check if validation fails
-        if ($validator->fails()) {
-            // return response()->json(['error' => $validator->errors()], 400);
-            return response(['message' => 'Fill all the required Fields!','type'=>'danger'], 400);
-
+        
+        if ($request->has('activityname')) {
+            $rules['activityname'] = 'required|string';
+            $rules['startdate'] = 'required|date';
+            $rules['enddate'] = 'required|date';
+            $rules['activitydescription'] = 'required|string';
+        } else {
+            $rules['activity'] = 'required|string';
+            $rules['time'] = 'required|string';
+            $rules['input'] = 'required|string';
+            $rules['outcome'] = 'required|string';
+            $rules['facilities'] = 'required|string';
+            $rules['bywhom'] = 'required|string';
         }
 
-        //check if publications are more than 10
-        $currentCount = Workplan::where('proposalidfk', $request->input('proposalidfk'))->count();
- 
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            return response()->json(['message' => 'Fill all the required Fields!','type'=>'danger'], 400);
+        }
 
-        // Assuming you're retrieving grantno, departmentid, and userid from the request
-        $workplan = new Workplan(); // Ensure the model name matches your actual model class name
-        // Assign values from the request
-        $workplan->activity = $request->input('activity');
-        $workplan->input = $request->input('input');
-        $workplan->bywhom = $request->input('bywhom');
-        $workplan->outcome = $request->input('outcome');  
-        $workplan->facilities = $request->input('facilities');  
-        $workplan->time = $request->input('time'); 
-        $workplan->proposalidfk =$request->input('proposalidfk');
-        // Save the proposal
+        $workplan = new Workplan();
+        
+        if ($request->has('activityname')) {
+            // Store activity name and dates in existing fields
+            $workplan->activity = $request->input('activityname');
+            $workplan->time = $request->input('startdate') . ' to ' . $request->input('enddate');
+            $workplan->input = $request->input('activitydescription');
+            $workplan->outcome = 'N/A';
+            $workplan->facilities = 'N/A';
+            $workplan->bywhom = 'N/A';
+        } else {
+            $workplan->activity = $request->input('activity');
+            $workplan->input = $request->input('input');
+            $workplan->bywhom = $request->input('bywhom');
+            $workplan->outcome = $request->input('outcome');
+            $workplan->facilities = $request->input('facilities');
+            $workplan->time = $request->input('time');
+        }
+        
+        $workplan->proposalidfk = $request->input('proposalidfk');
         $workplan->save();
 
-        // Optionally, return a response or redirect
-        // return response()->json(['message' => 'Proposal created successfully'], 201);
-        return response(['message'=> 'WorkplanItem Saved Successfully!!','type'=>'success']);
-
-
+        return response()->json(['message'=> 'WorkplanItem Saved Successfully!!','type'=>'success', 'success' => true, 'id' => $workplan->workplanid]);
     }
 
     
-    public function fetchall()
+    public function fetchall(Request $request)
     {
-        $data = Workplan::all();
-        return response()->json($data); // Return  data as JSON
+        $proposalId = $request->input('proposalid');
+        if ($proposalId) {
+            $data = Workplan::where('proposalidfk', $proposalId)->get();
+        } else {
+            $data = Workplan::all();
+        }
+        return response()->json($data);
     }
 
     public function fetchsearch(Request $request)

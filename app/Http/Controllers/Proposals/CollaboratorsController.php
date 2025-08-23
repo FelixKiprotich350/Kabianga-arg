@@ -18,59 +18,70 @@ class CollaboratorsController extends Controller
     public function postcollaborator(Request $request)
     {
         if(!auth()->user()->haspermission('canmakenewproposal')){
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Edit the requested Proposal!");
+            return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
         }
-        // Validate incoming request data if needed
-        // Define validation rules
+        
+        // Handle both form field names (name/collaboratorname)
         $rules = [
-            'collaboratorname' => 'required|string', // Example rules, adjust as needed
-            'institution' => 'required|string', // Adjust data types as per your schema
-            'position' => 'required|string',
-            'researcharea' => 'required|string',
-            'experience' => 'required|string', 
-            'proposalidfk' => 'required|string', 
+            'proposalidfk' => 'required|string',
         ];
+        
+        // Check which field names are being used
+        if ($request->has('name')) {
+            $rules['name'] = 'required|string';
+            $rules['institution'] = 'required|string';
+            $rules['role'] = 'required|string';
+            $rules['email'] = 'required|email';
+        } else {
+            $rules['collaboratorname'] = 'required|string';
+            $rules['institution'] = 'required|string';
+            $rules['position'] = 'required|string';
+            $rules['researcharea'] = 'required|string';
+            $rules['experience'] = 'required|string';
+        }
 
-
-
-        // Validate incoming request
         $validator = Validator::make($request->all(), $rules);
-
-        // Check if validation fails
         if ($validator->fails()) {
-            // $validator->errors()
-            return response(['message' => 'Fill all the required Fields!','type'=>'danger'], 400);
+            return response()->json(['message' => 'Fill all the required Fields!','type'=>'danger'], 400);
         }
 
         $currentcount = Collaborator::where('proposalidfk',$request->input('proposalidfk'))->count();
-
         if($currentcount>=5){
-            return response(['message'=>'You have reached the maximum number of collaborators allowed!','type'=>'warning']);
+            return response()->json(['message'=>'You have reached the maximum number of collaborators allowed!','type'=>'warning']);
         }
-        // Assuming you're retrieving grantno, departmentid, and userid from the request
-        $collaborator = new Collaborator(); // Ensure the model name matches your actual model class name
-
-        // Assign values from the request
-        $collaborator->collaboratorname = $request->input('collaboratorname');
-        $collaborator->institution = $request->input('institution');
-        $collaborator->position = $request->input('position');
-        $collaborator->researcharea = 'researcharea'; 
-        $collaborator->experience = $request->input('experience'); 
-        $collaborator->proposalidfk = $request->input('proposalidfk'); 
-        // Save the proposal
+        
+        $collaborator = new Collaborator();
+        
+        // Handle both field name formats
+        if ($request->has('name')) {
+            $collaborator->collaboratorname = $request->input('name');
+            $collaborator->institution = $request->input('institution');
+            $collaborator->position = $request->input('role');
+            $collaborator->researcharea = $request->input('email'); // Store email in researcharea for now
+            $collaborator->experience = 'N/A';
+        } else {
+            $collaborator->collaboratorname = $request->input('collaboratorname');
+            $collaborator->institution = $request->input('institution');
+            $collaborator->position = $request->input('position');
+            $collaborator->researcharea = $request->input('researcharea');
+            $collaborator->experience = $request->input('experience');
+        }
+        
+        $collaborator->proposalidfk = $request->input('proposalidfk');
         $collaborator->save();
 
-        // Optionally, return a response or redirect
-        // return response()->json(['message' => 'Proposal created successfully'], 201);
-        return response(['message'=> 'Collaborator Saved Successfully!!','type'=>'success']);
-
-
+        return response()->json(['message'=> 'Collaborator Saved Successfully!!','type'=>'success', 'success' => true, 'id' => $collaborator->collaboratorid]);
     }
 
-    public function fetchall()
+    public function fetchall(Request $request)
     {
-        $data = Collaborator::with('department', 'grantitem', 'themeitem', 'applicant')->get();
-        return response()->json($data); // Return  data as JSON
+        $proposalId = $request->input('proposalid');
+        if ($proposalId) {
+            $data = Collaborator::where('proposalidfk', $proposalId)->get();
+        } else {
+            $data = Collaborator::all();
+        }
+        return response()->json($data);
     }
 
     public function fetchsearch(Request $request)

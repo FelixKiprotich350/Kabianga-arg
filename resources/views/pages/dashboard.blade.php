@@ -160,7 +160,7 @@ $(document).ready(function() {
 });
 
 function loadDashboardStats() {
-    $.get('{{ route("api.dashboard.stats") }}')
+    $.get('/api/v1/dashboard/stats')
         .done(data => {
             if (data.success) {
                 renderDashboardStats(data.data);
@@ -174,7 +174,7 @@ function loadDashboardStats() {
 }
 
 function loadDashboardChart() {
-    $.get('{{ route("api.dashboard.chartdata") }}')
+    $.get('/api/v1/dashboard/charts')
         .done(data => {
             renderDashboardChart(data);
         })
@@ -184,7 +184,7 @@ function loadDashboardChart() {
 }
 
 function loadRecentActivity() {
-    $.get('{{ route("api.dashboard.recentactivity") }}')
+    $.get('/api/v1/dashboard/activity')
         .done(data => {
             if (data.success) {
                 renderRecentActivity(data.data);

@@ -10,7 +10,7 @@
             <p class="text-muted mb-0">ID: {{ $prop->proposalcode ?? $prop->proposalid }}</p>
         </div>
         <div class="d-flex gap-2">
-            <a href="{{ route('api.proposal.printpdf', $prop->proposalid) }}" class="btn btn-outline-secondary" target="_blank">
+            <a href="/api/v1/proposals/{{ $prop->proposalid }}/pdf" class="btn btn-outline-secondary" target="_blank">
                 <i class="bi bi-download me-2"></i>Download PDF
             </a>
             @if(Auth::user()->userid == $prop->useridfk && $prop->caneditstatus)
@@ -226,7 +226,7 @@ $(document).ready(function() {
     
     function loadCollaborators() {
         $.ajax({
-            url: "{{ route('api.proposals.fetchcollaborators', $prop->proposalid) }}",
+            url: "/api/v1/proposals/{{ $prop->proposalid }}/collaborators",
             type: 'GET',
             success: function(response) {
                 const container = $('#collaboratorsList');
@@ -254,7 +254,7 @@ $(document).ready(function() {
     
     function loadBudget() {
         $.ajax({
-            url: "{{ route('api.proposals.fetchexpenditures', $prop->proposalid) }}",
+            url: "/api/v1/proposals/{{ $prop->proposalid }}/expenditures",
             type: 'GET',
             success: function(response) {
                 const container = $('#budgetBreakdown');

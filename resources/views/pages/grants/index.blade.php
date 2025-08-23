@@ -338,7 +338,7 @@ $(document).ready(function() {
     // Add grant form
     $('#addGrantForm').on('submit', function(e) {
         e.preventDefault();
-        $.post("{{ route('api.grants.post') }}", $(this).serialize())
+        $.post('/api/v1/grants', $(this).serialize())
             .done(() => {
                 ARGPortal.showSuccess('Grant added successfully');
                 $('#addGrantModal').modal('hide');
@@ -350,14 +350,14 @@ $(document).ready(function() {
     // Current settings forms
     $('#currentGrantForm').on('submit', function(e) {
         e.preventDefault();
-        $.post("{{ route('api.grants.settings.postcurrentgrant') }}", $(this).serialize())
+        $.post('/api/v1/settings/current-grant', $(this).serialize())
             .done(() => ARGPortal.showSuccess('Current grant updated'))
             .fail(() => ARGPortal.showError('Failed to update current grant'));
     });
 
     $('#currentYearForm').on('submit', function(e) {
         e.preventDefault();
-        $.post("{{ route('api.grants.settings.postcurrentfinyear') }}", $(this).serialize())
+        $.post('/api/v1/settings/current-year', $(this).serialize())
             .done(() => ARGPortal.showSuccess('Current year updated'))
             .fail(() => ARGPortal.showError('Failed to update current year'));
     });
@@ -365,7 +365,7 @@ $(document).ready(function() {
     // Financial Year form
     $('#addFinYearForm').on('submit', function(e) {
         e.preventDefault();
-        $.post("{{ route('api.finyear.post') }}", $(this).serialize())
+        $.post('/api/v1/financial-years', $(this).serialize())
             .done(() => {
                 ARGPortal.showSuccess('Financial year added successfully');
                 $('#addFinYearModal').modal('hide');

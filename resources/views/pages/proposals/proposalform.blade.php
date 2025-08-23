@@ -3,6 +3,20 @@
 @section('title', isset($prop) ? 'Edit Proposal - UoK ARG Portal' : 'New Proposal - UoK ARG Portal')
 
 @section('content')
+
+@if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+@endif
+
+@if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+@endif
 <div class="container-fluid">
     @if (isset($grants))
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -51,7 +65,7 @@
                                     <select name="grantnofk" class="form-select" required>
                                         <option value="">Select Grant</option>
                                         @foreach ($grants as $grant)
-                                            <option value="{{ $grant->grantid }}">{{ $grant->title }}</option>
+                                            <option value="{{ $grant->grantid }}" {{ isset($prop) && $prop->grantnofk == $grant->grantid ? 'selected' : '' }}>{{ $grant->grantname ?? $grant->title }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -60,7 +74,7 @@
                                     <select name="themefk" class="form-select" required>
                                         <option value="">Select Theme</option>
                                         @foreach ($themes as $theme)
-                                            <option value="{{ $theme->themeid }}">{{ $theme->themename }}</option>
+                                            <option value="{{ $theme->themeid }}" {{ isset($prop) && $prop->themefk == $theme->themeid ? 'selected' : '' }}>{{ $theme->themename }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -69,17 +83,25 @@
                                     <select name="departmentfk" class="form-select" required>
                                         <option value="">Select Department</option>
                                         @foreach ($departments as $department)
-                                            <option value="{{ $department->depid }}">{{ $department->shortname }}</option>
+                                            <option value="{{ $department->depid }}" {{ isset($prop) && $prop->departmentidfk == $department->depid ? 'selected' : '' }}>{{ $department->shortname }}</option>
                                         @endforeach
                                     </select>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Qualification</label>
-                                    <input type="text" name="highestqualification" class="form-control" required>
+                                    <input type="text" name="highestqualification" class="form-control" value="{{ isset($prop) ? $prop->highqualification : '' }}" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">Phone</label>
-                                    <input type="tel" name="cellphone" class="form-control" required>
+                                    <label class="form-label">Office Phone</label>
+                                    <input type="tel" name="officephone" class="form-control" value="{{ isset($prop) ? $prop->officephone : '' }}" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Cell Phone</label>
+                                    <input type="tel" name="cellphone" class="form-control" value="{{ isset($prop) ? $prop->cellphone : '' }}" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Fax Number</label>
+                                    <input type="tel" name="faxnumber" class="form-control" value="{{ isset($prop) ? $prop->faxnumber : '' }}" required>
                                 </div>
                             </div>
                             <button type="submit" class="btn btn-primary">Save & Continue</button>
@@ -95,25 +117,45 @@
                             @csrf
                             <div class="mb-3">
                                 <label class="form-label">Research Title</label>
-                                <input type="text" name="researchtitle" class="form-control" required>
+                                <input type="text" name="researchtitle" class="form-control" value="{{ isset($prop) ? $prop->researchtitle : '' }}" required>
                             </div>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Start Date</label>
-                                    <input type="date" name="commencingdate" class="form-control" required>
+                                    <input type="date" name="commencingdate" class="form-control" value="{{ isset($prop) ? $prop->commencingdate : '' }}" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">End Date</label>
-                                    <input type="date" name="terminationdate" class="form-control" required>
+                                    <input type="date" name="terminationdate" class="form-control" value="{{ isset($prop) ? $prop->terminationdate : '' }}" required>
                                 </div>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Objectives</label>
-                                <textarea name="objectives" class="form-control" rows="3" required></textarea>
+                                <textarea name="objectives" class="form-control" rows="3" required>{{ isset($prop) ? $prop->objectives : '' }}</textarea>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Hypothesis</label>
-                                <textarea name="hypothesis" class="form-control" rows="3" required></textarea>
+                                <textarea name="hypothesis" class="form-control" rows="3" required>{{ isset($prop) ? $prop->hypothesis : '' }}</textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Significance</label>
+                                <textarea name="significance" class="form-control" rows="3" required>{{ isset($prop) ? $prop->significance : '' }}</textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Ethical Considerations</label>
+                                <textarea name="ethicals" class="form-control" rows="3" required>{{ isset($prop) ? $prop->ethicals : '' }}</textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Expected Output</label>
+                                <textarea name="outputs" class="form-control" rows="3" required>{{ isset($prop) ? $prop->expoutput : '' }}</textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Economic Impact</label>
+                                <textarea name="economicimpact" class="form-control" rows="3" required>{{ isset($prop) ? $prop->socio_impact : '' }}</textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Research Findings</label>
+                                <textarea name="res_findings" class="form-control" rows="3" required>{{ isset($prop) ? $prop->res_findings : '' }}</textarea>
                             </div>
                             <div class="d-flex justify-content-between">
                                 <button type="button" class="btn btn-secondary" onclick="showStep('basic')">Previous</button>
@@ -258,14 +300,15 @@
                             <table class="table table-striped" id="designTable">
                                 <thead>
                                     <tr>
-                                        <th>Component</th>
-                                        <th>Description</th>
+                                        <th>Summary</th>
+                                        <th>Goal</th>
+                                        <th>Purpose</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr class="text-center">
-                                        <td colspan="3" class="text-muted">No design components added yet</td>
+                                        <td colspan="4" class="text-muted">No design items added yet</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -497,27 +540,39 @@
 
 <!-- Design Modal -->
 <div class="modal fade" id="designModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Add Design Component</h5>
+                <h5 class="modal-title">Add Research Design Item</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <form id="designForm">
                     <div class="mb-3">
-                        <label class="form-label">Component</label>
-                        <select class="form-select" name="component" required>
-                            <option value="">Select Component</option>
-                            <option value="Methodology">Methodology</option>
-                            <option value="Data Collection">Data Collection</option>
-                            <option value="Analysis Plan">Analysis Plan</option>
-                            <option value="Ethics">Ethics</option>
-                        </select>
+                        <label class="form-label">Summary</label>
+                        <textarea class="form-control" name="projectsummary" rows="2" required></textarea>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-control" name="description" rows="3" required></textarea>
+                        <label class="form-label">Indicators</label>
+                        <textarea class="form-control" name="indicators" rows="2" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Verification</label>
+                        <textarea class="form-control" name="verification" rows="2" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Assumptions</label>
+                        <textarea class="form-control" name="assumptions" rows="2" required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Goal</label>
+                            <input type="text" class="form-control" name="goal" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Purpose</label>
+                            <input type="text" class="form-control" name="purpose" required>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -569,9 +624,125 @@
 
 <script>
 let collaborators = [];
+let publications = [];
 let budgetItems = [];
 let designItems = [];
 let workplanItems = [];
+let proposalId = {{ isset($prop) ? $prop->proposalid : 'null' }};
+
+// Initialize data when editing
+document.addEventListener('DOMContentLoaded', function() {
+    if (proposalId) {
+        loadExistingData();
+    }
+});
+
+// Function to show messages
+function showMessage(message, type = 'success') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('.container-fluid');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+function loadExistingData() {
+    // Load collaborators
+    fetch(`/collaborators/fetchall?proposalid=${proposalId}`)
+        .then(response => response.json())
+        .then(data => {
+            collaborators = data;
+            updateCollaboratorsTable();
+        })
+        .catch(error => {
+            console.error('Error loading collaborators:', error);
+        });
+    
+    // Load publications
+    fetch(`/publications/fetchall?proposalid=${proposalId}`)
+        .then(response => response.json())
+        .then(data => {
+            publications = data;
+            updatePublicationsTable();
+        })
+        .catch(error => {
+            console.error('Error loading publications:', error);
+        });
+    
+    // Load expenditures
+    fetch(`/expenditures/fetchall?proposalid=${proposalId}`)
+        .then(response => response.json())
+        .then(data => {
+            budgetItems = data.map(item => ({
+                category: item.itemtype,
+                description: item.item,
+                amount: item.total,
+                expenditureid: item.expenditureid
+            }));
+            updateBudgetTable();
+            updateTotalBudget();
+        })
+        .catch(error => {
+            console.error('Error loading expenditures:', error);
+        });
+    
+    // Load research design
+    fetch(`/researchdesign/fetchall?proposalid=${proposalId}`)
+        .then(response => response.json())
+        .then(data => {
+            designItems = data.map(item => ({
+                summary: item.summary,
+                indicators: item.indicators,
+                verification: item.verification,
+                assumptions: item.assumptions,
+                goal: item.goal,
+                purpose: item.purpose,
+                designid: item.designid
+            }));
+            updateDesignTable();
+        })
+        .catch(error => {
+            console.error('Error loading research design:', error);
+        });
+    
+    // Load workplan
+    fetch(`/workplan/fetchall?proposalid=${proposalId}`)
+        .then(response => response.json())
+        .then(data => {
+            workplanItems = data.map(item => {
+                const dates = item.time ? item.time.split(' to ') : ['', ''];
+                const startDate = dates[0] || '';
+                const endDate = dates[1] || '';
+                let duration = 0;
+                if (startDate && endDate) {
+                    duration = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24));
+                }
+                return {
+                    activity: item.activity,
+                    start_date: startDate,
+                    end_date: endDate,
+                    description: item.input,
+                    duration: duration,
+                    workplanid: item.workplanid
+                };
+            });
+            updateWorkplanTable();
+        })
+        .catch(error => {
+            console.error('Error loading workplan:', error);
+        });
+}
 
 function showStep(step) {
     document.querySelectorAll('.step-content').forEach(content => {
@@ -602,8 +773,35 @@ function addCollaborator() {
     const formData = new FormData(form);
     const collaborator = Object.fromEntries(formData);
     
-    collaborators.push(collaborator);
-    updateCollaboratorsTable();
+    if (proposalId) {
+        // Save to database
+        formData.append('proposalidfk', proposalId);
+        fetch('/collaborators/post', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                collaborator.collaboratorid = data.id;
+                collaborators.push(collaborator);
+                updateCollaboratorsTable();
+                showMessage(data.message, data.type);
+            } else {
+                showMessage(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            showMessage('Error adding collaborator', 'error');
+        });
+    } else {
+        collaborators.push(collaborator);
+        updateCollaboratorsTable();
+    }
+    
     form.reset();
     bootstrap.Modal.getInstance(document.getElementById('collaboratorModal')).hide();
 }
@@ -617,18 +815,113 @@ function updateCollaboratorsTable() {
     
     tbody.innerHTML = collaborators.map((collab, index) => `
         <tr>
-            <td>${collab.name}</td>
+            <td>${collab.collaboratorname || collab.name}</td>
             <td>${collab.institution}</td>
-            <td>${collab.role}</td>
-            <td>${collab.email}</td>
+            <td>${collab.position || collab.role}</td>
+            <td>${collab.researcharea || collab.email}</td>
             <td><button class="btn btn-sm btn-danger" onclick="removeCollaborator(${index})">Remove</button></td>
         </tr>
     `).join('');
 }
 
 function removeCollaborator(index) {
+    const collaborator = collaborators[index];
+    if (collaborator.collaboratorid) {
+        // Delete from database
+        fetch(`/collaborators/delete/${collaborator.collaboratorid}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            showMessage(data.message, data.type);
+        })
+        .catch(error => {
+            showMessage('Error removing collaborator', 'error');
+        });
+    }
     collaborators.splice(index, 1);
     updateCollaboratorsTable();
+}
+
+function addPublication() {
+    const form = document.getElementById('publicationForm');
+    const formData = new FormData(form);
+    const publication = Object.fromEntries(formData);
+    
+    if (proposalId) {
+        // Save to database
+        formData.append('proposalidfk', proposalId);
+        fetch('/publications/post', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                publication.publicationid = data.id;
+                publications.push(publication);
+                updatePublicationsTable();
+                showMessage(data.message, data.type);
+            } else {
+                showMessage(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            showMessage('Error adding publication', 'error');
+        });
+    } else {
+        publications.push(publication);
+        updatePublicationsTable();
+    }
+    
+    form.reset();
+    bootstrap.Modal.getInstance(document.getElementById('publicationModal')).hide();
+}
+
+function updatePublicationsTable() {
+    const tbody = document.querySelector('#publicationsTable tbody');
+    if (publications.length === 0) {
+        tbody.innerHTML = '<tr class="text-center"><td colspan="5" class="text-muted">No publications added yet</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = publications.map((pub, index) => `
+        <tr>
+            <td>${pub.title}</td>
+            <td>${pub.authors}</td>
+            <td>${pub.publisher}</td>
+            <td>${pub.year}</td>
+            <td><button class="btn btn-sm btn-danger" onclick="removePublication(${index})">Remove</button></td>
+        </tr>
+    `).join('');
+}
+
+function removePublication(index) {
+    const publication = publications[index];
+    if (publication.publicationid) {
+        // Delete from database
+        fetch(`/publications/delete/${publication.publicationid}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            showMessage(data.message, data.type);
+        })
+        .catch(error => {
+            showMessage('Error removing publication', 'error');
+        });
+    }
+    publications.splice(index, 1);
+    updatePublicationsTable();
 }
 
 function addBudgetItem() {
@@ -636,9 +929,41 @@ function addBudgetItem() {
     const formData = new FormData(form);
     const item = Object.fromEntries(formData);
     
-    budgetItems.push(item);
-    updateBudgetTable();
-    updateTotalBudget();
+    if (proposalId) {
+        // Save to database
+        formData.append('proposalidfk', proposalId);
+        formData.append('itemtype', item.category);
+        formData.append('itemdescription', item.description);
+        formData.append('total', item.amount);
+        
+        fetch('/expenditures/post', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                item.expenditureid = data.id;
+                budgetItems.push(item);
+                updateBudgetTable();
+                updateTotalBudget();
+                showMessage(data.message, data.type);
+            } else {
+                showMessage(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            showMessage('Error adding budget item', 'error');
+        });
+    } else {
+        budgetItems.push(item);
+        updateBudgetTable();
+        updateTotalBudget();
+    }
+    
     form.reset();
     bootstrap.Modal.getInstance(document.getElementById('budgetModal')).hide();
 }
@@ -652,22 +977,39 @@ function updateBudgetTable() {
     
     tbody.innerHTML = budgetItems.map((item, index) => `
         <tr>
-            <td>${item.category}</td>
-            <td>${item.description}</td>
-            <td>${parseFloat(item.amount).toLocaleString()}</td>
+            <td>${item.category || item.itemtype}</td>
+            <td>${item.description || item.item}</td>
+            <td>${parseFloat(item.amount || item.total).toLocaleString()}</td>
             <td><button class="btn btn-sm btn-danger" onclick="removeBudgetItem(${index})">Remove</button></td>
         </tr>
     `).join('');
 }
 
 function removeBudgetItem(index) {
+    const item = budgetItems[index];
+    if (item.expenditureid) {
+        // Delete from database
+        fetch(`/expenditures/delete/${item.expenditureid}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            showMessage(data.message, data.type);
+        })
+        .catch(error => {
+            showMessage('Error removing budget item', 'error');
+        });
+    }
     budgetItems.splice(index, 1);
     updateBudgetTable();
     updateTotalBudget();
 }
 
 function updateTotalBudget() {
-    const total = budgetItems.reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
+    const total = budgetItems.reduce((sum, item) => sum + parseFloat(item.amount || item.total || 0), 0);
     document.getElementById('totalBudget').value = total.toLocaleString();
 }
 
@@ -676,8 +1018,36 @@ function addDesignItem() {
     const formData = new FormData(form);
     const item = Object.fromEntries(formData);
     
-    designItems.push(item);
-    updateDesignTable();
+    if (proposalId) {
+        // Save to database
+        formData.append('proposalidfk', proposalId);
+        
+        fetch('/researchdesign/post', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                item.designid = data.id;
+                designItems.push(item);
+                updateDesignTable();
+                showMessage(data.message, data.type);
+            } else {
+                showMessage(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            showMessage('Error adding design item', 'error');
+        });
+    } else {
+        designItems.push(item);
+        updateDesignTable();
+    }
+    
     form.reset();
     bootstrap.Modal.getInstance(document.getElementById('designModal')).hide();
 }
@@ -685,20 +1055,38 @@ function addDesignItem() {
 function updateDesignTable() {
     const tbody = document.querySelector('#designTable tbody');
     if (designItems.length === 0) {
-        tbody.innerHTML = '<tr class="text-center"><td colspan="3" class="text-muted">No design components added yet</td></tr>';
+        tbody.innerHTML = '<tr class="text-center"><td colspan="4" class="text-muted">No design items added yet</td></tr>';
         return;
     }
     
     tbody.innerHTML = designItems.map((item, index) => `
         <tr>
-            <td>${item.component}</td>
-            <td>${item.description}</td>
+            <td>${item.summary}</td>
+            <td>${item.goal}</td>
+            <td>${item.purpose}</td>
             <td><button class="btn btn-sm btn-danger" onclick="removeDesignItem(${index})">Remove</button></td>
         </tr>
     `).join('');
 }
 
 function removeDesignItem(index) {
+    const item = designItems[index];
+    if (item.designid) {
+        // Delete from database
+        fetch(`/researchdesign/delete/${item.designid}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            showMessage(data.message, data.type);
+        })
+        .catch(error => {
+            showMessage('Error removing design item', 'error');
+        });
+    }
     designItems.splice(index, 1);
     updateDesignTable();
 }
@@ -713,8 +1101,40 @@ function addWorkplanItem() {
     const duration = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
     item.duration = duration;
     
-    workplanItems.push(item);
-    updateWorkplanTable();
+    if (proposalId) {
+        // Save to database
+        formData.append('proposalidfk', proposalId);
+        formData.append('activityname', item.activity);
+        formData.append('startdate', item.start_date);
+        formData.append('enddate', item.end_date);
+        formData.append('activitydescription', item.description);
+        
+        fetch('/workplan/post', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                item.workplanid = data.id;
+                workplanItems.push(item);
+                updateWorkplanTable();
+                showMessage(data.message, data.type);
+            } else {
+                showMessage(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            showMessage('Error adding workplan item', 'error');
+        });
+    } else {
+        workplanItems.push(item);
+        updateWorkplanTable();
+    }
+    
     form.reset();
     bootstrap.Modal.getInstance(document.getElementById('workplanModal')).hide();
 }
@@ -729,8 +1149,8 @@ function updateWorkplanTable() {
     tbody.innerHTML = workplanItems.map((item, index) => `
         <tr>
             <td>${item.activity}</td>
-            <td>${item.start_date}</td>
-            <td>${item.end_date}</td>
+            <td>${item.start_date || (item.time ? item.time.split(' to ')[0] : 'N/A')}</td>
+            <td>${item.end_date || (item.time ? item.time.split(' to ')[1] : 'N/A')}</td>
             <td>${item.duration} days</td>
             <td><button class="btn btn-sm btn-danger" onclick="removeWorkplanItem(${index})">Remove</button></td>
         </tr>
@@ -738,6 +1158,23 @@ function updateWorkplanTable() {
 }
 
 function removeWorkplanItem(index) {
+    const item = workplanItems[index];
+    if (item.workplanid) {
+        // Delete from database
+        fetch(`/workplan/delete/${item.workplanid}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            showMessage(data.message, data.type);
+        })
+        .catch(error => {
+            showMessage('Error removing workplan item', 'error');
+        });
+    }
     workplanItems.splice(index, 1);
     updateWorkplanTable();
 }
@@ -748,7 +1185,7 @@ function updateSummary() {
     document.getElementById('designCount').textContent = designItems.length;
     document.getElementById('workplanCount').textContent = workplanItems.length;
     
-    const total = budgetItems.reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
+    const total = budgetItems.reduce((sum, item) => sum + parseFloat(item.amount || item.total || 0), 0);
     document.getElementById('totalBudgetDisplay').textContent = total.toLocaleString();
 }
 
@@ -760,8 +1197,25 @@ function submitProposal() {
     }
     
     if (confirm('Are you sure you want to submit this proposal? You will not be able to edit it after submission.')) {
-        alert('Proposal submitted successfully!');
-        window.location.href = '{{ route("pages.proposals.index") }}';
+        if (proposalId) {
+            fetch(`/proposals/submit/${proposalId}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.type === 'success') {
+                    alert(data.message);
+                    window.location.href = '{{ route("pages.proposals.index") }}';
+                } else {
+                    alert(data.message);
+                }
+            });
+        } else {
+            alert('Please save the proposal first.');
+        }
     }
 }
 </script>

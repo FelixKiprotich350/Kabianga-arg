@@ -110,6 +110,13 @@ Route::prefix('v1')->middleware(['web', 'auth'])->group(function () {
         Route::get('/{id}/research-design', [ProposalsController::class, 'fetchresearchdesign']);
     });
     
+    // Proposal Changes
+    Route::prefix('proposal-changes')->group(function () {
+        Route::post('/', [\App\Http\Controllers\Proposals\ProposalChangesController::class, 'postproposalchanges']);
+        Route::get('/search', [\App\Http\Controllers\Proposals\ProposalChangesController::class, 'fetchsearch']);
+        Route::get('/{id}', [\App\Http\Controllers\Proposals\ProposalChangesController::class, 'fetchall']);
+    });
+    
     // Collaborators
     Route::prefix('collaborators')->group(function () {
         Route::get('/', [CollaboratorsController::class, 'fetchall']);
@@ -195,7 +202,6 @@ Route::prefix('v1')->middleware(['web', 'auth'])->group(function () {
     Route::prefix('departments')->group(function () {
         Route::get('/', [DepartmentsController::class, 'fetchalldepartments']);
         Route::post('/', [DepartmentsController::class, 'postnewdepartment']);
-        Route::get('/search', [DepartmentsController::class, 'fetchsearchdepartments']);
         Route::get('/{id}', [DepartmentsController::class, 'getviewdepartmentpage']);
         Route::put('/{id}', [DepartmentsController::class, 'updatedepartment']);
     });

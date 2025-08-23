@@ -37,7 +37,7 @@ class ProposalsController extends Controller
     {
         return view('pages.proposals.index');
     }
-    
+
     //
     public function modernNewProposal()
     {
@@ -86,8 +86,10 @@ class ProposalsController extends Controller
         // Check if the grant has already been applied for
         if ($this->isgrantapplied($request->input('grantnofk'))) {
             // Proposal exists for the current user and grant number
-            return redirect()->route('pages.proposals.viewnewproposal')
-                ->with('success', 'Proposal exists for grant number');
+            return response()->json([
+                'success' => false,
+                'message' => 'Proposal exists for grant number'
+            ], 409);
         }
         $grant = Grant::findOrFail($request->input('grantnofk'));
         // Generate proposal code 
@@ -116,9 +118,12 @@ class ProposalsController extends Controller
 
         // Save the proposal
         $proposal->save();
-        // Redirect to the edit proposal page with a success message
-        return redirect()->route('pages.proposals.editproposal', ['id' => $proposal->proposalid])
-            ->with('success', 'Basic Details Saved Successfully! Continue editing your proposal.');
+        // Return JSON response for API
+        return response()->json([
+            'success' => true,
+            'message' => 'Basic Details Saved Successfully! Continue editing your proposal.',
+            'proposal_id' => $proposal->proposalid
+        ], 201);
     }
 
     private function isgrantapplied($grantno)
@@ -143,7 +148,10 @@ class ProposalsController extends Controller
     {
         $proposal = Proposal::findOrFail($id);
         if (!auth()->user()->userid == $proposal->useridfk) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to edit this Proposal. Only the owner can Edit!");
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not Authorized to edit this Proposal. Only the owner can Edit!'
+            ], 403);
         }
         $rules = [
             'grantnofk' => 'required|integer', // Example rules, adjust as needed
@@ -177,19 +185,22 @@ class ProposalsController extends Controller
         // Save the proposal
         $proposal->save();
 
-        // Optionally, return a response or redirect
-        // return response()->json(['message' => 'Proposal created successfully'], 201);
-        // return response()->json('success', 'Basic Details Saved Successfully!!');
-        return redirect()->route('pages.proposals.editproposal', ['id' => $proposal->proposalid, 'has_message' => true])->with('success', 'Basic Details Saved Successfully!!');
-
-
+        // Return JSON response
+        return response()->json([
+            'success' => true,
+            'message' => 'Basic Details Saved Successfully!!',
+            'proposal_id' => $proposal->proposalid
+        ], 200);
     }
 
     public function updateresearchdetails(Request $request, $id)
     {
         $proposal = Proposal::findOrFail($id);
         if (!auth()->user()->userid == $proposal->useridfk) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to edit this Proposal. Only the owner can Edit!");
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not Authorized to edit this Proposal. Only the owner can Edit!'
+            ], 403);
         }
         $rules = [
             'researchtitle' => 'required|string', // Example rules, adjust as needed
@@ -229,16 +240,21 @@ class ProposalsController extends Controller
         // Save the proposal
         $proposal->save();
 
-        return redirect()->route('pages.proposals.editproposal', ['id' => $proposal->proposalid])->with('success', 'Research Details Saved Successfully!!');
-
-
+        return response()->json([
+            'success' => true,
+            'message' => 'Research Details Saved Successfully!!',
+            'proposal_id' => $proposal->proposalid
+        ], 200);
     }
 
     public function submitproposal(Request $request, $id)
     {
         $proposal = Proposal::findOrFail($id);
         if (!auth()->user()->userid == $proposal->useridfk) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Submit this Proposal. Only the owner can Submit!");
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not Authorized to Submit this Proposal. Only the owner can Submit!'
+            ], 403);
         }
         if ($proposal->submittedstatus) {
             return response(['message' => 'Application has already been submitted!', 'type' => 'danger']);
@@ -265,7 +281,10 @@ class ProposalsController extends Controller
     public function receiveproposal(Request $request, $id)
     {
         if (!auth()->user()->haspermission('canreceiveproposal')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to receive this Proposal!");
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not Authorized to receive this Proposal!'
+            ], 403);
         }
 
         $proposal = Proposal::findOrFail($id);
@@ -288,7 +307,10 @@ class ProposalsController extends Controller
     public function changeeditstatus(Request $request, $id)
     {
         if (!auth()->user()->haspermission('canenabledisableproposaledit')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Enable or Disable editing of this Proposal!");
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not Authorized to Enable or Disable editing of this Proposal!'
+            ], 403);
         }
 
         $proposal = Proposal::findOrFail($id);
@@ -306,7 +328,10 @@ class ProposalsController extends Controller
         if ($request->input('status') == "Approved" && auth()->user()->haspermission('canapproveproposal')) {
         } else if ($request->input('status') == "Rejected" && auth()->user()->haspermission('canrejectproposal')) {
         } else {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to  Approve/Reject this Proposal!");
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not Authorized to Approve/Reject this Proposal!'
+            ], 403);
         }
 
         $rules = [
@@ -407,14 +432,7 @@ class ProposalsController extends Controller
         }
         return view('pages.proposals.index');
     }
-    public function modernMyApplications()
-    {
-        if (!auth()->user()->haspermission('canviewmyapplications')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to view My Proposals!");
-        }
-        $themes = ResearchTheme::all();
-        return view('pages.proposals.my-applications', compact('themes'));
-    }
+
     public function getsingleproposalpage($id)
     {
         $user = Auth::user();
@@ -458,9 +476,9 @@ class ProposalsController extends Controller
 
     public function fetchmyapplications()
     {
-        if (!auth()->user()->haspermission('canviewmyapplications')) {
-            return response()->json(['data' => []]);
-        }
+        // if (!auth()->user()->haspermission('canviewmyapplications')) {
+        //     return response()->json(['data' => []]);
+        // }
         $user = auth()->user();
         $myapplications = Proposal::where('useridfk', $user->userid)->with('department', 'grantitem', 'themeitem', 'applicant')->get();
         $proposals = $myapplications->map(function ($proposal) {
@@ -476,7 +494,7 @@ class ProposalsController extends Controller
                 'themefk' => $proposal->themefk
             ];
         });
-        return response()->json(['data' => $proposals]);
+        return response()->json(data: ['data' => $proposals, 'success' => true]);
     }
 
     public function fetchallproposals()
@@ -484,7 +502,7 @@ class ProposalsController extends Controller
         if (!auth()->user()->haspermission('canviewallapplications')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized', 'data' => []], 403);
         }
-        
+
         try {
             $proposals = Proposal::with('department', 'grantitem', 'themeitem', 'applicant')->get();
             $data = $proposals->map(function ($proposal) {

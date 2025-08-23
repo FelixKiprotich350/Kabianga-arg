@@ -378,89 +378,88 @@
 
                                 let proposalId = "{{ isset($prop) ? $prop->proposalid : '' }}"; // Check if proposalId is set
                                 // Assuming prop is passed to the Blade view from the Laravel controller
-                                const collaboratorsurl = `{{ route('api.proposals.fetchcollaborators', ['id' => ':id']) }}`.replace(
-                                    ':id', proposalId);
-                                const punlicationsurl = `{{ route('api.proposals.fetchpublications', ['id' => ':id']) }}`.replace(
-                                    ':id', proposalId);
+                                const collaboratorsurl = `/api/v1/proposals/${proposalId}/collaborators`;
+                                ':id', proposalId);
+                            const punlicationsurl = `/api/v1/proposals/${proposalId}/publications`;
+                                ':id', proposalId);
 
-                                // Function to fetch collaborators data 
-                                function fetchcollaborators() {
-                                    $.ajax({
-                                        url: collaboratorsurl,
-                                        type: 'GET',
-                                        dataType: 'json',
-                                        success: function(response) {
-                                            populatecollaborators(response);
-                                        },
-                                        error: function(xhr, status, error) {
-                                            console.error('Error fetching data:', error);
-                                        }
-                                    });
-                                }
-
-                                // Function to populate collaborators
-                                function populatecollaborators(data) {
-                                    var tbody = $('#collaboratorstable tbody');
-                                    tbody.empty(); // Clear existing table rows
-                                    if (data.length > 0) {
-                                        $.each(data, function(index, data) {
-                                            var row = '<tr>' +
-                                                '<td>' + data.collaboratorname + '</td>' +
-                                                '<td>' + data.position + '</td>' +
-                                                '<td>' + data.institution + '</td>' +
-                                                '<td>' + data.researcharea + '</td>' +
-                                                '<td>' + data.experience + '</td>' +
-                                                '<td>' + new Date(data.created_at).toDateString("en-US") + '</td>' +
-                                                '<td>Edit</td>' +
-                                                '</tr>';
-                                            tbody.append(row);
-                                        });
-                                    } else {
-                                        var row = '<tr><td colspan="7" class="text-center">No Collaborators found</td></tr>';
-                                        tbody.append(row);
+                            // Function to fetch collaborators data 
+                            function fetchcollaborators() {
+                                $.ajax({
+                                    url: collaboratorsurl,
+                                    type: 'GET',
+                                    dataType: 'json',
+                                    success: function(response) {
+                                        populatecollaborators(response);
+                                    },
+                                    error: function(xhr, status, error) {
+                                        console.error('Error fetching data:', error);
                                     }
-                                }
+                                });
+                            }
 
-
-                                function fetchpublications() {
-                                    $.ajax({
-                                        url: punlicationsurl,
-                                        type: 'GET',
-                                        dataType: 'json',
-                                        success: function(response) {
-                                            populatepublications(response);
-                                        },
-                                        error: function(xhr, status, error) {
-                                            console.error('Error fetching data:', error);
-                                        }
-                                    });
-                                }
-                                // Function to populate collaborators
-                                function populatepublications(data) {
-                                    var tbody = $('#publicationstable tbody');
-                                    tbody.empty(); // Clear existing table rows
-                                    if (data.length > 0) {
-                                        $.each(data, function(index, data) {
-                                            var row = '<tr>' +
-                                                '<td>' + data.authors + '</td>' +
-                                                '<td>' + data.year + '</td>' +
-                                                '<td>' + data.title + '</td>' +
-                                                '<td>' + data.researcharea + '</td>' +
-                                                '<td>' + data.publisher + '</td>' +
-                                                '<td>' + data.volume + '</td>' +
-                                                '<td>' + data.pages + '</td>' +
-                                                '<td>' + new Date(data.created_at).toDateString("en-US") + '</td>' +
-                                                '<td>Edit</td>' +
-                                                '</tr>';
-                                            tbody.append(row);
-                                        });
-                                    } else {
-                                        var row = '<tr><td colspan="9" class="text-center">No Publications found</td></tr>';
+                            // Function to populate collaborators
+                            function populatecollaborators(data) {
+                                var tbody = $('#collaboratorstable tbody');
+                                tbody.empty(); // Clear existing table rows
+                                if (data.length > 0) {
+                                    $.each(data, function(index, data) {
+                                        var row = '<tr>' +
+                                            '<td>' + data.collaboratorname + '</td>' +
+                                            '<td>' + data.position + '</td>' +
+                                            '<td>' + data.institution + '</td>' +
+                                            '<td>' + data.researcharea + '</td>' +
+                                            '<td>' + data.experience + '</td>' +
+                                            '<td>' + new Date(data.created_at).toDateString("en-US") + '</td>' +
+                                            '<td>Edit</td>' +
+                                            '</tr>';
                                         tbody.append(row);
-                                    }
+                                    });
+                                } else {
+                                    var row = '<tr><td colspan="7" class="text-center">No Collaborators found</td></tr>';
+                                    tbody.append(row);
                                 }
-                                fetchcollaborators();
-                                fetchpublications();
+                            }
+
+
+                            function fetchpublications() {
+                                $.ajax({
+                                    url: punlicationsurl,
+                                    type: 'GET',
+                                    dataType: 'json',
+                                    success: function(response) {
+                                        populatepublications(response);
+                                    },
+                                    error: function(xhr, status, error) {
+                                        console.error('Error fetching data:', error);
+                                    }
+                                });
+                            }
+                            // Function to populate collaborators
+                            function populatepublications(data) {
+                                var tbody = $('#publicationstable tbody');
+                                tbody.empty(); // Clear existing table rows
+                                if (data.length > 0) {
+                                    $.each(data, function(index, data) {
+                                        var row = '<tr>' +
+                                            '<td>' + data.authors + '</td>' +
+                                            '<td>' + data.year + '</td>' +
+                                            '<td>' + data.title + '</td>' +
+                                            '<td>' + data.researcharea + '</td>' +
+                                            '<td>' + data.publisher + '</td>' +
+                                            '<td>' + data.volume + '</td>' +
+                                            '<td>' + data.pages + '</td>' +
+                                            '<td>' + new Date(data.created_at).toDateString("en-US") + '</td>' +
+                                            '<td>Edit</td>' +
+                                            '</tr>';
+                                        tbody.append(row);
+                                    });
+                                } else {
+                                    var row = '<tr><td colspan="9" class="text-center">No Publications found</td></tr>';
+                                    tbody.append(row);
+                                }
+                            }
+                            fetchcollaborators(); fetchpublications();
                             });
                         </script>
 
@@ -555,79 +554,79 @@
 
                                     let proposalId = "{{ isset($prop) ? $prop->proposalid : '' }}"; // Check if proposalId is set
                                     // Assuming prop is passed to the Blade view from the Laravel controller
-                                    const expenditureurl = `{{ route('api.proposals.fetchexpenditures', ['id' => ':id']) }}`.replace(':id',
-                                        proposalId);
+                                    const expenditureurl = `/api/v1/proposals/${proposalId}/expenditures`;
+                                    proposalId);
 
 
 
 
-                                    // Function to fetch expenditures data 
-                                    function fetchexpenditures() {
-                                        $.ajax({
-                                            url: expenditureurl,
-                                            type: 'GET',
-                                            dataType: 'json',
-                                            success: function(response) {
-                                                populateexpenditures(response);
-                                                populatetopfields(response);
-                                            },
-                                            error: function(xhr, status, error) {
-                                                console.error('Error fetching data:', error);
+                                // Function to fetch expenditures data 
+                                function fetchexpenditures() {
+                                    $.ajax({
+                                        url: expenditureurl,
+                                        type: 'GET',
+                                        dataType: 'json',
+                                        success: function(response) {
+                                            populateexpenditures(response);
+                                            populatetopfields(response);
+                                        },
+                                        error: function(xhr, status, error) {
+                                            console.error('Error fetching data:', error);
+                                        }
+                                    });
+                                }
+
+                                function populatetopfields(data) {
+                                    if (data.length > 0) {
+                                        let travel = 0;
+                                        let consumables = 0;
+                                        let facilities = 0;
+                                        let others = 0;
+                                        let total = 0;
+                                        $.each(data, function(index, data) {
+                                            total += parseFloat(data.total);
+                                            if (data.itemtype == "Facilities") {
+                                                facilities += parseFloat(data.total);
+                                            } else if (data.itemtype == "Consumables") {
+                                                consumables += parseFloat(data.total);
+                                            } else if (data.itemtype == "Travels") {
+                                                travel += parseFloat(data.total);
+                                            } else if (data.itemtype == "Others") {
+                                                others += parseFloat(data.total);
                                             }
                                         });
-                                    }
+                                        document.getElementById('totalfunds').value = total;
+                                        document.getElementById('travelcost').value = travel;
+                                        document.getElementById('equipmentscost').value = facilities;
+                                        document.getElementById('othercost').value = others;
+                                        document.getElementById('consumablescost').value = consumables;
+                                    };
+                                }
 
-                                    function populatetopfields(data) {
-                                        if (data.length > 0) {
-                                            let travel = 0;
-                                            let consumables = 0;
-                                            let facilities = 0;
-                                            let others = 0;
-                                            let total = 0;
-                                            $.each(data, function(index, data) {
-                                                total += parseFloat(data.total);
-                                                if (data.itemtype == "Facilities") {
-                                                    facilities += parseFloat(data.total);
-                                                } else if (data.itemtype == "Consumables") {
-                                                    consumables += parseFloat(data.total);
-                                                } else if (data.itemtype == "Travels") {
-                                                    travel += parseFloat(data.total);
-                                                } else if (data.itemtype == "Others") {
-                                                    others += parseFloat(data.total);
-                                                }
-                                            });
-                                            document.getElementById('totalfunds').value = total;
-                                            document.getElementById('travelcost').value = travel;
-                                            document.getElementById('equipmentscost').value = facilities;
-                                            document.getElementById('othercost').value = others;
-                                            document.getElementById('consumablescost').value = consumables;
-                                        };
-                                    }
-
-                                    // Function to populate collaborators
-                                    function populateexpenditures(data) {
-                                        var tbody = $('#expenditurestable tbody');
-                                        tbody.empty(); // Clear existing table rows
-                                        if (data.length > 0) {
-                                            $.each(data, function(index, data) {
-                                                var row = '<tr>' +
-                                                    '<td>' + data.item + '</td>' +
-                                                    '<td>' + data.itemtype + '</td>' +
-                                                    '<td>' + data.quantity + '</td>' +
-                                                    '<td>' + data.unitprice + '</td>' +
-                                                    '<td>' + data.total + '</td>' +
-                                                    '<td>' + new Date(data.created_at).toDateString("en-US") + '</td>' +
-                                                    '<td>Edit</td>' +
-                                                    '</tr>';
-                                                tbody.append(row);
-                                            });
-                                        } else {
-                                            var row = '<tr><td colspan="6" class="text-center">No Expenditures found</td></tr>';
+                                // Function to populate collaborators
+                                function populateexpenditures(data) {
+                                    var tbody = $('#expenditurestable tbody');
+                                    tbody.empty(); // Clear existing table rows
+                                    if (data.length > 0) {
+                                        $.each(data, function(index, data) {
+                                            var row = '<tr>' +
+                                                '<td>' + data.item + '</td>' +
+                                                '<td>' + data.itemtype + '</td>' +
+                                                '<td>' + data.quantity + '</td>' +
+                                                '<td>' + data.unitprice + '</td>' +
+                                                '<td>' + data.total + '</td>' +
+                                                '<td>' + new Date(data.created_at).toDateString("en-US") + '</td>' +
+                                                '<td>Edit</td>' +
+                                                '</tr>';
                                             tbody.append(row);
-                                        }
+                                        });
+                                    } else {
+                                        var row = '<tr><td colspan="6" class="text-center">No Expenditures found</td></tr>';
+                                        tbody.append(row);
                                     }
+                                }
 
-                                    fetchexpenditures();
+                                fetchexpenditures();
                                 });
                             </script>
                         </div>
@@ -665,7 +664,7 @@
 
                                 let proposalId = "{{ isset($prop) ? $prop->proposalid : '' }}"; // Check if proposalId is set
                                 // Assuming prop is passed to the Blade view from the Laravel controller
-                                const researchurl = `{{ route('api.proposals.researchdesignitems', ['id' => ':id']) }}`.replace(':id',
+                                const researchurl = `/api/v1/proposals/${proposalId}/research-design`;
                                     proposalId);
 
 
@@ -742,7 +741,7 @@
 
                                 let proposalId = "{{ isset($prop) ? $prop->proposalid : '' }}"; // Check if proposalId is set
                                 // Assuming prop is passed to the Blade view from the Laravel controller
-                                const workplanurl = `{{ route('api.proposals.fetchworkplanitems', ['id' => ':id']) }}`.replace(':id',
+                                const workplanurl = `/api/v1/proposals/${proposalId}/workplans`;
                                     proposalId);
 
 
@@ -889,7 +888,7 @@
 
 
                             <div class="col text-center">
-                                <form action="{{ route('api.proposal.printpdf', ['id' => $prop->proposalid]) }}">
+                                <form action="/api/v1/proposals/{{ $prop->proposalid }}/pdf">
                                     <button id="btn_printproposall" type="submit" class="btn btn-success ">Download
                                         Pdf</button>
 
@@ -1025,13 +1024,13 @@
 
 
                                 let proposalId = "{{ isset($prop) ? $prop->proposalid : '' }}"; // Check if proposalId is set
-                                const receiveproposalurl = `{{ route('api.proposals.receiveproposal', ['id' => ':id']) }}`.replace(
+                                const receiveproposalurl = `/api/v1/proposals/${proposalId}/receive`;
                                     ':id', proposalId.toString());
-                                const proposalchangeurl = `{{ route('api.proposals.proposalchanges', ['id' => ':id']) }}`.replace(
+                                const proposalchangeurl = `/api/v1/proposals/${proposalId}/changes`;
                                     ':id', proposalId.toString());
-                                const approverejecturl = `{{ route('api.proposals.approvereject', ['id' => ':id']) }}`.replace(':id',
+                                const approverejecturl = `/api/v1/proposals/${proposalId}/approve-reject`;
                                     proposalId.toString());
-                                const enableediting = `{{ route('api.proposals.changeeditstatus', ['id' => ':id']) }}`.replace(':id',
+                                const enableediting = `/api/v1/proposals/${proposalId}/edit-status`;
                                     proposalId.toString());
                                 var csrfToken = document.getElementsByName('_token')[0].value;
 
@@ -1099,7 +1098,7 @@
                                     }
                                     // Function to fetch data using AJAX
                                     $.ajax({
-                                        url: "{{ route('api.proposalchanges.post') }}",
+                                        url: "/api/v1/proposal-changes",
                                         type: 'POST',
                                         data: formData,
                                         dataType: 'json',

@@ -13,54 +13,52 @@ class ResearchdesignController extends Controller
      //
      public function postresearchdesignitem(Request $request)
      {
-         // Validate incoming request data if needed
-         // Define validation rules
+         if(!auth()->user()->haspermission('canmakenewproposal')){
+             return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
+         }
+         
+         // Handle both form field names
          $rules = [
-             'projectsummary' => 'required|string', // Example rules, adjust as needed
-             'indicators' => 'required|string', // Adjust data types as per your schema
-             'verification' => 'required|string',
-             'assumptions' => 'required|string',
-             'goal' => 'required|string', 
-             'purpose' => 'required|string', 
-             'proposalidfk'=>'required|string'
+             'proposalidfk' => 'required|string',
          ];
+         
+         $rules['projectsummary'] = 'required|string';
+         $rules['indicators'] = 'required|string';
+         $rules['verification'] = 'required|string';
+         $rules['assumptions'] = 'required|string';
+         $rules['goal'] = 'required|string';
+         $rules['purpose'] = 'required|string';
  
- 
- 
-         // Validate incoming request
          $validator = Validator::make($request->all(), $rules);
- 
-         // Check if validation fails
          if ($validator->fails()) {
-             // return response()->json(['error' => $validator->errors()], 400);
-             return response(['message' => 'Fill all the required Fields!','type'=>'danger'], 400);
- 
+             return response()->json(['message' => 'Fill all the required Fields!','type'=>'danger'], 400);
          }
    
-         $reditem= new ResearchDesignItem(); // Ensure the model name matches your actual model class name
-         // Assign values from the request
+         $reditem = new ResearchDesignItem();
+         
          $reditem->summary = $request->input('projectsummary');
          $reditem->indicators = $request->input('indicators');
          $reditem->verification = $request->input('verification');
-         $reditem->assumptions = $request->input('assumptions');  
-         $reditem->goal = $request->input('goal');  
-         $reditem->purpose = $request->input('purpose'); 
-         $reditem->proposalidfk =$request->input('proposalidfk');
-         // Save the proposal
+         $reditem->assumptions = $request->input('assumptions');
+         $reditem->goal = $request->input('goal');
+         $reditem->purpose = $request->input('purpose');
+         
+         $reditem->proposalidfk = $request->input('proposalidfk');
          $reditem->save();
  
-         // Optionally, return a response or redirect
-         // return response()->json(['message' => 'Proposal created successfully'], 201);
-         return response(['message'=> 'Item Saved Successfully!!','type'=>'success']);
- 
- 
+         return response()->json(['message'=> 'Item Saved Successfully!!','type'=>'success', 'success' => true, 'id' => $reditem->designid]);
      }
  
      
-     public function fetchall()
+     public function fetchall(Request $request)
      {
-         $data = ResearchDesignItem::all();
-         return response()->json($data); // Return  data as JSON
+         $proposalId = $request->input('proposalid');
+         if ($proposalId) {
+             $data = ResearchDesignItem::where('proposalidfk', $proposalId)->get();
+         } else {
+             $data = ResearchDesignItem::all();
+         }
+         return response()->json($data);
      }
  
      public function fetchsearch(Request $request)

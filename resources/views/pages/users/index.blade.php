@@ -322,7 +322,7 @@ async function loadUsersData() {
     
     try {
         loadingState.style.display = 'block';
-        const response = await fetch('/api/users');
+        const response = await fetch('/api/v1/users');
         const result = await response.json();
         
         if (result.success) {

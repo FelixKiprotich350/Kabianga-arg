@@ -94,7 +94,7 @@ async function loadProjects() {
     try {
         loadingState.style.display = 'block';
         
-        const url = scope === 'my' ? '/projects/fetchmyallprojects' : '/projects/fetchallprojects';
+        const url = scope === 'my' ? '/api/v1/projects/my' : '/api/v1/projects';
         const params = new URLSearchParams();
         if (status) params.append('status', status);
         if (search) params.append('search', search);

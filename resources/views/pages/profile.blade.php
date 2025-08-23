@@ -183,7 +183,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateBtn.addEventListener('click', function() {
         const formData = new FormData(form);
         const userId = "{{ Auth::user()->userid }}";
-        const updateUrl = "{{ route('api.users.updatebasicdetails', ['id' => ':id']) }}".replace(':id', userId);
+        const updateUrl = `/api/v1/users/${userId}`;
         
         fetch(updateUrl, {
             method: 'POST',

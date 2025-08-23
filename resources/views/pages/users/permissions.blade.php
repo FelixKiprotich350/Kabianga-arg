@@ -48,7 +48,7 @@
         <div class="col-md-8">
             <div class="form-card mb-4">
                 <h5 class="mb-3">Role & Status Management</h5>
-                <form id="roleForm" action="{{ route('users.update-role', $user->userid) }}" method="POST">
+                <form id="roleForm" action="/api/v1/users/{{ $user->userid }}/role" method="POST">
                     @csrf
                     @method('PUT')
                     <div class="row">
@@ -136,7 +136,7 @@
                 <!-- Additional Permissions -->
                 <div>
                     <h6 class="text-muted mb-3">Additional Permissions</h6>
-                    <form id="permissionsForm" action="{{ route('users.update-permissions', $user->userid) }}" method="POST">
+                    <form id="permissionsForm" action="/api/v1/users/{{ $user->userid }}/permissions" method="POST">
                         @csrf
                         @method('PUT')
                         <div class="row">

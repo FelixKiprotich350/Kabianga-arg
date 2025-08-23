@@ -97,7 +97,7 @@ async function loadProposals() {
     try {
         loadingState.style.display = 'block';
         
-        const url = scope === 'my' ? '/proposals/fetchmyapplications' : '/proposals/fetchallproposals';
+        const url = scope === 'my' ? '/api/v1/proposals/my' : '/api/v1/proposals';
         const params = new URLSearchParams();
         if (status) params.append('status', status);
         if (search) params.append('search', search);
