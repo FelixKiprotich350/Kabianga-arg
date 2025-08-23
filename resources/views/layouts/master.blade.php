@@ -19,7 +19,7 @@
         @include('partials.header')
         <div class="main-content">
             @if (Auth::check() && Auth::user()->hasVerifiedEmail())
-                @include('partials.sidebar')
+                @include('partials.modern-sidebar')
                 <div class="content-wrapper">
                     <div class="main bg-light">
                         <main class="content ">

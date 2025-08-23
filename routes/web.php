@@ -19,15 +19,11 @@ use App\Http\Controllers\{
     Proposals\ResearchdesignController,
     ReportsController,
     Proposals\ProposalChangesController,
-    BusinessMailingController,
     DepartmentsController,
     SchoolsController,
     Auth\CustomPasswordResetController,
     Auth\CustomVerificationController,
-    FinancesController,
     ProjectsController,
-    TestController,
-    PDFController,
     SupervisionController,
     FinYearController,
     ResearchThemeController,
@@ -47,32 +43,6 @@ use App\Http\Controllers\{
 |
 */
 
-//test controller /endpoint
-Route::get('/test', [TestController::class, 'test'])->name('api.test');
-Route::get('/api-test', function() {
-    return view('pages.api-test');
-})->name('pages.api-test')->middleware(['auth']);
-
-// Debug auth
-Route::get('/debug-auth', function() {
-    return [
-        'authenticated' => Auth::check(),
-        'user' => Auth::user(),
-        'session' => session()->all()
-    ];
-});
-
-// Public API Routes (no authentication required)
-Route::prefix('api')->group(function () {
-    Route::get('/users', [UsersController::class, 'apiGetAllUsers'])->name('api.public.users');
-    Route::get('/users/{id}', [UsersController::class, 'apiGetUser'])->name('api.public.user');
-});
-
-// Common Pages Routes
-Route::get('/default', [CommonPagesController::class, 'index'])->name('pages.default');
-Route::get('/about', [CommonPagesController::class, 'about'])->name('pages.about');
-Route::get('/contact', [CommonPagesController::class, 'contact'])->name('pages.contact');
-Route::get('/resetpassword', [CommonPagesController::class, 'resetpassword'])->name('pages.resetpassword');
 Route::get('/setupadmin', [CommonPagesController::class, 'setupadmin'])->name('pages.setupadmin');
 Route::post('/setupadmin', [CommonPagesController::class, 'makeInitialAdmin'])->name('api.makeinitialadmin');
 
@@ -153,11 +123,9 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/schools/edit/{id}', [SchoolsController::class, 'geteditschoolpage'])->name('pages.schools.editschool');
     Route::post('/schools/edit/{id}', [SchoolsController::class, 'updateschool'])->name('api.schools.updateschool');
 
-    //departments (redirect to schools page)
-    Route::get('/departments/home', function() { return redirect()->route('pages.schools.home'); })->name('pages.departments.home');
+    //departments
     Route::get('/departments', function() { return redirect()->route('pages.schools.home'); });
     Route::post('/departments/post', [DepartmentsController::class, 'postnewdepartment'])->name('api.departments.post');
-    Route::get('/departments/fetchsearchdepartments', [DepartmentsController::class, 'fetchsearchdepartments'])->name('api.departments.fetchsearchdepartments');
     Route::get('/departments/fetchalldepartments', [DepartmentsController::class, 'fetchalldepartments'])->name('api.departments.fetchalldepartments');
     Route::get('/departments/view/{id}', [DepartmentsController::class, 'getviewdepartmentpage'])->name('pages.departments.viewdepartment');
     Route::get('/departments/edit/{id}', [DepartmentsController::class, 'geteditdepartmentpage'])->name('pages.departments.editdepartment');
@@ -271,23 +239,16 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/projects/addfunding/{id}', [ProjectsController::class, 'addfunding'])->name('api.projects.addfunding');
     Route::get('/projects/fetchprojectfunding/{id}', [ProjectsController::class, 'fetchprojectfunding'])->name('api.projects.fetchprojectfunding');
 
-//monitoring (renamed from supervision)
-    Route::get('/supervision/home', [SupervisionController::class, 'home'])->name('pages.supervision.home');
+    //monitoring
     Route::get('/monitoring/home', [SupervisionController::class, 'home'])->name('pages.monitoring.home');
-    Route::get('/supervision/monitoring/{id}', [SupervisionController::class, 'viewmonitoringpage'])->name('pages.supervision.monitoring.monitoringpage');
     Route::get('/monitoring/project/{id}', [SupervisionController::class, 'viewmonitoringpage'])->name('pages.monitoring.project');
-    Route::post('/supervision/monitoring/addreport/{id}', [SupervisionController::class, 'addreport'])->name('api.supervision.monitoring.addreport');
-    Route::get('/supervision/monitoring/fetchmonitoringreport/{id}', [SupervisionController::class, 'fetchmonitoringreport'])->name('api.supervision.monitoring.fetchmonitoringreport');
+    Route::post('/monitoring/addreport/{id}', [SupervisionController::class, 'addreport'])->name('api.monitoring.addreport');
+    Route::get('/monitoring/fetchreport/{id}', [SupervisionController::class, 'fetchmonitoringreport'])->name('api.monitoring.fetchreport');
 
     //profile
     Route::get('/myprofile', [MyProfileController::class, 'myprofile'])->name('pages.myprofile');
 
-    //notifications
-    Route::get('/mailing/home', [BusinessMailingController::class, 'mailinghome'])->name('pages.mailing.home');
-    Route::get('/mailing/jobs/all', [BusinessMailingController::class, 'getalljobs'])->name('api.mailing.getalljobs');
-    Route::get('/mailing/jobs/{id}', [BusinessMailingController::class, 'viewjobpage'])->name('pages.mailing.viewjobpage');
-    Route::get('/mailing/failedjobs/all', [BusinessMailingController::class, 'getallfailedjobs'])->name('api.mailing.getallfailedjobs');
-    Route::get('/mailing/failedjobs/{id}', [BusinessMailingController::class, 'viewfailedjobdetails'])->name('pages.mailing.viewfailedjobdetails');
+
 
     //reports
     Route::get('/reports/home', [ReportsController::class, 'home'])->name('pages.reports.home');

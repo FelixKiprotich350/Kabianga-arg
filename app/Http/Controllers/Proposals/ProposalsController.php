@@ -45,9 +45,10 @@ class ProposalsController extends Controller
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Make a new Proposal!");
         }
         $themes = ResearchTheme::all();
+        $departments = Department::all();
         $user = auth()->user();
         $currentgrant = GlobalSetting::where('item', 'current_open_grant')->first();
-        $grants = null;
+        $grants = collect();
         if ($currentgrant) {
             $grants = Grant::where('grantid', $currentgrant->value1)
                 ->whereDoesntHave('proposals', function ($query) use ($user) {
@@ -55,7 +56,7 @@ class ProposalsController extends Controller
                 })->get();
         }
 
-        return view('pages.proposals.create', compact('grants', 'themes'));
+        return view('pages.proposals.create', compact('grants', 'themes', 'departments'));
     }
 
     public function postnewproposal(Request $request)
@@ -67,7 +68,6 @@ class ProposalsController extends Controller
         $rules = [
             'grantnofk' => 'required|integer',
             'departmentfk' => 'required|string',
-            'pfnofk' => 'required|integer',
             'themefk' => 'required|string',
             'highestqualification' => 'required|string',
             'officephone' => 'required|string',
@@ -106,7 +106,7 @@ class ProposalsController extends Controller
         $proposal->grantnofk = $request->input('grantnofk');
         $proposal->departmentidfk = $request->input('departmentfk');
         $proposal->useridfk = Auth::user()->userid;
-        $proposal->pfnofk = $request->input('pfnofk');
+        $proposal->pfnofk = Auth::user()->pfno;
         $proposal->approvalstatus = 'Pending';
         $proposal->highqualification = $request->input('highestqualification');
         $proposal->officephone = $request->input('officephone');
@@ -117,15 +117,15 @@ class ProposalsController extends Controller
         // Save the proposal
         $proposal->save();
         // Redirect to the edit proposal page with a success message
-        return redirect()->route('pages.proposals.editproposal', ['id' => $proposal->proposalid, 'has_message' => 'Basic Details Successfully Saved!'])
-            ->with('success', 'Basic Details Saved Successfully!!');
+        return redirect()->route('pages.proposals.editproposal', ['id' => $proposal->proposalid])
+            ->with('success', 'Basic Details Saved Successfully! Continue editing your proposal.');
     }
 
     private function isgrantapplied($grantno)
     {
         try {
             // Get the current user's ID (assuming you have authenticated users)
-            $userid = auth()->id();
+            $userid = auth()->user()->userid;
 
             // Check if a proposal exists with the given $grantno and for the current user
             $proposalExists = Proposal::where('grantnofk', $grantno)
@@ -502,7 +502,7 @@ class ProposalsController extends Controller
                 ];
             });
             return response()->json(['success' => true, 'data' => $data]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage(), 'data' => []], 500);
         }
     }

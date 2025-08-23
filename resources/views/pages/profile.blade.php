@@ -1,218 +1,259 @@
-@extends('layouts.master')
+@extends('layouts.app')
+
+@section('title', 'My Profile - UoK ARG Portal')
 
 @section('content')
-    @auth
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <style>
-                .prop-tabcontainer {
-                    background-color: #FAF9F6;
-                    border-radius: 4px;
-                }
+            <h2>My Profile</h2>
+            <p class="text-muted">Manage your account information and settings</p>
+        </div>
+    </div>
 
-                .prop-tabpanel {
-                    border-width: 1px;
-                    border-color: gray;
-                    background-color: #FAF9F6;
-                    border-style: solid;
-                    border-radius: 4px;
-                    padding: 8px;
-                }
-
-                .form-group {
-                    margin-bottom: 6px;
-                }
-            </style>
-            <div class="prop-tabcontainer">
-                <!-- Nav tabs -->
-                <nav>
-                    <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                        <button class="nav-link active" id="nav-myprofile-tab" data-bs-toggle="tab"
-                            data-bs-target="#panel-myprofile" type="button" role="tab" aria-controls="panel-myprofile"
-                            aria-selected="true">Basic Details</button>
-                        <button class="nav-link" id="nav-security-tab" data-bs-toggle="tab" data-bs-target="#panel-security"
-                            type="button" role="tab" aria-controls="panel-security" aria-selected="false">Security</button>
+    <div class="row">
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                            <i class="bi bi-person-fill text-white" style="font-size: 2rem;"></i>
+                        </div>
                     </div>
-                </nav>
-
-                <!-- Tab panes -->
-                <div class="tab-content prop-tabpanel">
-
-                    <!-- myprofile Details -->
-                    <div role="tabpanel" class="tab-pane active" id="panel-myprofile">
-                        <!-- Personal Details Form -->
-                        <form method="POST" id="form_basicdetails" enctype="multipart/form-data" class="form-horizontal">
-                            @csrf
-                            <div class="row form-group">
-                                <div class="col col-md-3">
-                                    <label class="form-control-label">Full Name</label>
-                                </div>
-                                <div class="col-12 col-md-9">
-                                    <input type="text" id="fullname" name="fullname" placeholder="Your Full Name"
-                                        value="{{ Auth::user()->name }}" class="form-control" readonly>
-                                </div>
-                            </div>
-
-                            <div class="row form-group">
-                                <div class="col col-md-3">
-                                    <label class="form-control-label">Email</label>
-                                </div>
-                                <div class="col-12 col-md-9">
-                                    <input type="text" id="email" name="email" placeholder="Your Email"
-                                        value="{{ Auth::user()->email }}" class="form-control" readonly>
-                                </div>
-                            </div>
-
-                            <div class="row form-group">
-                                <div class="col col-md-3">
-                                    <label class="form-control-label">PF Number</label>
-                                </div>
-                                <div class="col-12 col-md-9">
-                                    <input type="text" id="pfno" name="pfno" placeholder="Your PF Number"
-                                        value="{{ Auth::user()->pfno }}" class="form-control" readonly>
-                                </div>
-                            </div>
-
-                            <div class="row form-group">
-                                <div class="col col-md-3">
-                                    <label class="form-control-label">Phone Number</label>
-
-                                </div>
-                                <div class="col-12 col-md-9">
-                                    <input type="text" id="phonenumber" name="phonenumber" placeholder="Your Phone Number"
-                                        value="{{ Auth::user()->phonenumber }}" class="form-control" readonly>
-                                </div>
-                            </div>
-                            <div class="row form-group">
-                                <div class="col col-md-3">
-                                    <label class="form-control-label">Registration Date</label>
-
-                                </div>
-                                <div class="col-12 col-md-9">
-                                    <input type="text" placeholder="Your Registration Date"
-                                        value="{{ Auth::user()->created_at }}" class="form-control" readonly>
-                                </div>
-                            </div>
-                            <div class="row form-group">
-                                <div class="col text-center">
-                                    <button id="btn_editprofile" type="button" class="btn btn-info">Edit Profile</button>
-
-                                    <button id="btn_updateprofile" type="button" class="btn btn-success" disabled
-                                        hidden>Update</button>
-                                </div>
-                            </div>
-
-                        </form>
-
-                        <script>
-                            $(document).ready(function() {
-                                let userid = "{{ Auth::user()->userid }}"
-                                // Assuming prop is passed to the Blade view from the Laravel controller
-                                const basicupdateurl = `{{ route('api.users.updatebasicdetails', ['id' => ':id']) }}`.replace(':id',
-                                    userid);
-                                const punlicationsurl = `{{ route('api.proposals.fetchpublications', ['id' => ':id']) }}`.replace(':id',
-                                    userid);
-                                document.getElementById('btn_editprofile')?.addEventListener('click', function() {
-
-                                    document.getElementById('fullname').removeAttribute('readonly');
-                                    document.getElementById('email').removeAttribute('readonly');
-                                    document.getElementById('phonenumber').removeAttribute('readonly');
-                                    document.getElementById('pfno').removeAttribute('readonly');
-                                    document.getElementById('btn_updateprofile').removeAttribute('hidden');
-                                    document.getElementById('btn_updateprofile').removeAttribute('disabled');
-                                    this.disabled = true;
-                                    this.hidden = true;
-                                });
-                                document.getElementById('btn_updateprofile')?.addEventListener('click', function() {
-
-                                    var formData = $('#form_basicdetails').serialize();
-
-                                    // Function to fetch data using AJAX
-                                    $.ajax({
-                                        url: basicupdateurl,
-                                        type: 'POST',
-                                        data: formData,
-                                        dataType: 'json',
-                                        success: function(response) {
-                                            showtoastmessage(response);
-                                        },
-                                        error: function(xhr, status, error) {
-                                            var mess = JSON.stringify(xhr.responseJSON.message);
-                                            var type = JSON.stringify(xhr.responseJSON.type);
-                                            var result = {
-                                                message: mess,
-                                                type: type
-                                            };
-                                            showtoastmessage(result);
-
-                                            console.error('Error fetching data:', error);
-                                        }
-                                    });
-                                });
-                            });
-                        </script>
-                    </div>
-
-
-                    <!-- security tab -->
-                    <div role="tabpanel" class="tab-pane" id="panel-security">
-                        <form method="POST" enctype="multipart/form-data" class="form-horizontal">
-                            @csrf
-                            <div class="row form-group">
-                                <div class="col col-md-3">
-                                    <label class="form-control-label">Current Password</label>
-                                </div>
-                                <div class="col-12 col-md-9">
-                                    <input type="password" id="currentpass" name="currentpass" placeholder="Current Password"
-                                        class="form-control">
-                                </div>
-                            </div>
-
-                            <div class="row form-group">
-                                <div class="col col-md-3">
-                                    <label class="form-control-label">New Password</label>
-                                </div>
-                                <div class="col-12 col-md-9">
-                                    <input type="password" id="newpass" name="newpass" placeholder="New Password"
-                                        class="form-control">
-                                </div>
-                            </div>
-
-                            <div class="row form-group">
-                                <div class="col col-md-3">
-                                    <label class="form-control-label">Confirm Password</label>
-                                </div>
-                                <div class="col-12 col-md-9">
-                                    <input type="password" id="confirmpass" name="confirmpass"
-                                        placeholder="Confirm Password" class="form-control">
-                                </div>
-                            </div>
-
-                            <div class="row form-group">
-                                <div class="col col-md-3">
-                                    <label class="form-control-label"></label>
-                                </div>
-                                <div class="col-12 col-md-9">
-                                    <div class=" form-check">
-                                        <input class="form-check-input" type="checkbox">
-                                        <label class="form-check-label" for="flexCheckDefault">By changing your password you
-                                            will automatically be Signed Out!</label>
-
-                                        <br />
-
-                                    </div>
-                                </div>
-                                <div class="text-center">
-                                    <button id="btn_changepassword" class="btn btn-warning">Change Password</button>
-                                </div>
-                            </div>
-
-                        </form>
-
-
-                    </div>
-
+                    <h5 class="mb-1">{{ Auth::user()->name }}</h5>
+                    <p class="text-muted mb-2">{{ Auth::user()->email }}</p>
+                    <small class="text-muted">Member since {{ Auth::user()->created_at->format('M Y') }}</small>
                 </div>
             </div>
         </div>
-    @endauth
+
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" id="profileTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" role="tab">
+                                <i class="bi bi-person me-2"></i>Basic Details
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button" role="tab">
+                                <i class="bi bi-shield-lock me-2"></i>Security
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content" id="profileTabsContent">
+                        <!-- Basic Details Tab -->
+                        <div class="tab-pane fade show active" id="basic" role="tabpanel">
+                            <form id="basicDetailsForm" method="POST">
+                                @csrf
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Full Name</label>
+                                        <input type="text" class="form-control" id="fullname" name="fullname" value="{{ Auth::user()->name }}" readonly>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Email Address</label>
+                                        <input type="email" class="form-control" id="email" name="email" value="{{ Auth::user()->email }}" readonly>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">PF Number</label>
+                                        <input type="text" class="form-control" id="pfno" name="pfno" value="{{ Auth::user()->pfno }}" readonly>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Phone Number</label>
+                                        <input type="tel" class="form-control" id="phonenumber" name="phonenumber" value="{{ Auth::user()->phonenumber }}" readonly>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Registration Date</label>
+                                        <input type="text" class="form-control" value="{{ Auth::user()->created_at->format('M d, Y') }}" readonly>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Account Status</label>
+                                        <input type="text" class="form-control" value="Active" readonly>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-primary" id="editProfileBtn">
+                                        <i class="bi bi-pencil me-2"></i>Edit Profile
+                                    </button>
+                                    <button type="button" class="btn btn-success d-none" id="updateProfileBtn">
+                                        <i class="bi bi-check-circle me-2"></i>Update Profile
+                                    </button>
+                                    <button type="button" class="btn btn-secondary d-none" id="cancelEditBtn">
+                                        <i class="bi bi-x-circle me-2"></i>Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Security Tab -->
+                        <div class="tab-pane fade" id="security" role="tabpanel">
+                            <form id="passwordForm" method="POST">
+                                @csrf
+                                <div class="mb-3">
+                                    <label class="form-label">Current Password</label>
+                                    <input type="password" class="form-control" name="current_password" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">New Password</label>
+                                    <input type="password" class="form-control" name="new_password" required>
+                                    <div class="form-text">Password must be at least 8 characters long</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Confirm New Password</label>
+                                    <input type="password" class="form-control" name="new_password_confirmation" required>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="bi bi-shield-check me-2"></i>Change Password
+                                </button>
+                            </form>
+                            
+                            <hr class="my-4">
+                            
+                            <div class="alert alert-info">
+                                <h6><i class="bi bi-info-circle me-2"></i>Security Tips</h6>
+                                <ul class="mb-0">
+                                    <li>Use a strong, unique password</li>
+                                    <li>Don't share your login credentials</li>
+                                    <li>Log out when using shared computers</li>
+                                    <li>Report any suspicious activity</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const editBtn = document.getElementById('editProfileBtn');
+    const updateBtn = document.getElementById('updateProfileBtn');
+    const cancelBtn = document.getElementById('cancelEditBtn');
+    const form = document.getElementById('basicDetailsForm');
+    
+    const editableFields = ['fullname', 'email', 'phonenumber', 'pfno'];
+    const originalValues = {};
+    
+    // Store original values
+    editableFields.forEach(field => {
+        originalValues[field] = document.getElementById(field).value;
+    });
+    
+    editBtn.addEventListener('click', function() {
+        // Enable editing
+        editableFields.forEach(field => {
+            document.getElementById(field).removeAttribute('readonly');
+        });
+        
+        // Toggle buttons
+        editBtn.classList.add('d-none');
+        updateBtn.classList.remove('d-none');
+        cancelBtn.classList.remove('d-none');
+    });
+    
+    cancelBtn.addEventListener('click', function() {
+        // Restore original values
+        editableFields.forEach(field => {
+            document.getElementById(field).value = originalValues[field];
+            document.getElementById(field).setAttribute('readonly', true);
+        });
+        
+        // Toggle buttons
+        editBtn.classList.remove('d-none');
+        updateBtn.classList.add('d-none');
+        cancelBtn.classList.add('d-none');
+    });
+    
+    updateBtn.addEventListener('click', function() {
+        const formData = new FormData(form);
+        const userId = "{{ Auth::user()->userid }}";
+        const updateUrl = "{{ route('api.users.updatebasicdetails', ['id' => ':id']) }}".replace(':id', userId);
+        
+        fetch(updateUrl, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.type === 'success') {
+                // Update original values
+                editableFields.forEach(field => {
+                    originalValues[field] = document.getElementById(field).value;
+                    document.getElementById(field).setAttribute('readonly', true);
+                });
+                
+                // Toggle buttons
+                editBtn.classList.remove('d-none');
+                updateBtn.classList.add('d-none');
+                cancelBtn.classList.add('d-none');
+                
+                // Show success message
+                showAlert('Profile updated successfully!', 'success');
+            } else {
+                showAlert(data.message || 'Update failed', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('An error occurred while updating profile', 'danger');
+        });
+    });
+    
+    // Password form handler
+    document.getElementById('passwordForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const newPassword = this.new_password.value;
+        const confirmPassword = this.new_password_confirmation.value;
+        
+        if (newPassword !== confirmPassword) {
+            showAlert('Passwords do not match', 'danger');
+            return;
+        }
+        
+        if (newPassword.length < 8) {
+            showAlert('Password must be at least 8 characters long', 'danger');
+            return;
+        }
+        
+        // Here you would typically send the password change request
+        showAlert('Password change functionality will be implemented', 'info');
+    });
+    
+    function showAlert(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        const container = document.querySelector('.container-fluid');
+        container.insertBefore(alertDiv, container.firstChild);
+        
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 5000);
+    }
+});
+</script>
 @endsection

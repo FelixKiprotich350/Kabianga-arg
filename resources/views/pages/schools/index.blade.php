@@ -148,8 +148,8 @@ $(document).ready(function() {
         
         try {
             const [schoolsRes, deptsRes] = await Promise.all([
-                $.get("{{ route('api.schools.fetchallschools') }}"),
-                $.get("{{ route('api.departments.fetchalldepartments') }}")
+                $.get('/api/v1/schools'),
+                $.get('/api/v1/departments')
             ]);
             
             schools = schoolsRes.data || schoolsRes || [];
@@ -160,7 +160,7 @@ $(document).ready(function() {
             updateStats();
         } catch (error) {
             console.error('Load error:', error);
-            ARGPortal.showError('Failed to load data: ' + (error.responseText || error.message));
+            ARGPortal.showError('Failed to load schools and departments');
         } finally {
             $('#loadingState').hide();
         }

@@ -75,20 +75,10 @@
                 </li>
             @endif
 
-            @if (Auth::user()->haspermission('canviewmailing'))
+            @if (Auth::user()->haspermission('cansupervise'))
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('pages.mailing.*') ? 'active' : '' }}"
-                        href="{{ route('pages.mailing.home') }}">
-                        <i class="bi bi-envelope"></i>
-                        Notifications
-                    </a>
-                </li>
-            @endif
-
-@if (Auth::user()->haspermission('cansupervise'))
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('pages.supervision.*') ? 'active' : '' }}"
-                        href="{{ route('pages.supervision.home') }}">
+                    <a class="nav-link {{ request()->routeIs('pages.monitoring.*') ? 'active' : '' }}"
+                        href="{{ route('pages.monitoring.home') }}">
                         <i class="bi bi-clipboard-check"></i>
                         Monitoring
                     </a>

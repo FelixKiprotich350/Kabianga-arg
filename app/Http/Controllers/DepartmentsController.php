@@ -124,8 +124,32 @@ class DepartmentsController extends Controller
 
     public function fetchalldepartments()
     {
-        $data = Department::with('school')->withCount('users as staff_count')->get();
-        return response()->json(['data' => $data]);
+        try {
+            // Check permissions if user is authenticated
+            if (auth()->check() && !auth()->user()->haspermission('canviewdepartmentsandschools')) {
+                return response()->json([
+                    'error' => 'Unauthorized',
+                    'message' => 'You are not authorized to view departments'
+                ], 403);
+            }
+            
+            $data = Department::with('school')->withCount('users as staff_count')->get();
+            
+            // Log for debugging
+            \Log::info('Departments fetched successfully', ['count' => $data->count()]);
+            
+            return response()->json(['data' => $data]);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching departments', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'error' => 'Failed to fetch departments',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function fetchsearchdepartments(Request $request)

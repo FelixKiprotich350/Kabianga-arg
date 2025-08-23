@@ -113,10 +113,10 @@ async function loadProposals() {
                 const row = `
                     <tr>
                         <td>
-                            <strong>${proposal.proposaltitle || 'Untitled'}</strong>
-                            <small class="text-muted d-block">${proposal.researchtheme || ''}</small>
+                            <strong>${proposal.researchtitle || 'Untitled'}</strong>
+                            <small class="text-muted d-block">${proposal.theme_name || ''}</small>
                         </td>
-                        <td>${proposal.researcher_name || 'N/A'}</td>
+                        <td>${proposal.applicant_name || 'N/A'}</td>
                         <td>${proposal.grant_name || 'N/A'}</td>
                         <td>${statusBadge}</td>
                         <td>${proposal.created_at ? new Date(proposal.created_at).toLocaleDateString() : 'N/A'}</td>
@@ -124,11 +124,9 @@ async function loadProposals() {
                             <button class="btn btn-sm btn-outline-primary" onclick="viewProposal('${proposal.proposalid}')">
                                 <i class="bi bi-eye"></i>
                             </button>
-                            ${canEditProposal(proposal) ? `
-                                <button class="btn btn-sm btn-outline-secondary" onclick="editProposal('${proposal.proposalid}')">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                            ` : ''}
+                            <button class="btn btn-sm btn-outline-secondary" onclick="editProposal('${proposal.proposalid}')">
+                                <i class="bi bi-pencil"></i>
+                            </button>
                         </td>
                     </tr>
                 `;
@@ -154,11 +152,7 @@ function getStatusBadge(status) {
     return badges[status] || '<span class="badge bg-secondary">Unknown</span>';
 }
 
-function canEditProposal(proposal) {
-    const isOwner = proposal.useridfk === '{{ auth()->user()->userid }}';
-    const canEdit = proposal.caneditstatus || proposal.approvalstatus === 'Draft';
-    return isOwner && canEdit;
-}
+
 
 function viewProposal(proposalId) {
     window.location.href = `/proposals/view/${proposalId}`;
