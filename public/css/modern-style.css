@@ -9,7 +9,7 @@
   --dark-color: #1e293b;
   --sidebar-width: 280px;
   --header-height: 70px;
-  --footer-height: 50px;
+  --footer-height: 30px;
 }
 
 * {
@@ -161,6 +161,7 @@ body {
   margin-top: var(--header-height);
   min-height: calc(100vh - var(--header-height) - var(--footer-height));
   padding: 2rem;
+  padding-bottom: calc(2rem + var(--footer-height));
 }
 
 .auth-content {
@@ -286,6 +287,7 @@ body {
   align-items: center;
   justify-content: center;
   margin-top: auto;
+  margin-left: var(--sidebar-width);
 }
 
 /* Responsive Design */
@@ -305,6 +307,11 @@ body {
   .main-content {
     margin-left: 0;
     padding: 1rem;
+    padding-bottom: calc(1rem + var(--footer-height));
+  }
+  
+  .modern-footer {
+    margin-left: 0;
   }
   
   .logo-text {

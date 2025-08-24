@@ -45,6 +45,16 @@
                 </a>
             </li>
 
+            @if (Auth::user()->haspermission('cansupervise'))
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('pages.monitoring.*') ? 'active' : '' }}"
+                        href="{{ route('pages.monitoring.home') }}">
+                        <i class="bi bi-clipboard-check"></i>
+                        Monitoring
+                    </a>
+                </li>
+            @endif
+
             @if (Auth::user()->haspermission('canviewreports'))
                 <li class="nav-item">
                     <a class="nav-link {{ request()->routeIs('pages.reports.*') ? 'active' : '' }}"
@@ -93,15 +103,7 @@
                 </a>
             </li>
 
-            @if (Auth::user()->haspermission('cansupervise'))
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('pages.monitoring.*') ? 'active' : '' }}"
-                        href="{{ route('pages.monitoring.home') }}">
-                        <i class="bi bi-clipboard-check"></i>
-                        Monitoring
-                    </a>
-                </li>
-            @endif
+
 
             <li class="nav-item mt-3">
                 <hr class="sidebar-divider">

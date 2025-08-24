@@ -446,15 +446,54 @@ class ProposalsController extends Controller
     }
     public function printpdf($id)
     {
-        $proposal = Proposal::with(['applicant', 'department', 'themeitem',])->findOrFail($id);
-        // Load your Blade view here
-        $pdf = Pdf::loadView('pages.proposals.printproposal', compact('proposal'));
-
-        // Optionally, you can set the paper size and orientation
-        $pdf->setPaper('A4', 'potrait');
-        // Return the generated PDF 
-        // return $pdf->download('Application-' . str_replace('/', '-', $proposal->proposalcode) . '.pdf');
-        return $pdf->stream();
+        try {
+            // Optimize query with specific fields to reduce memory usage
+            $proposal = Proposal::with([
+                'applicant:userid,name,email,phonenumber,gender', 
+                'department:depid,shortname,description', 
+                'themeitem:themeid,themename', 
+                'grantitem:grantid,title,status',
+                'expenditures:expenditureid,proposalidfk,item,itemtype,quantity,unitprice,total',
+                'researchdesigns:designid,proposalidfk,summary,indicators,goal',
+                'workplans:workplanid,proposalidfk,activity,time,input,bywhom',
+                'collaborators:collaboratorid,proposalidfk,collaboratorname,position,institution',
+                'publications:publicationid,proposalidfk,title,publisher,year'
+            ])->findOrFail($id);
+            
+            // Configure PDF with optimized settings
+            $pdf = Pdf::loadView('pages.proposals.printproposal', compact('proposal'))
+                ->setPaper('A4', 'portrait')
+                ->setOptions([
+                    'isHtml5ParserEnabled' => true,
+                    'isPhpEnabled' => false,
+                    'isRemoteEnabled' => false,
+                    'defaultFont' => 'DejaVu Sans',
+                    'dpi' => 96,
+                    'enable_font_subsetting' => true
+                ]);
+            
+            $filename = 'Research-Proposal-' . str_replace(['/', ' ', '\\'], ['-', '-', '-'], $proposal->proposalcode) . '.pdf';
+            
+            // Add headers for better browser handling
+            return response($pdf->output(), 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="' . $filename . '"',
+                'Cache-Control' => 'no-cache, no-store, must-revalidate',
+                'Pragma' => 'no-cache',
+                'Expires' => '0'
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('PDF Generation Error: ' . $e->getMessage(), [
+                'proposal_id' => $id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'error' => 'Failed to generate PDF. Please try again later.',
+                'message' => config('app.debug') ? $e->getMessage() : 'PDF generation failed'
+            ], 500);
+        }
     }
     public function geteditsingleproposalpage(Request $req, $id)
     {

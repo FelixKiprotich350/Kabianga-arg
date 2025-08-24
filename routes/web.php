@@ -104,7 +104,8 @@ Route::group(['middleware' => 'auth'], function () {
 
     //departments
     Route::get('/departments', function () {
-        return redirect()->route('pages.schools.home'); });
+        return redirect()->route('pages.schools.home');
+    });
     Route::get('/departments/view/{id}', [DepartmentsController::class, 'getviewdepartmentpage'])->name('pages.departments.viewdepartment');
     Route::get('/departments/edit/{id}', [DepartmentsController::class, 'geteditdepartmentpage'])->name('pages.departments.editdepartment');
 
@@ -113,14 +114,6 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/grants/home', [GrantsController::class, 'viewallgrants'])->name('pages.grants.home');
     Route::get('/grants/view/{id}', [GrantsController::class, 'getviewsinglegrantpage'])->name('pages.grants.viewgrant');
     Route::get('/grants/edit/{id}', [GrantsController::class, 'geteditsinglegrantpage'])->name('pages.grants.editgrant');
-
-
-
-
-    //  Route::get('/grants/fetchsearchgrants', [GrantsController::class, 'fetchsearchgrants'])->name('api.grants.fetchsearchgrants');
-    //  Route::get('/grants/view/{id}', [GrantsController::class, 'getviewsinglegrantpage'])->name('pages.grants.viewgrant');
-    //  Route::get('/grants/edit/{id}', [GrantsController::class, 'geteditsinglegrantpage'])->name('pages.grants.editgrant');
-    //  Route::post('/grants/edit/{id}', [GrantsController::class, 'updategrant'])->name('api.grants.updategrant');
 
     //users
     Route::get('/users/manage', [UsersController::class, 'viewallusers'])->name('pages.users.manage');
