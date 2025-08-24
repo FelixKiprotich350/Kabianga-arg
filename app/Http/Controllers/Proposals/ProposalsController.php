@@ -771,5 +771,156 @@ class ProposalsController extends Controller
             'message' => $isCompliant ? '60% rule met' : 'Research items < 60%'
         ]);
     }
+
+    public function approveProposal(Request $request, $id)
+    {
+        try {
+            if (!auth()->user()->haspermission('canapproveproposal')) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'comment' => 'nullable|string',
+                'fundingfinyearfk' => 'required|integer|min:1'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['success' => false, 'message' => 'Please select a valid funding year'], 400);
+            }
+
+            $fundingYear = $request->input('fundingfinyearfk');
+            if (!$fundingYear || $fundingYear === 'undefined' || $fundingYear === '') {
+                return response()->json(['success' => false, 'message' => 'Please select a funding year'], 400);
+            }
+
+            $proposal = Proposal::findOrFail($id);
+            
+            if ($proposal->approvalstatus !== ApprovalStatus::PENDING) {
+                return response()->json(['success' => false, 'message' => 'Proposal already processed'], 400);
+            }
+
+            DB::transaction(function () use ($proposal, $request) {
+                $proposal->approvalstatus = ApprovalStatus::APPROVED;
+                $proposal->comment = $request->input('comment', 'Approved');
+                $proposal->caneditstatus = false;
+                $proposal->save();
+
+                $yearid = GlobalSetting::where('item', 'current_fin_year')->first();
+                if (!$yearid) {
+                    throw new Exception('Current financial year not set');
+                }
+                
+                $currentyear = FinancialYear::findOrFail($yearid->value1);
+                $lastRecord = ResearchProject::orderBy('researchid', 'desc')->first();
+                $incrementNumber = $lastRecord ? $lastRecord->researchid + 1 : 1;
+                $generatedCode = 'UOK/ARG/' . $currentyear->finyear . '/' . $incrementNumber;
+
+                $project = new ResearchProject();
+                $project->researchnumber = $generatedCode;
+                $project->proposalidfk = $proposal->proposalid;
+                $project->projectstatus = 'Active';
+                $project->ispaused = false;
+                $project->fundingfinyearfk = $request->input('fundingfinyearfk');
+                $project->save();
+            });
+
+            return response()->json(['success' => true, 'message' => 'Proposal approved successfully']);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function rejectProposal(Request $request, $id)
+    {
+        if (!auth()->user()->haspermission('canrejectproposal')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'comment' => 'required|string'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => 'Comment is required'], 400);
+        }
+
+        $proposal = Proposal::findOrFail($id);
+        
+        if ($proposal->approvalstatus !== ApprovalStatus::PENDING) {
+            return response()->json(['success' => false, 'message' => 'Proposal already processed'], 400);
+        }
+
+        $proposal->approvalstatus = ApprovalStatus::REJECTED;
+        $proposal->comment = $request->input('comment');
+        $proposal->caneditstatus = false;
+        $proposal->save();
+
+        $mailingController = new MailingController();
+        $url = route('pages.proposals.viewproposal', ['id' => $id]);
+        $mailingController->notifyUsersOfProposalActivity('proposalrejected', 'Proposal Rejected', 'danger', ['The project didnt qualify for further steps.'], 'View Proposal', $url);
+
+        return response()->json(['success' => true, 'message' => 'Proposal rejected']);
+    }
+
+    public function markAsDraft(Request $request, $id)
+    {
+        try {
+            if (!auth()->user()->haspermission('canapproveproposal')) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
+
+            $proposal = Proposal::findOrFail($id);
+            
+            if ($proposal->approvalstatus !== ApprovalStatus::PENDING) {
+                return response()->json(['success' => false, 'message' => 'Proposal already processed'], 400);
+            }
+
+            $proposal->approvalstatus = ApprovalStatus::DRAFT;
+            $proposal->caneditstatus = true;
+            $proposal->save();
+
+            return response()->json(['success' => true, 'message' => 'Proposal marked as draft']);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function requestChanges(Request $request, $id)
+    {
+        try {
+            if (!auth()->user()->haspermission('canapproveproposal')) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'comment' => 'required|string'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['success' => false, 'message' => 'Comment is required'], 400);
+            }
+
+            $proposal = Proposal::findOrFail($id);
+            
+            if ($proposal->approvalstatus !== ApprovalStatus::PENDING) {
+                return response()->json(['success' => false, 'message' => 'Proposal already processed'], 400);
+            }
+
+            $change = new ProposalChanges();
+            $change->proposalidfk = $id;
+            $change->suggestedbyfk = auth()->user()->userid;
+            $change->triggerissue = 'Review required';
+            $change->suggestedchange = $request->input('comment');
+            $change->status = 'Pending';
+            $change->save();
+
+            $proposal->caneditstatus = true;
+            $proposal->save();
+
+            return response()->json(['success' => true, 'message' => 'Change request sent']);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+        }
+    }
 }
 

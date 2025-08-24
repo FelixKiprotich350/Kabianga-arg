@@ -162,13 +162,13 @@ $(document).ready(function(){
             map.setCenter(position.coords.latitude, position.coords.longitude);
         },
         error: function(error){
-            alert('Geolocation failed: '+error.message);
+            ARGPortal.showError('Geolocation failed: '+error.message);
         },
         not_supported: function(){
-            alert("Your browser does not support geolocation");
+            ARGPortal.showWarning('Your browser does not support geolocation');
         },
         always: function(){
-            alert("Done!");
+            ARGPortal.showSuccess('Geolocation completed!');
         }
     });
 });
@@ -235,10 +235,10 @@ map = new GMaps({
     lat: -12.043333,
     lng: -77.028333,
     click: function(e){
-        alert('click');
+        ARGPortal.showInfo('Map clicked');
     },
     dragend: function(e){
-        alert('dragend');
+        ARGPortal.showInfo('Map drag ended');
     }
 });
 

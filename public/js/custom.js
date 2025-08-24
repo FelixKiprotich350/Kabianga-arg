@@ -1,6 +1,6 @@
 
     $(document).ready(function() {
         $('#menuToggle').click(function() {
-            alert('Button was clicked!');
+            ARGPortal.showInfo('Menu toggle clicked!');
         });
     });

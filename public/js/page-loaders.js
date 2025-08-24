@@ -32,6 +32,7 @@ async function loadDashboardData() {
         
     } catch (error) {
         console.error('Dashboard load error:', error);
+        ARGPortal.showError("Failed to load data");
         const statsContainer = document.getElementById('dashboard-stats');
         if (statsContainer) {
             statsContainer.innerHTML = '<div class="alert alert-danger">Failed to load dashboard data</div>';
@@ -73,6 +74,7 @@ async function loadProposalsData(type = 'all') {
         
     } catch (error) {
         console.error('Proposals load error:', error);
+        ARGPortal.showError("Failed to load data");
         const loadingState = document.getElementById('loadingState');
         const emptyState = document.getElementById('emptyState');
         const tableBody = document.getElementById('applicationsTableBody');
@@ -101,11 +103,12 @@ async function loadProposalDetails(proposalId) {
             API.getProposalResearchDesign(proposalId)
         ]);
 
-        console.log('Proposal details loaded successfully');
+        ARGPortal.showSuccess('Proposal details loaded successfully');
         
     } catch (error) {
         ARGPortal.showError('Failed to load proposal details');
         console.error('Proposal details load error:', error);
+        ARGPortal.showError("Failed to load data");
     }
 }
 
@@ -134,6 +137,7 @@ async function loadProjectsData(type = 'all') {
     } catch (error) {
         ARGPortal.showError('Failed to load projects');
         console.error('Projects load error:', error);
+        ARGPortal.showError("Failed to load data");
     }
 }
 
@@ -155,6 +159,7 @@ async function loadProjectDetails(projectId) {
     } catch (error) {
         ARGPortal.showError('Failed to load project details');
         console.error('Project details load error:', error);
+        ARGPortal.showError("Failed to load data");
     }
 }
 
@@ -169,6 +174,7 @@ async function loadUsersData() {
     } catch (error) {
         ARGPortal.showError('Failed to load users');
         console.error('Users load error:', error);
+        ARGPortal.showError("Failed to load data");
     }
 }
 
@@ -183,6 +189,7 @@ async function loadSchoolsData() {
     } catch (error) {
         ARGPortal.showError('Failed to load schools');
         console.error('Schools load error:', error);
+        ARGPortal.showError("Failed to load data");
     }
 }
 
@@ -197,6 +204,7 @@ async function loadDepartmentsData() {
     } catch (error) {
         ARGPortal.showError('Failed to load departments');
         console.error('Departments load error:', error);
+        ARGPortal.showError("Failed to load data");
     }
 }
 
@@ -211,6 +219,7 @@ async function loadGrantsData() {
     } catch (error) {
         ARGPortal.showError('Failed to load grants');
         console.error('Grants load error:', error);
+        ARGPortal.showError("Failed to load data");
     }
 }
 
@@ -236,6 +245,7 @@ async function loadReportsData() {
     } catch (error) {
         ARGPortal.showError('Failed to load reports');
         console.error('Reports load error:', error);
+        ARGPortal.showError("Failed to load data");
     }
 }
 
@@ -250,6 +260,7 @@ async function loadMonitoringData() {
     } catch (error) {
         ARGPortal.showError('Failed to load monitoring data');
         console.error('Monitoring load error:', error);
+        ARGPortal.showError("Failed to load data");
     }
 }
 
@@ -275,6 +286,7 @@ async function loadSettingsData() {
     } catch (error) {
         ARGPortal.showError('Failed to load settings');
         console.error('Settings load error:', error);
+        ARGPortal.showError("Failed to load data");
     }
 }
 
@@ -311,6 +323,7 @@ async function performSearch(query, type) {
     } catch (error) {
         ARGPortal.showError('Search failed');
         console.error('Search error:', error);
+        ARGPortal.showError("Failed to load data");
         return [];
     }
 }
@@ -344,6 +357,7 @@ async function loadUsersData() {
             tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading users</td></tr>';
         }
         console.error('Users load error:', error);
+        ARGPortal.showError("Failed to load data");
     }
 }
 

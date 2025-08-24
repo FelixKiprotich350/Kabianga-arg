@@ -33,7 +33,7 @@ class ApiClient {
             
             return result;
         } catch (error) {
-            console.error('API Request failed:', error);
+            ARGPortal.showError('API Request failed: ' + error.message);
             throw error;
         }
     }
@@ -272,6 +272,13 @@ function handleProposalForm(formElement) {
 }
 
 function showNotification(type, message) {
-    // Implementation depends on your notification system
-    console.log(`${type}: ${message}`);
+    if (type === 'success') {
+        ARGPortal.showSuccess(message);
+    } else if (type === 'error') {
+        ARGPortal.showError(message);
+    } else if (type === 'warning') {
+        ARGPortal.showWarning(message);
+    } else {
+        ARGPortal.showInfo(message);
+    }
 }

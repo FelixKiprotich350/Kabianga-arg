@@ -189,7 +189,7 @@ $(document).ready(function() {
 
 function viewFinYear(id) {
     // Implement view functionality if needed
-    console.log('View financial year:', id);
+    ARGPortal.showInfo(`Viewing financial year: ${id}`);
 }
 </script>
 @endpush

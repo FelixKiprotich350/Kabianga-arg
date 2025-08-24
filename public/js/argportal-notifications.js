@@ -6,30 +6,26 @@ window.ARGPortal = (function() {
     'use strict';
 
     // Private methods
-    function showNotification(message, type = 'info', duration = 3000) {
-        // Use existing toast system if available
+    function showNotification(message, type = 'info', duration = 3000, position = 'topright') {
+        // Always use existing toast system
         if (typeof showtoastmessage === 'function') {
             showtoastmessage({
                 message: message,
                 type: type
             });
-            return;
         }
-
-        // Fallback to custom notification
-        createCustomNotification(message, type, duration);
     }
 
-    function createCustomNotification(message, type, duration) {
+    function createCustomNotification(message, type, duration, position = 'topright') {
         // Create notification container if it doesn't exist
-        let container = document.getElementById('argportal-notifications');
+        const containerId = `argportal-notifications-${position}`;
+        let container = document.getElementById(containerId);
         if (!container) {
             container = document.createElement('div');
-            container.id = 'argportal-notifications';
+            container.id = containerId;
             container.style.cssText = `
                 position: fixed;
-                top: 20px;
-                right: 20px;
+                ${getPositionStyles(position)}
                 z-index: 9999;
                 max-width: 400px;
             `;
@@ -38,30 +34,25 @@ window.ARGPortal = (function() {
 
         // Create notification element
         const notification = document.createElement('div');
-        notification.className = `alert alert-${getBootstrapClass(type)} alert-dismissible fade show`;
-        notification.style.cssText = `
-            margin-bottom: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        `;
+        notification.className = 'toast';
+        notification.setAttribute('role', 'alert');
         
         notification.innerHTML = `
-            <strong>${getTypeLabel(type)}:</strong> ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <div class="toast-body d-flex align-items-center">
+                <i class="bi bi-${getTypeIcon(type)} text-${getBootstrapClass(type)} me-3" style="font-size: 1.2rem;"></i>
+                <div class="flex-grow-1">${message}</div>
+                <button type="button" class="btn-close ms-2" data-bs-dismiss="toast"></button>
+            </div>
         `;
+        
+        const bsToast = new bootstrap.Toast(notification);
+        bsToast.show();
+        
+        notification.addEventListener('hidden.bs.toast', function() {
+            notification.remove();
+        });
 
         container.appendChild(notification);
-
-        // Auto-remove after duration
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.classList.remove('show');
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.parentNode.removeChild(notification);
-                    }
-                }, 150);
-            }
-        }, duration);
     }
 
     function getBootstrapClass(type) {
@@ -84,31 +75,51 @@ window.ARGPortal = (function() {
         return labelMap[type] || 'Info';
     }
 
+    function getPositionStyles(position) {
+        const positions = {
+            'topright': 'top: 20px; right: 20px;',
+            'topleft': 'top: 20px; left: 20px;',
+            'bottomright': 'bottom: 20px; right: 20px;',
+            'bottomleft': 'bottom: 20px; left: 20px;'
+        };
+        return positions[position] || positions['topright'];
+    }
+
+    function getTypeIcon(type) {
+        const icons = {
+            'success': 'check-circle-fill',
+            'error': 'exclamation-triangle-fill',
+            'warning': 'exclamation-triangle-fill',
+            'info': 'info-circle-fill'
+        };
+        return icons[type] || icons['info'];
+    }
+
     // Public API
-    return {
+    const api = {
         // Success notifications
-        showSuccess: function(message, duration = 3000) {
-            showNotification(message, 'success', duration);
+        showSuccess: function(message, duration = 3000, position = 'topright') {
+            showNotification(message, 'success', duration, position);
         },
 
         // Error notifications
-        showError: function(message, duration = 5000) {
-            showNotification(message, 'error', duration);
+        showError: function(message, duration = 5000, position = 'topright') {
+            showNotification(message, 'error', duration, position);
         },
 
         // Warning notifications
-        showWarning: function(message, duration = 4000) {
-            showNotification(message, 'warning', duration);
+        showWarning: function(message, duration = 4000, position = 'topright') {
+            showNotification(message, 'warning', duration, position);
         },
 
         // Info notifications
-        showInfo: function(message, duration = 3000) {
-            showNotification(message, 'info', duration);
+        showInfo: function(message, duration = 3000, position = 'topright') {
+            showNotification(message, 'info', duration, position);
         },
 
         // Generic notification method
-        notify: function(message, type = 'info', duration = 3000) {
-            showNotification(message, type, duration);
+        notify: function(message, type = 'info', duration = 3000, position = 'topright') {
+            showNotification(message, type, duration, position);
         },
 
         // Proposal-specific notifications
@@ -188,29 +199,157 @@ window.ARGPortal = (function() {
             deadlineReminder: function(deadline, days) {
                 showNotification(`Reminder: ${deadline} deadline in ${days} days`, 'warning');
             }
+        },
+
+        // Utility functions from modern-app.js
+        showLoading: function(element) {
+            if (element) {
+                element.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm" role="status"></div> Loading...</div>';
+            }
+        },
+        
+        formatNumber: function(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        },
+        
+        debounce: function(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
         }
     };
+    
+    return api;
 })();
 
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', function() {
+    initializeSidebar();
+    initializeTooltips();
+    initializeAnimations();
+    
     // Add custom styles for notifications
     const style = document.createElement('style');
     style.textContent = `
-        #argportal-notifications .alert {
-            animation: slideInRight 0.3s ease-out;
+        [id^="argportal-notifications-"] {
+            pointer-events: none;
         }
         
-        @keyframes slideInRight {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
+        [id^="argportal-notifications-"] .toast {
+            pointer-events: auto;
+            margin-bottom: 10px;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 8px;
+        }
+        
+        [id^="argportal-notifications-"] .toast-body {
+            padding: 12px 16px;
+            background: white;
+            border-radius: 8px;
         }
     `;
     document.head.appendChild(style);
 });
+
+// Sidebar functionality
+function initializeSidebar() {
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    
+    if (sidebarToggle && sidebar) {
+        sidebarToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('active');
+            if (overlay) {
+                overlay.classList.toggle('active');
+            }
+        });
+    }
+    
+    if (overlay) {
+        overlay.addEventListener('click', function() {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+    }
+    
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 768) {
+            sidebar.classList.remove('active');
+            if (overlay) {
+                overlay.classList.remove('active');
+            }
+        }
+    });
+}
+
+// Initialize Bootstrap tooltips
+function initializeTooltips() {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+}
+
+// Initialize animations
+function initializeAnimations() {
+    const cards = document.querySelectorAll('.stats-card, .form-card, .table-card');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+        card.classList.add('fade-in');
+    });
+}
+
+// Enhanced form handling
+document.addEventListener('submit', function(e) {
+    const form = e.target;
+    if (form.classList.contains('ajax-form')) {
+        e.preventDefault();
+        handleAjaxForm(form);
+    }
+});
+
+function handleAjaxForm(form) {
+    const submitBtn = form.querySelector('[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+    submitBtn.disabled = true;
+    
+    const formData = new FormData(form);
+    
+    fetch(form.action, {
+        method: form.method,
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.ARGPortal.showSuccess(data.message || 'Operation completed successfully');
+            if (data.redirect) {
+                setTimeout(() => window.location.href = data.redirect, 1500);
+            }
+        } else {
+            window.ARGPortal.showError(data.message || 'An error occurred');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        window.ARGPortal.showError('An unexpected error occurred');
+    })
+    .finally(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+}

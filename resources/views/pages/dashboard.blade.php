@@ -130,7 +130,7 @@ $(document).ready(function() {
     loadRecentActivity();
     @else
     // User dashboard is already populated from server-side data
-    console.log('User dashboard loaded');
+    ARGPortal.showInfo('Dashboard loaded successfully');
     @endif
 });
 

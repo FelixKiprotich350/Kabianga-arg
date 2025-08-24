@@ -12,6 +12,7 @@
     @include('partials.styles')
     @include('partials.scripts')
     <script src="{{ asset('js/argportal-notifications.js') }}"></script>
+    <!-- modern-app.js functionality merged into argportal-notifications.js -->
 </head>
 
 <body>

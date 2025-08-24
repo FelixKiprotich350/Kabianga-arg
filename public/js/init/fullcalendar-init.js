@@ -94,7 +94,7 @@
                     $this.$modal.modal('hide');
                 }
                 else{
-                    alert('You have to give a title to your event');
+                    ARGPortal.showWarning('You have to give a title to your event');
                 }
                 return false;
                 

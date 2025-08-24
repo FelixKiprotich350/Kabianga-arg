@@ -36,7 +36,7 @@
         onRegionClick: function ( element, code, region ) {
             var message = 'You clicked "' + region + '" which has the code: ' + code.toUpperCase();
 
-            alert( message );
+            ARGPortal.showInfo(message);
         }
     } );
 
@@ -48,7 +48,7 @@
         onRegionClick: function ( element, code, region ) {
             var message = 'You clicked "' + region + '" which has the code: ' + code.toUpperCase();
 
-            alert( message );
+            ARGPortal.showInfo(message);
         }
     } );
 
@@ -69,7 +69,7 @@
         onRegionClick: function ( element, code, region ) {
             var message = 'You clicked "' + region + '" which has the code: ' + code.toUpperCase();
 
-            alert( message );
+            ARGPortal.showInfo(message);
         }
     } );
 
@@ -81,7 +81,7 @@
         onRegionClick: function ( element, code, region ) {
             var message = 'You clicked "' + region + '" which has the code: ' + code.toUpperCase();
 
-            alert( message );
+            ARGPortal.showInfo(message);
         }
     } );
 
@@ -90,7 +90,7 @@
         onRegionClick: function ( element, code, region ) {
             var message = 'You clicked "' + region + '" which has the code: ' + code.toUpperCase();
 
-            alert( message );
+            ARGPortal.showInfo(message);
         }
     } );
 
@@ -102,7 +102,7 @@
         onRegionClick: function ( element, code, region ) {
             var message = 'You clicked "' + region + '" which has the code: ' + code.toUpperCase();
 
-            alert( message );
+            ARGPortal.showInfo(message);
         }
     } );
 
@@ -127,7 +127,7 @@
         onRegionClick: function ( element, code, region ) {
             var message = 'You clicked "' + region + '" which has the code: ' + code.toUpperCase();
 
-            alert( message );
+            ARGPortal.showInfo(message);
         }
     } );
 
@@ -166,7 +166,7 @@
         backgroundColor: '#fff',
         onRegionClick: function ( element, code, region ) {
             var message = 'You clicked "' + region + '" which has the code: ' + code.toUpperCase();
-            alert( message );
+            ARGPortal.showInfo(message);
         }
     } );
 

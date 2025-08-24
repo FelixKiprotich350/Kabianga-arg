@@ -20,7 +20,7 @@ return new class extends Migration
             }
             
             // Update approvalstatus to use consistent enum values
-            $table->enum('approvalstatus', ['PENDING', 'APPROVED', 'REJECTED'])->default('PENDING')->change();
+            $table->enum('approvalstatus', ['DRAFT', 'PENDING', 'APPROVED', 'REJECTED'])->default('PENDING')->change();
             
             // Ensure caneditstatus is boolean
             if (!Schema::hasColumn('proposals', 'caneditstatus')) {

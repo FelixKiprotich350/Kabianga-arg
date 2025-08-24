@@ -99,6 +99,10 @@ Route::prefix('v1')->middleware(['web', 'auth'])->group(function () {
         Route::post('/{id}/submit', [ProposalsController::class, 'submitproposal']);
         Route::post('/{id}/receive', [ProposalsController::class, 'receiveproposal']);
         Route::post('/{id}/approve-reject', [ProposalsController::class, 'approverejectproposal']);
+        Route::post('/{id}/approve', [ProposalsController::class, 'approveProposal']);
+        Route::post('/{id}/reject', [ProposalsController::class, 'rejectProposal']);
+        Route::post('/{id}/mark-draft', [ProposalsController::class, 'markAsDraft']);
+        Route::post('/{id}/request-changes', [ProposalsController::class, 'requestChanges']);
         Route::patch('/{id}/edit-status', [ProposalsController::class, 'changeeditstatus']);
         Route::get('/{id}/status', [ProposalsController::class, 'fetchsubmissionstatus']);
         Route::get('/{id}/changes', [ProposalsController::class, 'fetchproposalchanges']);

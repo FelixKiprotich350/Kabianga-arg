@@ -43,11 +43,18 @@
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Custom JS -->
-    <script src="{{ asset('js/modern-app.js') }}"></script>
+    <script src="{{ asset('js/argportal-notifications.js') }}"></script>
     <script src="{{ asset('js/auth-service.js') }}"></script>
     <script src="{{ asset('js/api-service.js') }}"></script>
     <script src="{{ asset('js/page-loaders.js') }}"></script>
     <script src="{{ asset('js/data-renderers.js') }}"></script>
+    @if(session('login_success'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            ARGPortal.user.loggedIn('{{ session('user_name', auth()->user()->name ?? 'User') }}');
+        });
+    </script>
+    @endif
     @stack('scripts')
 </body>
 </html>

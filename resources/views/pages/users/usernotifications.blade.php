@@ -131,7 +131,7 @@
                     });
                     var perm = { 'users': users_ids }
                     if (perm.users.length <= 0) {
-                        showtoastmessage({ 'message': "You must select at least one User!", 'type': "warning" });
+                        ARGPortal.showWarning("You must select at least one User!");
                         return;
                     }
                     var csrfToken = $('input[name="_token"]').val();
@@ -143,11 +143,11 @@
                         data: perm,
                         success: function (response) {
                             $('#btn_closeaddnotifiableusermodal').click();
-                            showtoastmessage(response);
+                            ARGPortal.showSuccess(response.message);
                             fetchData();
                         },
                         error: function (xhr, status, error) {
-                            showtoastmessage({ 'message': 'Error Occurred!', 'type': 'danger' })
+                            ARGPortal.showError('Error Occurred!');
                             console.error('Error saving users:', error);
                         }
                     });

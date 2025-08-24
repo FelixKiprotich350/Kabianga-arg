@@ -95,7 +95,7 @@
                 })
                 .catch(error => {
                     console.error('Error loading themes:', error);
-                    showMessage('Error loading themes', 'error');
+                    ARGPortal.showError('Error loading themes');
                 });
         }
 
@@ -157,17 +157,17 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        showMessage(data.message, data.type);
+                        ARGPortal.showSuccess(data.message);
                         bootstrap.Modal.getInstance(document.getElementById('themeModal')).hide();
                         resetForm();
                         loadThemes();
                     } else {
-                        showMessage(data.message, 'error');
+                        ARGPortal.showError(data.message);
                     }
                 })
                 .catch(error => {
                     console.error('Error saving theme:', error);
-                    showMessage('Error saving theme', 'error');
+                    ARGPortal.showError('Error saving theme');
                 });
         }
 
@@ -183,15 +183,15 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        showMessage(data.message, data.type);
+                        ARGPortal.showSuccess(data.message);
                         loadThemes();
                     } else {
-                        showMessage(data.message, 'error');
+                        ARGPortal.showError(data.message);
                     }
                 })
                 .catch(error => {
                     console.error('Error deleting theme:', error);
-                    showMessage('Error deleting theme', 'error');
+                    ARGPortal.showError('Error deleting theme');
                 });
         }
 
@@ -207,26 +207,6 @@
             resetForm();
         });
 
-        function showMessage(message, type) {
-            // Create alert element
-            const alertClass = type === 'error' ? 'alert-danger' : `alert-${type}`;
-            const alert = document.createElement('div');
-            alert.className = `alert ${alertClass} alert-dismissible fade show`;
-            alert.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
 
-            // Insert at top of container
-            const container = document.querySelector('.container-fluid');
-            container.insertBefore(alert, container.firstChild);
-
-            // Auto dismiss after 5 seconds
-            setTimeout(() => {
-                if (alert.parentNode) {
-                    alert.remove();
-                }
-            }, 5000);
-        }
     </script>
 @endsection
