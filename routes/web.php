@@ -159,6 +159,14 @@ Route::group(['middleware' => 'auth'], function () {
 
     //reports
     Route::get('/reports/home', [ReportsController::class, 'home'])->name('pages.reports.home');
+    Route::get('/reports/financial', function() {
+        if (!auth()->user()->haspermission('canviewreports')) {
+            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to View Reports!");
+        }
+        $allgrants = \App\Models\Grant::all();
+        $allfinyears = \App\Models\FinancialYear::all();
+        return view('pages.reports.financial-dashboard', compact('allgrants', 'allfinyears'));
+    })->name('pages.reports.financial');
 
     //themes
     Route::get('/themes', [ResearchThemeController::class, 'index'])->name('pages.themes.index');

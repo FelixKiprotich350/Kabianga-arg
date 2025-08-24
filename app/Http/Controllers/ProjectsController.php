@@ -64,7 +64,7 @@ class ProjectsController extends Controller
 
         try {
             $userid = auth()->user()->userid;
-            $myprojects = ResearchProject::with(['proposal.grantitem'])
+            $myprojects = ResearchProject::with(['proposal.grantitem', 'proposal.applicant'])
                 ->whereHas('proposal', function ($query) use ($userid) {
                     $query->where('useridfk', $userid);
                 })
@@ -75,7 +75,10 @@ class ProjectsController extends Controller
                         'researchnumber' => $project->researchnumber,
                         'title' => $project->proposal->researchtitle ?? 'Untitled Project',
                         'description' => $project->proposal->objectives ?? '',
-                        'projectstatus' => $project->projectstatus,
+                        'status' => $project->projectstatus ?? 'ACTIVE',
+                        'researcher_name' => $project->proposal->applicant->name ?? 'N/A',
+                        'progress' => 0,
+                        'start_date' => $project->proposal->commencingdate ?? $project->created_at,
                         'created_at' => $project->created_at
                     ];
                 });
@@ -139,8 +142,11 @@ class ProjectsController extends Controller
                         'researchid' => $project->researchid,
                         'researchnumber' => $project->researchnumber,
                         'title' => $project->proposal->researchtitle ?? 'Untitled',
-                        'projectstatus' => $project->projectstatus,
-                        'researcher' => $project->proposal->applicant->name ?? 'N/A',
+                        'description' => $project->proposal->objectives ?? '',
+                        'status' => $project->projectstatus ?? 'ACTIVE',
+                        'researcher_name' => $project->proposal->applicant->name ?? 'N/A',
+                        'progress' => 0,
+                        'start_date' => $project->proposal->commencingdate ?? $project->created_at,
                         'created_at' => $project->created_at
                     ];
                 });

@@ -7,10 +7,27 @@ use App\Models\Department;
 use App\Models\Grant;
 use App\Models\Proposal;
 use App\Models\ResearchTheme;
+use App\Models\ResearchProject;
+use App\Models\ResearchFunding;
+use App\Models\ResearchProgress;
+use App\Models\Publication;
+use App\Models\User;
+use App\Models\Expenditureitem;
+use App\Models\FinancialYear;
+use App\Services\PdfGenerationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class ReportsController extends Controller
 {
+    protected $pdfService;
+
+    public function __construct(PdfGenerationService $pdfService)
+    {
+        $this->pdfService = $pdfService;
+    }
+
     //return reports main view
     public function home()
     {
@@ -20,7 +37,8 @@ class ReportsController extends Controller
         $allgrants = Grant::all();
         $allthemes = ResearchTheme::all();
         $alldepartments = Department::all();
-        return view('pages.reports.index', compact('allgrants', 'allthemes', 'alldepartments'));
+        $allfinyears = FinancialYear::all();
+        return view('pages.reports.index', compact('allgrants', 'allthemes', 'alldepartments', 'allfinyears'));
     }
 
     public function getallproposals(Request $request)
@@ -386,6 +404,327 @@ class ReportsController extends Controller
         }
 
         return response()->json($chartData);
+    }
+
+    // Financial Reports
+    public function getFinancialSummary(Request $request)
+    {
+        if (!auth()->user()->haspermission('canviewreports')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $grantFilter = $request->input('grant');
+        $yearFilter = $request->input('year');
+
+        $query = ResearchFunding::with('applicant');
+        
+        if ($grantFilter && $grantFilter != 'all') {
+            $query->whereHas('project.proposal.grantitem', function($q) use ($grantFilter) {
+                $q->where('grantid', $grantFilter);
+            });
+        }
+
+        if ($yearFilter && $yearFilter != 'all') {
+            $query->whereYear('created_at', $yearFilter);
+        }
+
+        $fundings = $query->get();
+        $totalFunding = $fundings->sum('amount');
+        $avgFunding = $fundings->avg('amount');
+        $fundingCount = $fundings->count();
+
+        // Budget vs Actual Analysis
+        $budgetData = Expenditureitem::select(
+            DB::raw('SUM(amount) as total_budget'),
+            DB::raw('COUNT(*) as proposal_count')
+        )->first();
+
+        return response()->json([
+            'total_funding' => $totalFunding,
+            'average_funding' => round($avgFunding, 2),
+            'funding_count' => $fundingCount,
+            'total_budget' => $budgetData->total_budget ?? 0,
+            'budget_utilization' => $budgetData->total_budget > 0 ? round(($totalFunding / $budgetData->total_budget) * 100, 2) : 0,
+            'funding_by_month' => $this->getFundingByMonth($yearFilter)
+        ]);
+    }
+
+    private function getFundingByMonth($year = null)
+    {
+        $year = $year ?? date('Y');
+        
+        $monthlyFunding = ResearchFunding::select(
+            DB::raw('MONTH(created_at) as month'),
+            DB::raw('SUM(amount) as total')
+        )
+        ->whereYear('created_at', $year)
+        ->groupBy(DB::raw('MONTH(created_at)'))
+        ->orderBy('month')
+        ->get();
+
+        $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        $data = array_fill(0, 12, 0);
+        
+        foreach ($monthlyFunding as $funding) {
+            $data[$funding->month - 1] = $funding->total;
+        }
+
+        return [
+            'labels' => $months,
+            'data' => $data
+        ];
+    }
+
+    // Project Reports
+    public function getProjectsReport(Request $request)
+    {
+        if (!auth()->user()->haspermission('canviewreports')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $statusFilter = $request->input('status');
+        $grantFilter = $request->input('grant');
+
+        $query = ResearchProject::with('proposal.applicant', 'proposal.grantitem', 'proposal.themeitem');
+        
+        if ($statusFilter && $statusFilter != 'all') {
+            $query->where('projectstatus', $statusFilter);
+        }
+
+        if ($grantFilter && $grantFilter != 'all') {
+            $query->whereHas('proposal.grantitem', function($q) use ($grantFilter) {
+                $q->where('grantid', $grantFilter);
+            });
+        }
+
+        $projects = $query->get();
+
+        $statusCounts = [
+            'ACTIVE' => $projects->where('projectstatus', 'ACTIVE')->count(),
+            'PAUSED' => $projects->where('projectstatus', 'PAUSED')->count(),
+            'COMPLETED' => $projects->where('projectstatus', 'COMPLETED')->count(),
+            'CANCELLED' => $projects->where('projectstatus', 'CANCELLED')->count(),
+        ];
+
+        $projectsByTheme = $projects->groupBy('proposal.themeitem.themename')
+            ->map(function($group) {
+                return $group->count();
+            });
+
+        return response()->json([
+            'total_projects' => $projects->count(),
+            'status_breakdown' => $statusCounts,
+            'projects_by_theme' => $projectsByTheme,
+            'completion_rate' => $projects->count() > 0 ? round(($statusCounts['COMPLETED'] / $projects->count()) * 100, 2) : 0,
+            'projects' => $projects->map(function($project) {
+                return [
+                    'id' => $project->researchid,
+                    'number' => $project->researchnumber,
+                    'title' => $project->proposal->title ?? 'N/A',
+                    'applicant' => $project->proposal->applicant->name ?? 'N/A',
+                    'status' => $project->projectstatus,
+                    'theme' => $project->proposal->themeitem->themename ?? 'N/A',
+                    'grant' => $project->proposal->grantitem->grantid ?? 'N/A',
+                    'created_at' => $project->created_at->format('Y-m-d')
+                ];
+            })
+        ]);
+    }
+
+    // User Activity Reports
+    public function getUserActivityReport(Request $request)
+    {
+        if (!auth()->user()->haspermission('canviewreports')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $departmentFilter = $request->input('department');
+        $roleFilter = $request->input('role');
+
+        $query = User::with('department');
+        
+        if ($departmentFilter && $departmentFilter != 'all') {
+            $query->whereHas('department', function($q) use ($departmentFilter) {
+                $q->where('depid', $departmentFilter);
+            });
+        }
+
+        if ($roleFilter && $roleFilter != 'all') {
+            $query->where('role', $roleFilter);
+        }
+
+        $users = $query->get();
+
+        $userStats = $users->map(function($user) {
+            $proposalCount = Proposal::where('useridfk', $user->userid)->count();
+            $approvedProposals = Proposal::where('useridfk', $user->userid)
+                ->where('approvalstatus', 'APPROVED')->count();
+            $activeProjects = ResearchProject::whereHas('proposal', function($q) use ($user) {
+                $q->where('useridfk', $user->userid);
+            })->where('projectstatus', 'ACTIVE')->count();
+
+            return [
+                'id' => $user->userid,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'department' => $user->department->shortname ?? 'N/A',
+                'proposal_count' => $proposalCount,
+                'approved_proposals' => $approvedProposals,
+                'active_projects' => $activeProjects,
+                'success_rate' => $proposalCount > 0 ? round(($approvedProposals / $proposalCount) * 100, 2) : 0,
+                'last_login' => $user->updated_at->format('Y-m-d H:i:s')
+            ];
+        });
+
+        $roleDistribution = $users->groupBy('role')->map(function($group) {
+            return $group->count();
+        });
+
+        return response()->json([
+            'total_users' => $users->count(),
+            'active_users' => $users->where('isactive', true)->count(),
+            'role_distribution' => $roleDistribution,
+            'users' => $userStats
+        ]);
+    }
+
+    // Publications Report
+    public function getPublicationsReport(Request $request)
+    {
+        if (!auth()->user()->haspermission('canviewreports')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $yearFilter = $request->input('year');
+        $themeFilter = $request->input('theme');
+
+        $query = Publication::with('proposal.themeitem', 'proposal.applicant');
+        
+        if ($yearFilter && $yearFilter != 'all') {
+            $query->where('year', $yearFilter);
+        }
+
+        if ($themeFilter && $themeFilter != 'all') {
+            $query->whereHas('proposal.themeitem', function($q) use ($themeFilter) {
+                $q->where('themeid', $themeFilter);
+            });
+        }
+
+        $publications = $query->get();
+
+        $publicationsByYear = $publications->groupBy('year')
+            ->map(function($group) {
+                return $group->count();
+            })->sortKeys();
+
+        $publicationsByTheme = $publications->groupBy('proposal.themeitem.themename')
+            ->map(function($group) {
+                return $group->count();
+            });
+
+        return response()->json([
+            'total_publications' => $publications->count(),
+            'publications_by_year' => $publicationsByYear,
+            'publications_by_theme' => $publicationsByTheme,
+            'recent_publications' => $publications->sortByDesc('year')->take(10)->map(function($pub) {
+                return [
+                    'title' => $pub->title,
+                    'authors' => $pub->authors,
+                    'year' => $pub->year,
+                    'publisher' => $pub->publisher,
+                    'theme' => $pub->proposal->themeitem->themename ?? 'N/A',
+                    'applicant' => $pub->proposal->applicant->name ?? 'N/A'
+                ];
+            })
+        ]);
+    }
+
+    // Export Reports to PDF
+    public function exportReport(Request $request)
+    {
+        if (!auth()->user()->haspermission('canviewreports')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $reportType = $request->input('type');
+        $filters = $request->except(['type']);
+
+        $data = [];
+        $title = '';
+
+        switch ($reportType) {
+            case 'proposals':
+                $data = $this->getallproposals($request)->getData();
+                $title = 'Proposals Report';
+                break;
+            case 'projects':
+                $data = $this->getProjectsReport($request)->getData();
+                $title = 'Projects Report';
+                break;
+            case 'financial':
+                $data = $this->getFinancialSummary($request)->getData();
+                $title = 'Financial Report';
+                break;
+            case 'publications':
+                $data = $this->getPublicationsReport($request)->getData();
+                $title = 'Publications Report';
+                break;
+            default:
+                return response()->json(['error' => 'Invalid report type'], 400);
+        }
+
+        $html = view('pages.reports.pdf-template', compact('data', 'title', 'filters'))->render();
+        
+        try {
+            $pdf = $this->pdfService->generatePdf($html, [
+                'page-size' => 'A4',
+                'orientation' => 'Portrait',
+                'margin-top' => '0.75in',
+                'margin-right' => '0.75in',
+                'margin-bottom' => '0.75in',
+                'margin-left' => '0.75in'
+            ]);
+
+            return response($pdf, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . strtolower(str_replace(' ', '_', $title)) . '_' . date('Y-m-d') . '.pdf"'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to generate PDF: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // Dashboard Summary for Reports
+    public function getReportsSummary()
+    {
+        if (!auth()->user()->haspermission('canviewreports')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $totalProposals = Proposal::count();
+        $totalProjects = ResearchProject::count();
+        $totalFunding = ResearchFunding::sum('amount');
+        $totalPublications = Publication::count();
+        $activeUsers = User::where('isactive', true)->count();
+
+        $recentActivity = [
+            'proposals_this_month' => Proposal::whereMonth('created_at', date('m'))->count(),
+            'projects_this_month' => ResearchProject::whereMonth('created_at', date('m'))->count(),
+            'funding_this_month' => ResearchFunding::whereMonth('created_at', date('m'))->sum('amount'),
+            'publications_this_year' => Publication::where('year', date('Y'))->count()
+        ];
+
+        return response()->json([
+            'totals' => [
+                'proposals' => $totalProposals,
+                'projects' => $totalProjects,
+                'funding' => $totalFunding,
+                'publications' => $totalPublications,
+                'active_users' => $activeUsers
+            ],
+            'recent_activity' => $recentActivity
+        ]);
     }
 
 }

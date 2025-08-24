@@ -254,10 +254,16 @@ Route::prefix('v1')->middleware(['web', 'auth'])->group(function () {
     
     // Reports
     Route::prefix('reports')->group(function () {
+        Route::get('/summary', [ReportsController::class, 'getReportsSummary']);
         Route::get('/proposals', [ReportsController::class, 'getallproposals']);
         Route::get('/proposals/by-school', [ReportsController::class, 'getProposalsBySchool']);
         Route::get('/proposals/by-theme', [ReportsController::class, 'getProposalsByTheme']);
         Route::get('/proposals/by-grant', [ReportsController::class, 'getProposalsByGrant']);
+        Route::get('/financial', [ReportsController::class, 'getFinancialSummary']);
+        Route::get('/projects', [ReportsController::class, 'getProjectsReport']);
+        Route::get('/users', [ReportsController::class, 'getUserActivityReport']);
+        Route::get('/publications', [ReportsController::class, 'getPublicationsReport']);
+        Route::post('/export', [ReportsController::class, 'exportReport']);
     });
     
     // Notifications
