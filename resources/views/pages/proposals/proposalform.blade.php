@@ -61,9 +61,7 @@
                     <div class="card step-content" id="basic-content">
                         <div class="card-body">
                             <h5>Basic Details</h5>
-                            <form method="POST"
-                                action="{{ isset($prop) ? '/api/v1/proposals/' . $prop->proposalid . '/basic' : '/api/v1/proposals' }}">
-                                @csrf
+                            <form id="basicForm">
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Full Name</label>
@@ -124,7 +122,7 @@
                                             value="{{ isset($prop) ? $prop->faxnumber : '' }}" required>
                                     </div>
                                 </div>
-                                <button type="submit" class="btn btn-primary">Save</button>
+                                <button type="button" class="btn btn-primary" onclick="saveBasicDetails()">Save</button>
                             </form>
                         </div>
                     </div>
@@ -133,9 +131,7 @@
                     <div class="card step-content d-none" id="research-content">
                         <div class="card-body">
                             <h5>Research Details</h5>
-                            <form method="POST"
-                                action="{{ isset($prop) ? '/api/v1/proposals/' . $prop->proposalid . '/research' : '' }}">
-                                @csrf
+                            <form id="researchForm">
                                 <div class="mb-3">
                                     <label class="form-label">Research Title</label>
                                     <input type="text" name="researchtitle" class="form-control"
@@ -184,7 +180,8 @@
                                 <div class="d-flex justify-content-between">
                                     <button type="button" class="btn btn-secondary"
                                         onclick="showStep('basic')">Previous</button>
-                                    <button type="submit" class="btn btn-primary">Save</button>
+                                    <button type="button" class="btn btn-primary"
+                                        onclick="saveResearchDetails()">Save</button>
                                 </div>
                             </form>
                         </div>
@@ -224,7 +221,7 @@
                                 <button type="button" class="btn btn-secondary"
                                     onclick="showStep('research')">Previous</button>
                                 <button type="button" class="btn btn-primary"
-                                    onclick="showStep('publications')">Save</button>
+                                    onclick="showStep('publications')">Next</button>
                             </div>
                         </div>
                     </div>
@@ -263,7 +260,7 @@
                                 <button type="button" class="btn btn-secondary"
                                     onclick="showStep('collaboration')">Previous</button>
                                 <button type="button" class="btn btn-primary"
-                                    onclick="showStep('finance')">Save</button>
+                                    onclick="showStep('finance')">Next</button>
                             </div>
                         </div>
                     </div>
@@ -314,7 +311,7 @@
                             <div class="d-flex justify-content-between">
                                 <button type="button" class="btn btn-secondary"
                                     onclick="showStep('publications')">Previous</button>
-                                <button type="button" class="btn btn-primary" onclick="showStep('design')">Save</button>
+                                <button type="button" class="btn btn-primary" onclick="showStep('design')">Next</button>
                             </div>
                         </div>
                     </div>
@@ -351,7 +348,7 @@
                                 <button type="button" class="btn btn-secondary"
                                     onclick="showStep('finance')">Previous</button>
                                 <button type="button" class="btn btn-primary"
-                                    onclick="showStep('workplan')">Save</button>
+                                    onclick="showStep('workplan')">Next</button>
                             </div>
                         </div>
                     </div>
@@ -388,7 +385,7 @@
                             <div class="d-flex justify-content-between">
                                 <button type="button" class="btn btn-secondary"
                                     onclick="showStep('design')">Previous</button>
-                                <button type="button" class="btn btn-primary" onclick="showStep('submit')">Save</button>
+                                <button type="button" class="btn btn-primary" onclick="showStep('submit')">Next</button>
                             </div>
                         </div>
                     </div>
@@ -699,24 +696,15 @@
             }
         });
 
-        // Function to show messages
+        // Function to show messages - using ARGPortal notifications
         function showMessage(message, type = 'success') {
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
-            alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-
-            const container = document.querySelector('.container-fluid');
-            container.insertBefore(alertDiv, container.firstChild);
-
-            // Auto-dismiss after 5 seconds
-            setTimeout(() => {
-                if (alertDiv.parentNode) {
-                    alertDiv.remove();
-                }
-            }, 5000);
+            if (type === 'success') {
+                ARGPortal.showSuccess(message);
+            } else if (type === 'warning') {
+                ARGPortal.showWarning(message);
+            } else {
+                ARGPortal.showError(message);
+            }
         }
 
         function loadExistingData() {
@@ -858,13 +846,13 @@
                             collaborator.collaboratorid = data.id;
                             collaborators.push(collaborator);
                             updateCollaboratorsTable();
-                            showMessage(data.message, data.type);
+                            ARGPortal.showSuccess(data.message);
                         } else {
-                            showMessage(data.message, 'error');
+                            ARGPortal.showError(data.message);
                         }
                     })
                     .catch(error => {
-                        showMessage('Error adding collaborator', 'error');
+                        ARGPortal.showError('Error adding collaborator');
                     });
             } else {
                 collaborators.push(collaborator);
@@ -906,10 +894,10 @@
                     })
                     .then(response => response.json())
                     .then(data => {
-                        showMessage(data.message, data.type);
+                        ARGPortal.showSuccess(data.message);
                     })
                     .catch(error => {
-                        showMessage('Error removing collaborator', 'error');
+                        ARGPortal.showError('Error removing collaborator');
                     });
             }
             collaborators.splice(index, 1);
@@ -937,13 +925,13 @@
                             publication.publicationid = data.id;
                             publications.push(publication);
                             updatePublicationsTable();
-                            showMessage(data.message, data.type);
+                            ARGPortal.showSuccess(data.message);
                         } else {
-                            showMessage(data.message, 'error');
+                            ARGPortal.showError(data.message);
                         }
                     })
                     .catch(error => {
-                        showMessage('Error adding publication', 'error');
+                        ARGPortal.showError('Error adding publication');
                     });
             } else {
                 publications.push(publication);
@@ -988,7 +976,7 @@
                         showMessage(data.message, data.type);
                     })
                     .catch(error => {
-                        showMessage('Error removing publication', 'error');
+                        ARGPortal.showError('Error removing publication');
                     });
             }
             publications.splice(index, 1);
@@ -1028,7 +1016,7 @@
                         }
                     })
                     .catch(error => {
-                        showMessage('Error adding budget item', 'error');
+                        ARGPortal.showError('Error adding budget item');
                     });
             } else {
                 budgetItems.push(item);
@@ -1075,7 +1063,7 @@
                         showMessage(data.message, data.type);
                     })
                     .catch(error => {
-                        showMessage('Error removing budget item', 'error');
+                        ARGPortal.showError('Error removing budget item');
                     });
             }
             budgetItems.splice(index, 1);
@@ -1159,7 +1147,7 @@
                         }
                     })
                     .catch(error => {
-                        showMessage('Error adding design item', 'error');
+                        ARGPortal.showError('Error adding design item');
                     });
             } else {
                 designItems.push(item);
@@ -1188,6 +1176,68 @@
     `).join('');
         }
 
+        function saveBasicDetails() {
+            if (!proposalId) {
+                showMessage('Proposal ID not found', 'error');
+                return;
+            }
+
+            const form = document.getElementById('basicForm');
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+
+            fetch(`/api/v1/proposals/${proposalId}/basic`, {
+                    method: 'PUT',
+                    body: JSON.stringify(data),
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        showMessage('Please fill all required fields', 'error');
+                    } else {
+                        showMessage(data.message, data.type);
+                    }
+                })
+                .catch(error => {
+                    ARGPortal.showError('Error saving basic details');
+                });
+        }
+
+        function saveResearchDetails() {
+            if (!proposalId) {
+                showMessage('Proposal ID not found', 'error');
+                return;
+            }
+
+            const form = document.getElementById('researchForm');
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+
+            fetch(`/api/v1/proposals/${proposalId}/research`, {
+                    method: 'PUT',
+                    body: JSON.stringify(data),
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        showMessage('Please fill all required fields', 'error');
+                    } else {
+                        showMessage(data.message, data.type);
+                    }
+                })
+                .catch(error => {
+                    ARGPortal.showError('Error saving research details');
+                });
+        }
+
         function removeDesignItem(index) {
             const item = designItems[index];
             if (item.designid) {
@@ -1203,7 +1253,7 @@
                         showMessage(data.message, data.type);
                     })
                     .catch(error => {
-                        showMessage('Error removing design item', 'error');
+                        ARGPortal.showError('Error removing design item');
                     });
             }
             designItems.splice(index, 1);
@@ -1238,7 +1288,7 @@
                         }
                     })
                     .catch(error => {
-                        showMessage('Error adding workplan item', 'error');
+                        ARGPortal.showError('Error adding workplan item');
                     });
             } else {
                 workplanItems.push(item);
@@ -1283,7 +1333,7 @@
                         showMessage(data.message, data.type);
                     })
                     .catch(error => {
-                        showMessage('Error removing workplan item', 'error');
+                        ARGPortal.showError('Error removing workplan item');
                     });
             }
             workplanItems.splice(index, 1);
@@ -1303,7 +1353,7 @@
         async function submitProposal() {
             const declaration = document.getElementById('declaration').checked;
             if (!declaration) {
-                alert('Please accept the declaration before submitting.');
+                ARGPortal.showWarning('Please accept the declaration before submitting.');
                 return;
             }
 
@@ -1313,7 +1363,7 @@
                 const budgetData = await response.json();
 
                 if (!budgetData.is_compliant) {
-                    alert(
+                    ARGPortal.showError(
                         'Cannot submit proposal: Facilities/Equipment and Consumables must be at least 60% of total budget. Please adjust your budget allocation.'
                     );
                     return;
@@ -1334,14 +1384,16 @@
                         .then(response => response.json())
                         .then(data => {
                             if (data.type === 'success') {
-                                alert(data.message);
-                                window.location.href = '{{ route('pages.proposals.index') }}';
+                                ARGPortal.proposal.submitted(document.querySelector('input[name="researchtitle"]')?.value || 'Your proposal');
+                                setTimeout(() => {
+                                    window.location.href = '{{ route('pages.proposals.index') }}';
+                                }, 2000);
                             } else {
-                                alert(data.message);
+                                ARGPortal.showError(data.message);
                             }
                         });
                 } else {
-                    alert('Please save the proposal first.');
+                    ARGPortal.showWarning('Please save the proposal first.');
                 }
             }
         }

@@ -14,6 +14,7 @@ class LogoutController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+        $request->session()->flash('logout_success', true);
         // Optional: Clear remember me cookies
         $cookie = \Cookie::forget('remember_web');
         return redirect()->route('pages.login')->withCookie($cookie);

@@ -126,7 +126,8 @@ class ProposalsController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Basic Details Saved Successfully! Continue editing your proposal.',
-            'proposal_id' => $proposal->proposalid
+            'proposal_id' => $proposal->proposalid,
+            'type' => 'success'
         ], 201);
     }
 
@@ -199,7 +200,8 @@ class ProposalsController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Basic Details Saved Successfully!!',
-            'proposal_id' => $proposal->proposalid
+            'proposal_id' => $proposal->proposalid,
+            'type' => 'success'
         ], 200);
     }
 
@@ -259,7 +261,8 @@ class ProposalsController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Research Details Saved Successfully!!',
-            'proposal_id' => $proposal->proposalid
+            'proposal_id' => $proposal->proposalid,
+            'type' => 'success'
         ], 200);
     }
 

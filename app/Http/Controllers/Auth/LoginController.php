@@ -47,7 +47,7 @@ class LoginController extends Controller
 
             $request->session()->put('user_name', $user->name); // Store user name in session
             $request->session()->put('user_id', $user->email);// Store user email in session
-
+            $request->session()->flash('login_success', true);
           
             // Create an instance of MailingController and call the sendMail function
             // $mailingController = new MailingController();

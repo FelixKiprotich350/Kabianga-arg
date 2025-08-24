@@ -119,6 +119,11 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
+    // Show welcome notification for logged in users
+    @if(session('login_success'))
+        ARGPortal.user.loggedIn('{{ auth()->user()->name }}');
+    @endif
+    
     @if(Auth::user()->haspermission('canviewadmindashboard'))
     loadDashboardStats();
     loadDashboardChart();
@@ -140,6 +145,7 @@ function loadDashboardStats() {
         })
         .fail(() => {
             $('#dashboard-stats').html('<div class="alert alert-danger">Failed to load statistics</div>');
+            ARGPortal.showError('Failed to load dashboard statistics');
         });
 }
 
@@ -150,6 +156,7 @@ function loadDashboardChart() {
         })
         .fail(() => {
             $('#dashboard-chart').html('<div class="alert alert-danger">Failed to load chart data</div>');
+            ARGPortal.showError('Failed to load dashboard charts');
         });
 }
 
@@ -164,6 +171,7 @@ function loadRecentActivity() {
         })
         .fail(() => {
             $('#recent-activity').html('<div class="alert alert-danger">Failed to load recent activity</div>');
+            ARGPortal.showError('Failed to load recent activity');
         });
 }
 

@@ -11,6 +11,7 @@
 
     @include('partials.styles')
     @include('partials.scripts')
+    <script src="{{ asset('js/argportal-notifications.js') }}"></script>
 </head>
 
 <body>

@@ -256,5 +256,23 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ asset('js/argportal-notifications.js') }}"></script>
+    
+    <script>
+        // Show login success notification when redirected from successful login
+        @if(session('login_success'))
+            ARGPortal.user.loggedIn('{{ auth()->user()->name ?? "User" }}');
+        @endif
+        
+        // Show logout success notification
+        @if(session('logout_success'))
+            ARGPortal.user.loggedOut();
+        @endif
+        
+        // Show error notifications for login failures
+        @if($errors->has('email'))
+            ARGPortal.showError('{{ $errors->first('email') }}');
+        @endif
+    </script>
 </body>
 </html>
