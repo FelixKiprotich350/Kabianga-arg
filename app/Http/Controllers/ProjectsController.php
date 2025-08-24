@@ -7,6 +7,7 @@ use App\Models\ResearchFunding;
 use App\Models\ResearchProgress;
 use App\Models\ResearchProject;
 use App\Models\User;
+use App\Traits\NotifiesUsers;
 use Auth;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\Validator;
 
 class ProjectsController extends Controller
 {
+    use NotifiesUsers;
     public function index()
     {
         return view('pages.projects.index');
@@ -375,9 +377,9 @@ class ProjectsController extends Controller
         $item->amount = $request->input('amount');
         $item->save();
 
-        $mailingController = new MailingController();
-        $url = route('pages.projects.viewanyproject', ['id' => $id]);
-        $mailingController->notifyUsersOfProposalActivity('projectdfundingreleased', 'Project Funding Released!', 'success', ['This Project has received a funding of Ksh ' . $request->input('amount') . ', Dispatched by ' . auth()->user()->name], 'View Project', $url);
+        // Send notification using new system
+        $project = ResearchProject::with(['proposal', 'applicant'])->findOrFail($id);
+        $this->notifyFundingAdded($project, $request->input('amount'));
 
         // Optionally, return a response or redirect
         return response(['message' => 'Funding Release Submitted Successfully!!', 'type' => 'success']);

@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Mail\SimpleMail;
+use App\Mail\ArgMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 
@@ -13,7 +13,7 @@ class SimpleMailService
         try {
             $email = is_object($to) ? $to->email : $to;
             
-            Mail::to($email)->send(new SimpleMail($subject, $content, $actionUrl, $actionText));
+            Mail::to($email)->send(new ArgMail($subject, $content, $actionUrl, $actionText));
             
             Log::info('Email sent successfully', ['to' => $email, 'subject' => $subject]);
             return true;

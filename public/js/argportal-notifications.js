@@ -318,50 +318,79 @@ document.addEventListener('submit', function(e) {
 
 function handleAjaxForm(form) {
     const submitBtn = form.querySelector('[type="submit"]');
-    const originalText = submitBtn.innerHTML;
+    const originalText = submitBtn?.innerHTML || 'Submit';
     
-    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
-    submitBtn.disabled = true;
+    if (submitBtn) {
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+        submitBtn.disabled = true;
+    }
     
-    const method = form.method.toUpperCase();
+    const method = (form.method || 'GET').toUpperCase();
     const formData = new FormData(form);
+    let requestUrl = form.action || window.location.href;
     
-    let url = form.action;
-    let fetchOptions = {
+    // Prepare fetch configuration
+    const config = {
         method: method,
         headers: {
             'X-Requested-With': 'XMLHttpRequest'
         }
     };
     
-    if (method === 'GET' || method === 'HEAD') {
-        // For GET requests, append form data to URL
-        const params = new URLSearchParams(formData);
-        url += (url.includes('?') ? '&' : '?') + params.toString();
+    // Handle different HTTP methods
+    if (method === 'GET') {
+        // Convert FormData to URLSearchParams for GET requests
+        const searchParams = new URLSearchParams();
+        for (const [key, value] of formData.entries()) {
+            searchParams.append(key, value);
+        }
+        requestUrl += (requestUrl.includes('?') ? '&' : '?') + searchParams.toString();
     } else {
-        // For POST/PUT/PATCH/DELETE, add body and CSRF token
-        fetchOptions.body = formData;
-        fetchOptions.headers['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        // Add body and CSRF for non-GET requests
+        config.body = formData;
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        if (csrfToken) {
+            config.headers['X-CSRF-TOKEN'] = csrfToken;
+        }
     }
     
-    fetch(url, fetchOptions)
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            window.ARGPortal.showSuccess(data.message || 'Operation completed successfully');
-            if (data.redirect) {
-                setTimeout(() => window.location.href = data.redirect, 1500);
+    // Make the request
+    fetch(requestUrl, config)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
-        } else {
-            window.ARGPortal.showError(data.message || 'An error occurred');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        window.ARGPortal.showError('An unexpected error occurred');
-    })
-    .finally(() => {
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
-    });
+            
+            // Check if response is JSON
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return response.json();
+            } else {
+                // If not JSON, redirect to the response URL
+                window.location.href = response.url;
+                return null;
+            }
+        })
+        .then(data => {
+            if (data) {
+                if (data.success) {
+                    window.ARGPortal.showSuccess(data.message || 'Operation completed successfully');
+                    if (data.redirect) {
+                        setTimeout(() => window.location.href = data.redirect, 1500);
+                    }
+                } else {
+                    window.ARGPortal.showError(data.message || 'An error occurred');
+                }
+            }
+        })
+        .catch(error => {
+            console.error('AJAX Form Error:', error);
+            window.ARGPortal.showError('An unexpected error occurred');
+        })
+        .finally(() => {
+            if (submitBtn) {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        });
 }
