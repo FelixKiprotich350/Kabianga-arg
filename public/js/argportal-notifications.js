@@ -323,16 +323,28 @@ function handleAjaxForm(form) {
     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
     submitBtn.disabled = true;
     
+    const method = form.method.toUpperCase();
     const formData = new FormData(form);
     
-    fetch(form.action, {
-        method: form.method,
-        body: formData,
+    let url = form.action;
+    let fetchOptions = {
+        method: method,
         headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+            'X-Requested-With': 'XMLHttpRequest'
         }
-    })
+    };
+    
+    if (method === 'GET' || method === 'HEAD') {
+        // For GET requests, append form data to URL
+        const params = new URLSearchParams(formData);
+        url += (url.includes('?') ? '&' : '?') + params.toString();
+    } else {
+        // For POST/PUT/PATCH/DELETE, add body and CSRF token
+        fetchOptions.body = formData;
+        fetchOptions.headers['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    }
+    
+    fetch(url, fetchOptions)
     .then(response => response.json())
     .then(data => {
         if (data.success) {

@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Support\Facades\Log;
+use App\Services\MailService;
+use Illuminate\Support\Facades\URL as UrlGenerator;
 
 
 class CustomVerificationController extends Controller
@@ -45,8 +47,17 @@ class CustomVerificationController extends Controller
             return redirect()->route('pages.index');
         }
 
-        $request->user()->sendEmailVerificationNotification();
-
-        return back()->with('verificationstatus', 'verification-link-sent');
+        $user = $request->user();
+        $url = UrlGenerator::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(60),
+            ['id' => $user->userid, 'hash' => sha1($user->email)]
+        );
+        
+        $sent = MailService::send($user, 'email_verification', ['url' => $url]);
+        
+        return $sent 
+            ? back()->with('verificationstatus', 'verification-link-sent')
+            : back()->with('error', 'Unable to send verification email. Please try again.');
     }
 }

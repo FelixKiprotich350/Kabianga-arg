@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Str;
+use App\Services\MailService;
+use App\Models\User;
 
 class CustomPasswordResetController extends Controller
 {
@@ -28,8 +30,8 @@ class CustomPasswordResetController extends Controller
         );
 
         return $status === Password::RESET_LINK_SENT
-                    ? back()->with(['status' => __($status)])
-                    : back()->withErrors(['email' => __($status)]);
+                    ? back()->with(['status' => 'We have emailed your password reset link!'])
+                    : back()->withErrors(['email' => 'Unable to send reset email. Please try again.']);
     }
 
     // Show the form to reset the password

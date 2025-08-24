@@ -189,5 +189,10 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/notifications/mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.markAllRead');
     Route::delete('/notifications/{id}', [\App\Http\Controllers\NotificationController::class, 'destroy'])->name('notifications.destroy');
 
+    //funding
+    Route::post('/projects/{id}/funding', [\App\Http\Controllers\FinancesController::class, 'addFunding'])->name('projects.addFunding');
+    
+
+
 });
 ;

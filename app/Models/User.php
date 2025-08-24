@@ -15,8 +15,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\URL;
 use App\Models\Permission;
 use App\Models\Proposal;
-use App\Notifications\CustomResetPasswordNotification;
-use App\Notifications\CustomVerifyEmailNotification;
+use App\Services\SimpleMailService;
 use App\Traits\HasPermissions;
 
 
@@ -86,12 +85,22 @@ class User extends Authenticatable
 
     public function sendPasswordResetNotification($token)
     {
-        $this->notify(new CustomResetPasswordNotification($token));
+        $url = route('password.reset', ['token' => $token]) . '?email=' . urlencode($this->email);
+        $content = "You are receiving this email because we received a password reset request for your account. This link will expire in 60 minutes.";
+        
+        SimpleMailService::send($this->email, 'Reset Your Password', $content, $url, 'Reset Password');
     }
 
     public function sendEmailVerificationNotification()
     {
-        $this->notify(new CustomVerifyEmailNotification());
+        $url = \Illuminate\Support\Facades\URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(60),
+            ['id' => $this->userid, 'hash' => sha1($this->email)]
+        );
+        $content = "Please click the button below to verify your email address.";
+        
+        SimpleMailService::send($this->email, 'Verify Your Email Address', $content, $url, 'Verify Email');
     }
 
     //functions 
