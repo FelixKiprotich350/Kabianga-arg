@@ -117,30 +117,10 @@ class SchoolsController extends Controller
     public function fetchallschools()
     {
         try {
-            // Check permissions if user is authenticated
-            if (auth()->check() && !auth()->user()->haspermission('canviewdepartmentsandschools')) {
-                return response()->json([
-                    'error' => 'Unauthorized',
-                    'message' => 'You are not authorized to view schools'
-                ], 403);
-            }
-            
-            $data = School::withCount('departments')->get();
-            
-            // Log for debugging
-            \Log::info('Schools fetched successfully', ['count' => $data->count()]);
-            
+            $data = School::all();
             return response()->json(['data' => $data]);
         } catch (\Exception $e) {
-            \Log::error('Error fetching schools', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            return response()->json([
-                'error' => 'Failed to fetch schools',
-                'message' => $e->getMessage()
-            ], 500);
+            return response()->json(['error' => 'Failed to fetch schools'], 500);
         }
     }
 

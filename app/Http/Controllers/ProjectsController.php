@@ -255,86 +255,66 @@ class ProjectsController extends Controller
     public function pauseproject(Request $request, $id)
     {
         if (!auth()->user()->hasPermission('canpauseresearchproject')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not authorized to pause this Project!");
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
         $item = ResearchProject::findOrFail($id);
 
         if ($item->ispaused) {
-            return redirect()->back()->with('projectalreadypausedmessage', 'This Project has already been Paused!');
+            return response()->json(['success' => false, 'message' => 'Project already paused'], 400);
         }
+        $item->projectstatus = ResearchProject::STATUS_PAUSED;
         $item->ispaused = true;
         $item->save();
-        $mailingController = new MailingController();
-        $url = route('pages.projects.viewanyproject', ['id' => $item->researchid]);
-        $mailingController->notifyUsersOfProposalActivity('projectpaused', 'Project Paused!', 'success', ['This Project has been Paused Successfully.'], 'View Project', $url);
-
-        // Optionally, return a response or redirect
-        return redirect(route('pages.projects.viewanyproject', ['id' => $id]));
-
-
+        
+        return response()->json(['success' => true, 'message' => 'Project paused successfully']);
     }
     public function resumeproject(Request $request, $id)
     {
         if (!auth()->user()->hasPermission('canresumeresearchproject')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not authorized to pause this Project!");
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
         $item = ResearchProject::findOrFail($id);
         if (!$item->ispaused) {
-            return redirect()->back()->with('projectnotpausedmessage', 'This Project cannot Resume because its not Paused!');
+            return response()->json(['success' => false, 'message' => 'Project is not paused'], 400);
         }
+        $item->projectstatus = ResearchProject::STATUS_ACTIVE;
         $item->ispaused = false;
         $item->save();
 
-        $mailingController = new MailingController();
-        $url = route('pages.projects.viewanyproject', ['id' => $item->researchid]);
-        $mailingController->notifyUsersOfProposalActivity('projectpaused', 'Project Paused!', 'success', ['This Project has been Paused Successfully.'], 'View Project', $url);
-
-        // Optionally, return a response or redirect
-        return redirect(route('pages.projects.viewanyproject', ['id' => $id]));
-
-
+        return response()->json(['success' => true, 'message' => 'Project resumed successfully']);
     }
     public function cancelproject(Request $request, $id)
     {
         if (!auth()->user()->hasPermission('cancancelresearchproject')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not authorized to pause this Project!");
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
         $item = ResearchProject::findOrFail($id);
 
         if ($item->projectstatus != ResearchProject::STATUS_ACTIVE) {
-            return redirect()->back()->with('projectnotcancelledmessage', 'This Project cannot be Cancelled because its not Active!');
+            return response()->json(['success' => false, 'message' => 'Project must be active to cancel'], 400);
         }
         $item->projectstatus = ResearchProject::STATUS_CANCELLED;
         $item->save();
-        $mailingController = new MailingController();
-        $url = route('pages.projects.viewanyproject', ['id' => $item->researchid]);
-        $mailingController->notifyUsersOfProposalActivity('projectcancelled', 'Project Cancelled!', 'success', ['This Project has been Cancelled and Stopped Successfully.'], 'View Project', $url);
-
-        // Optionally, return a response or redirect
-        return redirect(route('pages.projects.viewanyproject', ['id' => $id]));
+        
+        return response()->json(['success' => true, 'message' => 'Project cancelled successfully']);
     }
     public function completeproject(Request $request, $id)
     {
         if (!auth()->user()->hasPermission('cancompleteresearchproject')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not authorized to pause this Project!");
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
         $item = ResearchProject::findOrFail($id);
 
         if ($item->projectstatus != ResearchProject::STATUS_ACTIVE || $item->ispaused) {
-            return redirect()->back()->with('projectnotcompletedmessage', 'This Project cannot be Completed because its not Active or it has been Paused!');
+            return response()->json(['success' => false, 'message' => 'Project must be active and not paused to complete'], 400);
         }
         $item->projectstatus = ResearchProject::STATUS_COMPLETED;
         $item->save();
 
-        $mailingController = new MailingController();
-        $url = route('pages.projects.viewanyproject', ['id' => $item->researchid]);
-        $mailingController->notifyUsersOfProposalActivity('projectcompleted', 'Project Completed!', 'success', ['This Project has been Completed and Closed Successfully.'], 'View Project', $url);
-
-        // Optionally, return a response or redirect
-        return redirect(route('pages.projects.viewanyproject', ['id' => $id]))->with('projectcompletedmessage', 'This Project has been Completed and Closed Successfully!');
+        return response()->json(['success' => true, 'message' => 'Project completed successfully']);
     }
     public function fetchprojectprogress($id)
     {

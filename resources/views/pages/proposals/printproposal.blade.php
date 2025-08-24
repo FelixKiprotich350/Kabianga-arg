@@ -31,7 +31,7 @@
             text-align: center;
             margin-bottom: 25px;
             padding-bottom: 15px;
-            border-bottom: 3px solid #2c5aa0;
+            border-bottom: 3px solid #88CDFF;
         }
 
         .university-logo {
@@ -43,7 +43,7 @@
         .university-name {
             font-size: 18px;
             font-weight: bold;
-            color: #2c5aa0;
+            color: #88CDFF;
             margin-bottom: 5px;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -146,7 +146,7 @@
             background: #f8f9fa;
             padding: 15px;
             border-radius: 5px;
-            border-left: 4px solid #2c5aa0;
+            border-left: 4px solid #88CDFF;
             margin-bottom: 15px;
             text-align: justify;
             line-height: 1.5;
@@ -155,7 +155,7 @@
         .footer {
             margin-top: 30px;
             padding-top: 15px;
-            border-top: 2px solid #2c5aa0;
+            border-top: 2px solid #88CDFF;
             text-align: center;
             font-size: 10px;
             color: #7f8c8d;
@@ -168,7 +168,7 @@
 
         .footer .copyright {
             font-weight: bold;
-            color: #2c5aa0;
+            color: #88CDFF;
         }
 
         .amount {
