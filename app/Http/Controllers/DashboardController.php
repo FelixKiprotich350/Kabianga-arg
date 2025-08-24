@@ -19,9 +19,9 @@ class DashboardController extends Controller
 
         // Get  proposals count
         $allProposalscount = Proposal::count();
-        $approvedProposalsCount = Proposal::where('approvalstatus', 'approved')->count();
-        $rejectedProposalsCount = Proposal::where('approvalstatus', 'rejected')->count();
-        $pendingProposalsCount = Proposal::where('approvalstatus', 'pending')->count();
+        $approvedProposalsCount = Proposal::where('approvalstatus', 'APPROVED')->count();
+        $rejectedProposalsCount = Proposal::where('approvalstatus', 'REJECTED')->count();
+        $pendingProposalsCount = Proposal::where('approvalstatus', 'PENDING')->count();
         
         $dashboardmetrics = [
             'allProposalscount' => $allProposalscount,
@@ -46,9 +46,9 @@ class DashboardController extends Controller
         // Personal stats
         $personalStats = [
             'totalProposals' => $proposals->count(),
-            'approvedProposals' => $proposals->where('approvalstatus', 'approved')->count(),
-            'pendingProposals' => $proposals->where('approvalstatus', 'pending')->count(),
-            'rejectedProposals' => $proposals->where('approvalstatus', 'rejected')->count(),
+            'approvedProposals' => $proposals->where('approvalstatus', 'APPROVED')->count(),
+            'pendingProposals' => $proposals->where('approvalstatus', 'PENDING')->count(),
+            'rejectedProposals' => $proposals->where('approvalstatus', 'REJECTED')->count(),
             'activeProjects' => $projects->where('projectstatus', 'Active')->count(),
             'completedProjects' => $projects->where('projectstatus', 'Completed')->count(),
             'cancelledProjects' => $projects->where('projectstatus', 'Cancelled')->count(),
@@ -69,9 +69,9 @@ class DashboardController extends Controller
 
         // Get  proposals count
         $allProposalscount = Proposal::count();
-        $approvedProposalsCount = Proposal::where('approvalstatus', 'approved')->count();
-        $rejectedProposalsCount = Proposal::where('approvalstatus', 'rejected')->count();
-        $pendingProposalsCount = Proposal::where('approvalstatus', 'pending')->count();
+        $approvedProposalsCount = Proposal::where('approvalstatus', 'APPROVED')->count();
+        $rejectedProposalsCount = Proposal::where('approvalstatus', 'REJECTED')->count();
+        $pendingProposalsCount = Proposal::where('approvalstatus', 'PENDING')->count();
         // $requirechangeProposalsCount = Proposal::where('approvalstatus', 'requirechange')->count();
         $dashboardmetrics = [
             'allProposalscount' => $allProposalscount,
@@ -116,9 +116,9 @@ class DashboardController extends Controller
         }
         // Get  proposals count
         $allProposalscount = Proposal::count();
-        $approvedProposalsCount = Proposal::where('approvalstatus', 'approved')->count();
-        $rejectedProposalsCount = Proposal::where('approvalstatus', 'rejected')->count();
-        $pendingProposalsCount = Proposal::where('approvalstatus', 'pending')->count();
+        $approvedProposalsCount = Proposal::where('approvalstatus', 'APPROVED')->count();
+        $rejectedProposalsCount = Proposal::where('approvalstatus', 'REJECTED')->count();
+        $pendingProposalsCount = Proposal::where('approvalstatus', 'PENDING')->count();
         $requirechangeProposalsCount = Proposal::where('approvalstatus', 'requirechange')->count();
         $dashboardmetrics = [
             'allProposalscount' => $allProposalscount,
@@ -137,7 +137,7 @@ class DashboardController extends Controller
             return [];
         }
 
-        $proposalsQuery = Proposal::with('department', 'grantitem', 'themeitem', 'applicant')->where('submittedstatus', true);
+        $proposalsQuery = Proposal::with('department', 'grantitem', 'themeitem', 'applicant')->where('submittedstatus', 'SUBMITTED');
 
 
         $themes = ResearchTheme::all();
@@ -192,9 +192,9 @@ class DashboardController extends Controller
         foreach ($themes as $theme) {
             $filteredProposals = (clone $proposalsQuery)->where('themefk', $theme->themeid)->get();
 
-            $approvedCount = $filteredProposals->where('approvalstatus', 'Approved')->count();
-            $rejectedCount = $filteredProposals->where('approvalstatus', 'Rejected')->count();
-            $pendingCount = $filteredProposals->where('approvalstatus', 'Pending')->count();
+            $approvedCount = $filteredProposals->where('approvalstatus', 'APPROVED')->count();
+            $rejectedCount = $filteredProposals->where('approvalstatus', 'REJECTED')->count();
+            $pendingCount = $filteredProposals->where('approvalstatus', 'PENDING')->count();
 
             $maleCount = $filteredProposals->filter(fn($proposal) => $proposal->applicant->gender == 'Male')->count();
             $femaleCount = $filteredProposals->filter(fn($proposal) => $proposal->applicant->gender == 'Female')->count();
@@ -230,9 +230,9 @@ class DashboardController extends Controller
             $stats = [
                 'proposals' => [
                     'total' => Proposal::count(),
-                    'approved' => Proposal::where('approvalstatus', 'Approved')->count(),
-                    'pending' => Proposal::where('approvalstatus', 'Pending')->count(),
-                    'rejected' => Proposal::where('approvalstatus', 'Rejected')->count()
+                    'approved' => Proposal::where('approvalstatus', 'APPROVED')->count(),
+                    'pending' => Proposal::where('approvalstatus', 'PENDING')->count(),
+                    'rejected' => Proposal::where('approvalstatus', 'REJECTED')->count()
                 ],
                 'projects' => [
                     'total' => ResearchProject::count(),

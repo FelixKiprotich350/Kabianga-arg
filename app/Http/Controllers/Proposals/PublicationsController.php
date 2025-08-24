@@ -19,6 +19,11 @@ class PublicationsController extends Controller
             return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
         }
         
+        $proposal = \App\Models\Proposal::findOrFail($request->input('proposalidfk'));
+        if (!$proposal->canBeEdited()) {
+            return response()->json(['message' => 'This proposal cannot be edited at this time.', 'type' => 'danger'], 403);
+        }
+        
         $rules = [
             'proposalidfk' => 'required|string',
             'title' => 'required|string',
@@ -81,6 +86,12 @@ class PublicationsController extends Controller
         if(!auth()->user()->haspermission('canmakenewproposal')){
             return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
         }
+        
+        $publication = Publication::findOrFail($id);
+        $proposal = \App\Models\Proposal::findOrFail($publication->proposalidfk);
+        if (!$proposal->canBeEdited()) {
+            return response()->json(['message' => 'This proposal cannot be edited at this time.', 'type' => 'danger'], 403);
+        }
 
         $rules = [
             'authors' => 'required|string',
@@ -114,6 +125,12 @@ class PublicationsController extends Controller
     {
         if(!auth()->user()->haspermission('canmakenewproposal')){
             return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
+        }
+        
+        $publication = Publication::findOrFail($id);
+        $proposal = \App\Models\Proposal::findOrFail($publication->proposalidfk);
+        if (!$proposal->canBeEdited()) {
+            return response()->json(['message' => 'This proposal cannot be edited at this time.', 'type' => 'danger'], 403);
         }
 
         $publication = Publication::findOrFail($id);

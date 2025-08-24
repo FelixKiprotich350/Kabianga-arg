@@ -76,7 +76,7 @@
                         '<td>' + (data.themeitem ? data.themeitem.themename : '') + '</td>' +
                         '<td>' + data.highqualification + '</td>' +
                         '<td>' + (data.department ? data.department.shortname : '') + '</td>' +
-                        '<td>' + (data.submittedstatus == 1 ? "Yes" : "No") + '</td>' +
+                        '<td>' + (data.submittedstatus == 'SUBMITTED' ? "Yes" : "No") + '</td>' +
                         '<td>' + new Date(data.created_at).toDateString("en-US") + '</td>' +
                         '</tr>';
                     tbody.append(row);

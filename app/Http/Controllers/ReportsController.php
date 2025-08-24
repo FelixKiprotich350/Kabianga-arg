@@ -76,9 +76,9 @@ class ReportsController extends Controller
             // Get the proposals for the current department
             $proposals = $data->where('departmentidfk', $department->depid)->get();
             //proposal status
-            $approved = $proposals->where('approvalstatus', 'Approved')->count();
-            $rejected = $proposals->where('approvalstatus', 'Rejected')->count();
-            $pending = $proposals->where('approvalstatus', 'Pending')->count();
+            $approved = $proposals->where('approvalstatus', 'APPROVED')->count();
+            $rejected = $proposals->where('approvalstatus', 'REJECTED')->count();
+            $pending = $proposals->where('approvalstatus', 'PENDING')->count();
             // gender
             $malecount = $proposals->filter(function ($proposal) {
                 return $proposal->applicant->gender === 'Male';
@@ -89,7 +89,7 @@ class ReportsController extends Controller
 
             // Add the department and its proposals to the array
             $departmentProposals[] = [$department->shortname, $proposals->count(), $malecount, $femalecount];
-            // 'statuses' => ['Approved' => $approved, 'Rejected' => $rejected, 'Pending' => $pending]
+            // 'statuses' => ['APPROVED' => $approved, 'REJECTED' => $rejected, 'PENDING' => $pending]
 
         }
         return response()->json($departmentProposals); // Return filtered data as JSON
@@ -172,9 +172,9 @@ class ReportsController extends Controller
         foreach ($departments as $department) {
             $filteredProposals = (clone $proposalsQuery)->where('departmentidfk', $department->depid)->get();
 
-            $approvedCount = $filteredProposals->where('approvalstatus', 'Approved')->count();
-            $rejectedCount = $filteredProposals->where('approvalstatus', 'Rejected')->count();
-            $pendingCount = $filteredProposals->where('approvalstatus', 'Pending')->count();
+            $approvedCount = $filteredProposals->where('approvalstatus', 'APPROVED')->count();
+            $rejectedCount = $filteredProposals->where('approvalstatus', 'REJECTED')->count();
+            $pendingCount = $filteredProposals->where('approvalstatus', 'PENDING')->count();
 
             $maleCount = $filteredProposals->filter(fn($proposal) => $proposal->applicant->gender === 'Male')->count();
             $femaleCount = $filteredProposals->filter(fn($proposal) => $proposal->applicant->gender === 'Female')->count();
@@ -270,9 +270,9 @@ class ReportsController extends Controller
         foreach ($themes as $theme) {
             $filteredProposals = (clone $proposalsQuery)->where('themefk', $theme->themeid)->get();
 
-            $approvedCount = $filteredProposals->where('approvalstatus', 'Approved')->count();
-            $rejectedCount = $filteredProposals->where('approvalstatus', 'Rejected')->count();
-            $pendingCount = $filteredProposals->where('approvalstatus', 'Pending')->count();
+            $approvedCount = $filteredProposals->where('approvalstatus', 'APPROVED')->count();
+            $rejectedCount = $filteredProposals->where('approvalstatus', 'REJECTED')->count();
+            $pendingCount = $filteredProposals->where('approvalstatus', 'PENDING')->count();
 
             $maleCount = $filteredProposals->filter(fn($proposal) => $proposal->applicant->gender == 'Male')->count();
             $femaleCount = $filteredProposals->filter(fn($proposal) => $proposal->applicant->gender == 'Female')->count();
@@ -368,9 +368,9 @@ class ReportsController extends Controller
         foreach ($grants as $grant) {
             $filteredProposals = (clone $proposalsQuery)->where('grantnofk', $grant->grantid)->get();
 
-            $approvedCount = $filteredProposals->where('approvalstatus', 'Approved')->count();
-            $rejectedCount = $filteredProposals->where('approvalstatus', 'Rejected')->count();
-            $pendingCount = $filteredProposals->where('approvalstatus', 'Pending')->count();
+            $approvedCount = $filteredProposals->where('approvalstatus', 'APPROVED')->count();
+            $rejectedCount = $filteredProposals->where('approvalstatus', 'REJECTED')->count();
+            $pendingCount = $filteredProposals->where('approvalstatus', 'PENDING')->count();
 
             $maleCount = $filteredProposals->filter(fn($proposal) => $proposal->applicant->gender == 'Male')->count();
             $femaleCount = $filteredProposals->filter(fn($proposal) => $proposal->applicant->gender == 'Female')->count();

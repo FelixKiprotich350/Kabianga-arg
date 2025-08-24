@@ -10,6 +10,26 @@ use Illuminate\Support\Str;
 use App\Models\User;
 use App\Models\ResearchTheme;
 
+enum SubmittedStatus: string
+{
+    case PENDING = 'PENDING';
+    case SUBMITTED = 'SUBMITTED';
+}
+
+enum ReceivedStatus: string
+{
+    case PENDING = 'PENDING';
+    case RECEIVED = 'RECEIVED';
+}
+
+enum ApprovalStatus: string
+{
+    case DRAFT = 'DRAFT';
+    case PENDING = 'PENDING';
+    case APPROVED = 'APPROVED';
+    case REJECTED = 'REJECTED';
+}
+
 
 
 class Proposal extends Model
@@ -45,7 +65,16 @@ class Proposal extends Model
         'faxnumber',
         'cellphone',
         'officephone',
-        'submittedstatus'
+        'submittedstatus',
+        'receivedstatus',
+        'caneditstatus'
+    ];
+
+    protected $casts = [
+        'submittedstatus' => SubmittedStatus::class,
+        'receivedstatus' => ReceivedStatus::class,
+        'approvalstatus' => ApprovalStatus::class,
+        'caneditstatus' => 'boolean',
     ];
 
 
@@ -119,7 +148,7 @@ class Proposal extends Model
     {
         try {
             $user = Auth::user();
-            if (($user->userid == $this->useridfk) && $this->caneditstatus && $this->approvalstatus == 'Pending') {
+            if (($user->userid == $this->useridfk) && $this->caneditstatus && $this->approvalstatus == ApprovalStatus::PENDING) {
                 return true;
             }
             else {
@@ -129,5 +158,10 @@ class Proposal extends Model
             return false;
         }
 
+    }
+
+    public function canBeEdited()
+    {
+        return $this->receivedstatus == ReceivedStatus::PENDING || $this->caneditstatus;
     }
 }

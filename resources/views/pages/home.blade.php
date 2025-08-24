@@ -104,11 +104,11 @@
                                         <small class="text-muted">{{ $proposal->created_at->format('M d, Y') }}</small>
                                     </div>
                                     <span class="badge 
-                                        @if($proposal->approvalstatus == 'approved') bg-success
-                                        @elseif($proposal->approvalstatus == 'pending') bg-warning
+                                        @if($proposal->approvalstatus == 'APPROVED') bg-success
+                                        @elseif($proposal->approvalstatus == 'PENDING') bg-warning
                                         @else bg-danger
                                         @endif">
-                                        {{ ucfirst($proposal->approvalstatus) }}
+                                        {{ ucfirst($proposal->approvalstatus->value) }}
                                     </span>
                                 </div>
                             @endforeach

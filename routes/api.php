@@ -92,7 +92,8 @@ Route::prefix('v1')->middleware(['web', 'auth'])->group(function () {
         Route::post('/', [ProposalsController::class, 'postnewproposal']);
         Route::get('/my', [ProposalsController::class, 'fetchmyapplications']);
         Route::get('/search', [ProposalsController::class, 'fetchsearchproposals']);
-        Route::get('/{id}', [ProposalsController::class, 'getsingleproposalpage']);
+        Route::get('/{id}', [ProposalsController::class, 'fetchsingleproposal']);
+        Route::get('/{id}/view', [ProposalsController::class, 'getsingleproposalpage']);
         Route::put('/{id}/basic', [ProposalsController::class, 'updatebasicdetails']);
         Route::put('/{id}/research', [ProposalsController::class, 'updateresearchdetails']);
         Route::post('/{id}/submit', [ProposalsController::class, 'submitproposal']);
@@ -102,6 +103,7 @@ Route::prefix('v1')->middleware(['web', 'auth'])->group(function () {
         Route::get('/{id}/status', [ProposalsController::class, 'fetchsubmissionstatus']);
         Route::get('/{id}/changes', [ProposalsController::class, 'fetchproposalchanges']);
         Route::get('/{id}/pdf', [ProposalsController::class, 'printpdf']);
+        Route::get('/test-snappy', [ProposalsController::class, 'testSnappy']);
         
         // Proposal Components
         Route::get('/{id}/collaborators', [ProposalsController::class, 'fetchcollaborators']);

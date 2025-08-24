@@ -17,6 +17,11 @@ class ResearchdesignController extends Controller
              return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
          }
          
+         $proposal = \App\Models\Proposal::findOrFail($request->input('proposalidfk'));
+         if (!$proposal->canBeEdited()) {
+             return response()->json(['message' => 'This proposal cannot be edited at this time.', 'type' => 'danger'], 403);
+         }
+         
          // Handle both form field names
          $rules = [
              'proposalidfk' => 'required|string',
@@ -92,6 +97,12 @@ class ResearchdesignController extends Controller
 
      public function updateResearchDesign(Request $request, $id)
      {
+         $reditem = ResearchDesignItem::findOrFail($id);
+         $proposal = \App\Models\Proposal::findOrFail($reditem->proposalidfk);
+         if (!$proposal->canBeEdited()) {
+             return response()->json(['message' => 'This proposal cannot be edited at this time.', 'type' => 'danger'], 403);
+         }
+         
          $rules = [
              'summary' => 'required|string',
              'indicators' => 'required|string',
@@ -121,6 +132,10 @@ class ResearchdesignController extends Controller
      public function deleteResearchDesign($id)
      {
          $reditem = ResearchDesignItem::findOrFail($id);
+         $proposal = \App\Models\Proposal::findOrFail($reditem->proposalidfk);
+         if (!$proposal->canBeEdited()) {
+             return response()->json(['message' => 'This proposal cannot be edited at this time.', 'type' => 'danger'], 403);
+         }
          $reditem->delete();
 
          return response()->json(['message' => 'Research design deleted successfully!', 'type' => 'success']);

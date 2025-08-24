@@ -125,14 +125,14 @@ class User extends Authenticatable
     public function haspermission($shortname)
     {
         // Super admin has all permissions
-        if ((isset($this->isadmin) && $this->isadmin) || $this->role == 1) {
+        if ((isset($this->isadmin) && $this->isadmin)) {
             return true;
         }
 
         // Check user permissions
         return $this->permissions()->where('shortname', $shortname)->exists();
     }
-     
+
 
     // public function hasselfpermission($shortname)
     // {
@@ -150,7 +150,7 @@ class User extends Authenticatable
     {
         try {
             $proposal = Proposal::findOrFail($proposalid);
-            if ($this->haspermission('canapproveproposal') && ($proposal->useridfk != $this->userid) && $proposal->receivedstatus && $proposal->approvalstatus == 'Pending') {
+            if ($this->haspermission('canapproveproposal') && ($proposal->useridfk != $this->userid) && $proposal->receivedstatus == \App\Models\ReceivedStatus::RECEIVED && $proposal->approvalstatus == \App\Models\ApprovalStatus::PENDING) {
                 return true;
             } else {
                 return false;
@@ -165,7 +165,7 @@ class User extends Authenticatable
     {
         try {
             $proposal = Proposal::findOrFail($proposalid);
-            if ($this->haspermission('canrejectproposal') && ($proposal->useridfk != $this->userid) && $proposal->receivedstatus && $proposal->approvalstatus == 'Pending') {
+            if ($this->haspermission('canrejectproposal') && ($proposal->useridfk != $this->userid) && $proposal->receivedstatus == \App\Models\ReceivedStatus::RECEIVED && $proposal->approvalstatus == \App\Models\ApprovalStatus::PENDING) {
                 return true;
             } else {
                 return false;
@@ -179,7 +179,7 @@ class User extends Authenticatable
     {
         try {
             $proposal = Proposal::findOrFail($proposalid);
-            if ($this->haspermission('canproposechanges') && ($proposal->useridfk != $this->userid) && $proposal->approvalstatus == 'Pending' && $proposal->receivedstatus) {
+            if ($this->haspermission('canproposechanges') && ($proposal->useridfk != $this->userid) && $proposal->approvalstatus == \App\Models\ApprovalStatus::PENDING && $proposal->receivedstatus == \App\Models\ReceivedStatus::RECEIVED) {
                 return true;
             } else {
                 return false;
@@ -193,7 +193,7 @@ class User extends Authenticatable
     {
         try {
             $proposal = Proposal::findOrFail($proposalid);
-            if ($this->haspermission('canreceiveproposal') && ($proposal->useridfk != $this->userid) && $proposal->approvalstatus == 'Pending' && $proposal->submittedstatus && !$proposal->receivedstatus) {
+            if ($this->haspermission('canreceiveproposal') && ($proposal->useridfk != $this->userid) && $proposal->approvalstatus == \App\Models\ApprovalStatus::PENDING && $proposal->submittedstatus == \App\Models\SubmittedStatus::SUBMITTED && $proposal->receivedstatus == \App\Models\ReceivedStatus::PENDING) {
                 return true;
             } else {
                 return false;
@@ -207,7 +207,7 @@ class User extends Authenticatable
     {
         try {
             $proposal = Proposal::findOrFail($proposalid);
-            if ($this->haspermission('canenabledisableproposaledit') && ($proposal->useridfk != $this->userid) && $proposal->approvalstatus == 'Pending' && $proposal->submittedstatus && $proposal->receivedstatus && !$proposal->caneditstatus) {
+            if ($this->haspermission('canenabledisableproposaledit') && ($proposal->useridfk != $this->userid) && $proposal->approvalstatus == \App\Models\ApprovalStatus::PENDING && $proposal->submittedstatus == \App\Models\SubmittedStatus::SUBMITTED && $proposal->receivedstatus == \App\Models\ReceivedStatus::RECEIVED && !$proposal->caneditstatus) {
                 return true;
             } else {
                 return false;
@@ -221,7 +221,7 @@ class User extends Authenticatable
     {
         try {
             $proposal = Proposal::findOrFail($proposalid);
-            if ($this->haspermission('canenabledisableproposaledit') && ($proposal->useridfk != $this->userid) && $proposal->approvalstatus == 'Pending' && $proposal->submittedstatus && $proposal->receivedstatus && $proposal->caneditstatus) {
+            if ($this->haspermission('canenabledisableproposaledit') && ($proposal->useridfk != $this->userid) && $proposal->approvalstatus == \App\Models\ApprovalStatus::PENDING && $proposal->submittedstatus == \App\Models\SubmittedStatus::SUBMITTED && $proposal->receivedstatus == \App\Models\ReceivedStatus::RECEIVED && $proposal->caneditstatus) {
                 return true;
             } else {
                 return false;
@@ -260,19 +260,19 @@ class User extends Authenticatable
     public function getEffectivePermissions()
     {
         $permissions = [];
-        
+
         // Base researcher permissions
         $permissions = array_merge($permissions, $this->getResearcherPermissions());
-        
+
         // Committee member permissions
         if ($this->isCommitteeMember()) {
             $permissions = array_merge($permissions, $this->getCommitteePermissions());
         }
-        
+
         // Additional assigned permissions
         $userPermissions = $this->permissions()->pluck('shortname')->toArray();
         $permissions = array_merge($permissions, $userPermissions);
-        
+
         return array_unique($permissions);
     }
 
@@ -288,8 +288,9 @@ class User extends Authenticatable
 
     public function hasPermissionDynamic($permission)
     {
-        if ($this->isadmin) return true;
-        
+        if ($this->isadmin)
+            return true;
+
         return in_array($permission, $this->getEffectivePermissions());
     }
 }

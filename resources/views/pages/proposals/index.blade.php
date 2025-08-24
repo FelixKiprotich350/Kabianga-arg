@@ -144,10 +144,10 @@ async function loadProposals() {
 
 function getStatusBadge(status) {
     const badges = {
-        'Pending': '<span class="badge bg-warning">Pending</span>',
-        'Approved': '<span class="badge bg-success">Approved</span>',
-        'Rejected': '<span class="badge bg-danger">Rejected</span>',
-        'Draft': '<span class="badge bg-secondary">Draft</span>'
+        'PENDING': '<span class="badge bg-warning">Pending</span>',
+        'APPROVED': '<span class="badge bg-success">Approved</span>',
+        'REJECTED': '<span class="badge bg-danger">Rejected</span>',
+        'DRAFT': '<span class="badge bg-secondary">Draft</span>'
     };
     return badges[status] || '<span class="badge bg-secondary">Unknown</span>';
 }

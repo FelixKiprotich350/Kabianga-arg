@@ -81,7 +81,7 @@
             margin-bottom: 10px;
             padding: 6px 10px;
             background: #f8f9fa;
-            border-left: 3px solid #adb5bd;
+            border-left: 3px solid #88CDFF;
             text-transform: uppercase;
         }
 
@@ -93,7 +93,7 @@
         }
 
         .info-table th {
-            background: #adb5bd;
+            background: #88CDFF;
             color: #495057;
             font-weight: bold;
             padding: 8px 10px;
@@ -121,13 +121,13 @@
         }
 
         .data-table th {
-            background: #adb5bd;
+            background: #88CDFF;
             color: #495057;
             font-weight: bold;
             padding: 6px 8px;
             text-align: left;
             font-size: 10px;
-            border: 1px solid #adb5bd;
+            border: 1px solid #88CDFF;
         }
 
         .data-table td {
@@ -203,6 +203,7 @@
             body {
                 padding: 10px;
             }
+
             .page-container {
                 margin: 0;
             }
@@ -221,7 +222,7 @@
             <div class="proposal-meta">
                 <span><strong>Proposal Code:</strong> {{ $proposal->proposalcode }}</span>
                 <span><strong>Generated:</strong> {{ \Carbon\Carbon::now()->format('F j, Y \a\t g:i A') }}</span>
-                <span class="status {{ strtolower($proposal->approvalstatus) }}">{{ $proposal->approvalstatus }}</span>
+                <span class="status {{ $proposal->approvalstatus }}">{{ $proposal->approvalstatus }}</span>
             </div>
         </div>
         <div class="content">
@@ -246,7 +247,8 @@
                     </tr>
                     <tr>
                         <th>Department</th>
-                        <td>{{ $proposal->department->description ?? $proposal->department->shortname ?? 'Not specified' }}</td>
+                        <td>{{ $proposal->department->description ?? ($proposal->department->shortname ?? 'Not specified') }}
+                        </td>
                     </tr>
                 </table>
             </div>
@@ -272,7 +274,8 @@
                     </tr>
                     <tr>
                         <th>Project Duration</th>
-                        <td>{{ \Carbon\Carbon::parse($proposal->commencingdate)->format('M j, Y') }} - {{ \Carbon\Carbon::parse($proposal->terminationdate)->format('M j, Y') }}</td>
+                        <td>{{ \Carbon\Carbon::parse($proposal->commencingdate)->format('M j, Y') }} -
+                            {{ \Carbon\Carbon::parse($proposal->terminationdate)->format('M j, Y') }}</td>
                     </tr>
                 </table>
             </div>
@@ -328,7 +331,7 @@
 
             <div class="section">
                 <div class="section-title">J: Budget & Expenditures</div>
-                @if($proposal->expenditures && $proposal->expenditures->count() > 0)
+                @if ($proposal->expenditures && $proposal->expenditures->count() > 0)
                     <table class="data-table">
                         <thead>
                             <tr>
@@ -362,7 +365,7 @@
 
             <div class="section">
                 <div class="section-title">K: Research Methodology & Design</div>
-                @if($proposal->researchdesigns && $proposal->researchdesigns->count() > 0)
+                @if ($proposal->researchdesigns && $proposal->researchdesigns->count() > 0)
                     <table class="data-table">
                         <thead>
                             <tr>
@@ -388,7 +391,7 @@
 
             <div class="section">
                 <div class="section-title">L: Project Work Plan</div>
-                @if($proposal->workplans && $proposal->workplans->count() > 0)
+                @if ($proposal->workplans && $proposal->workplans->count() > 0)
                     <table class="data-table">
                         <thead>
                             <tr>
@@ -417,7 +420,7 @@
 
             <div class="section">
                 <div class="section-title">M: Research Collaborators</div>
-                @if($proposal->collaborators && $proposal->collaborators->count() > 0)
+                @if ($proposal->collaborators && $proposal->collaborators->count() > 0)
                     <table class="data-table">
                         <thead>
                             <tr>
@@ -443,7 +446,7 @@
 
             <div class="section">
                 <div class="section-title">N: Related Publications</div>
-                @if($proposal->publications && $proposal->publications->count() > 0)
+                @if ($proposal->publications && $proposal->publications->count() > 0)
                     <table class="data-table">
                         <thead>
                             <tr>
@@ -467,7 +470,7 @@
                 @endif
             </div>
 
-            @if($proposal->comment)
+            @if ($proposal->comment)
                 <div class="section">
                     <div class="section-title">O: Additional Comments & Notes</div>
                     <div class="text-content">
@@ -479,7 +482,8 @@
 
         <div class="footer">
             <div class="disclaimer">
-                <strong>Disclaimer:</strong> This is a computer-generated document and does not require a physical signature.
+                <strong>Disclaimer:</strong> This is a computer-generated document and does not require a physical
+                signature.
             </div>
             <div class="copyright">
                 &copy; {{ \Carbon\Carbon::now()->format('Y') }} University of Kabianga - Annual Research Grants Program

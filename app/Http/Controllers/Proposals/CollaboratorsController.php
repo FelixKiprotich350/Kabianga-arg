@@ -23,6 +23,11 @@ class CollaboratorsController extends Controller
             return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
         }
         
+        $proposal = \App\Models\Proposal::findOrFail($request->input('proposalidfk'));
+        if (!$proposal->canBeEdited()) {
+            return response()->json(['message' => 'This proposal cannot be edited at this time.', 'type' => 'danger'], 403);
+        }
+        
         $rules = [
             'proposalidfk' => 'required|string',
             'collaboratorname' => 'required|string',
@@ -101,6 +106,12 @@ class CollaboratorsController extends Controller
         if(!auth()->user()->haspermission('canmakenewproposal')){
             return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
         }
+        
+        $collaborator = Collaborator::findOrFail($id);
+        $proposal = \App\Models\Proposal::findOrFail($collaborator->proposalidfk);
+        if (!$proposal->canBeEdited()) {
+            return response()->json(['message' => 'This proposal cannot be edited at this time.', 'type' => 'danger'], 403);
+        }
 
         $rules = [
             'collaboratorname' => 'required|string',
@@ -130,6 +141,12 @@ class CollaboratorsController extends Controller
     {
         if(!auth()->user()->haspermission('canmakenewproposal')){
             return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
+        }
+        
+        $collaborator = Collaborator::findOrFail($id);
+        $proposal = \App\Models\Proposal::findOrFail($collaborator->proposalidfk);
+        if (!$proposal->canBeEdited()) {
+            return response()->json(['message' => 'This proposal cannot be edited at this time.', 'type' => 'danger'], 403);
         }
 
         $collaborator = Collaborator::findOrFail($id);

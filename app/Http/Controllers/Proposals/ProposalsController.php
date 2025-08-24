@@ -27,7 +27,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Notification;
 use Illuminate\Support\Facades\DB;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Barryvdh\Snappy\Facades\SnappyPdf;
+use App\Models\{SubmittedStatus, ReceivedStatus, ApprovalStatus};
 
 
 
@@ -109,7 +110,10 @@ class ProposalsController extends Controller
         $proposal->departmentidfk = $request->input('departmentfk');
         $proposal->useridfk = Auth::user()->userid;
         $proposal->pfnofk = Auth::user()->pfno;
-        $proposal->approvalstatus = 'Pending';
+        $proposal->approvalstatus = ApprovalStatus::PENDING;
+        $proposal->submittedstatus = SubmittedStatus::PENDING;
+        $proposal->receivedstatus = ReceivedStatus::PENDING;
+        $proposal->caneditstatus = true;
         $proposal->highqualification = $request->input('highestqualification');
         $proposal->officephone = $request->input('officephone');
         $proposal->cellphone = $request->input('cellphone');
@@ -151,6 +155,12 @@ class ProposalsController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'You are not Authorized to edit this Proposal. Only the owner can Edit!'
+            ], 403);
+        }
+        if (!$proposal->canBeEdited()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This proposal cannot be edited at this time.'
             ], 403);
         }
         $rules = [
@@ -200,6 +210,12 @@ class ProposalsController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'You are not Authorized to edit this Proposal. Only the owner can Edit!'
+            ], 403);
+        }
+        if (!$proposal->canBeEdited()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This proposal cannot be edited at this time.'
             ], 403);
         }
         $rules = [
@@ -256,15 +272,15 @@ class ProposalsController extends Controller
                 'message' => 'You are not Authorized to Submit this Proposal. Only the owner can Submit!'
             ], 403);
         }
-        if ($proposal->submittedstatus) {
+        if ($proposal->submittedstatus == SubmittedStatus::SUBMITTED) {
             return response(['message' => 'Application has already been submitted!', 'type' => 'danger']);
         }
-        if ($proposal->receivedstatus) {
+        if ($proposal->receivedstatus == ReceivedStatus::RECEIVED) {
             return response(['message' => 'This Proposal has been received before!!', 'type' => 'danger']);
         }
         $cansubmit = $this->cansubmit($id);
         if (isset($cansubmit)) {
-            $proposal->submittedstatus = true;
+            $proposal->submittedstatus = SubmittedStatus::SUBMITTED;
             $proposal->caneditstatus = false;
             $proposal->save();
             //notifiable users to be informed of new proposal
@@ -288,13 +304,13 @@ class ProposalsController extends Controller
         }
 
         $proposal = Proposal::findOrFail($id);
-        if (!$proposal->submittedstatus) {
+        if ($proposal->submittedstatus != SubmittedStatus::SUBMITTED) {
             return response(['message' => 'This proposal has not been submitted!', 'type' => 'warning']);
         }
-        if ($proposal->receivedstatus) {
+        if ($proposal->receivedstatus == ReceivedStatus::RECEIVED) {
             return response(['message' => 'This Proposal has been received before!!', 'type' => 'danger']);
         }
-        $proposal->receivedstatus = true;
+        $proposal->receivedstatus = ReceivedStatus::RECEIVED;
         $proposal->caneditstatus = false;
         $proposal->save();
         $mailingController = new MailingController();
@@ -325,8 +341,8 @@ class ProposalsController extends Controller
     }
     public function approverejectproposal(Request $request, $id)
     {
-        if ($request->input('status') == "Approved" && auth()->user()->haspermission('canapproveproposal')) {
-        } else if ($request->input('status') == "Rejected" && auth()->user()->haspermission('canrejectproposal')) {
+        if ($request->input('status') == ApprovalStatus::APPROVED->value && auth()->user()->haspermission('canapproveproposal')) {
+        } else if ($request->input('status') == ApprovalStatus::REJECTED->value && auth()->user()->haspermission('canrejectproposal')) {
         } else {
             return response()->json([
                 'success' => false,
@@ -352,13 +368,13 @@ class ProposalsController extends Controller
         }
 
         $proposal = Proposal::findOrFail($id);
-        if (!$proposal->submittedstatus) {
+        if ($proposal->submittedstatus != SubmittedStatus::SUBMITTED) {
             return response(['message' => 'This Proposal has not been Submitted by the owner!!', 'type' => 'danger']);
         }
-        if (!$proposal->receivedstatus) {
-            return response(['message' => 'This Proposal has not been Received!!', 'type' => 'danger']);
+        if ($proposal->receivedstatus != ReceivedStatus::RECEIVED) {
+            return response(['message' => 'This Proposal has not been Received by the office!!', 'type' => 'danger']);
         }
-        if ($proposal->approvalstatus == 'Rejected' || ResearchProject::where('proposalidfk', $id)->exists()) {
+        if ($proposal->approvalstatus == ApprovalStatus::REJECTED || ResearchProject::where('proposalidfk', $id)->exists()) {
             return response(['message' => 'This Proposal has been Approved or Rejected before!!', 'type' => 'danger']);
         }
         DB::transaction(function () use ($id, $request) {
@@ -371,7 +387,7 @@ class ProposalsController extends Controller
             $yearid = GlobalSetting::where('item', 'current_fin_year')->first();
             $currentyear = FinancialYear::findOrFail($yearid->value1);
 
-            if ($request->input('status') == "Approved") {
+            if ($request->input('status') == ApprovalStatus::APPROVED->value) {
                 $lastRecord = ResearchProject::orderBy('researchid', 'desc')->first();
                 $incrementNumber = $lastRecord ? $lastRecord->researchid + 1 : 1;
                 $generatedCode = 'UOK/ARG/' . $currentyear->finyear . '/' . $incrementNumber;
@@ -386,13 +402,13 @@ class ProposalsController extends Controller
             }
 
         });
-        if ($request->input('status') == "Approved") {
+        if ($request->input('status') == ApprovalStatus::APPROVED->value) {
             $project = ResearchProject::where('proposalidfk', $id)->firstOrFail();
             $mailingController = new MailingController();
             $url = route('pages.projects.viewanyproject', ['id' => $project->researchid]);
             $mailingController->notifyUsersOfProposalActivity('proposalapproved', 'Proposal Approved!', 'success', ['This Proposal has been Approved Successfully.', 'The project will kick off on the indicated Start Date.'], 'View Project', $url);
             return response(['message' => 'Proposal Approved Successfully! Project Started!', 'type' => 'success']);
-        } else if ($request->input('status') == "Rejected") {
+        } else if ($request->input('status') == ApprovalStatus::REJECTED->value) {
             $mailingController = new MailingController();
             $url = route('pages.proposals.viewproposal', ['id' => $id]);
             $mailingController->notifyUsersOfProposalActivity('proposalrejected', 'Proposal Rejected', 'success', ['The project didnt qualify for further steps.'], 'View Proposal', $url);
@@ -442,12 +458,13 @@ class ProposalsController extends Controller
         if (!$user->haspermission('canreadproposaldetails') && $user->userid != $prop->useridfk) {
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to read the requested Proposal!");
         }
-        return view('pages.proposals.show', compact('prop'));
+        
+        $finyears = FinancialYear::all();
+        return view('pages.proposals.show', compact('prop', 'finyears'));
     }
     public function printpdf($id)
     {
         try {
-            // Optimize query with specific fields to reduce memory usage
             $proposal = Proposal::with([
                 'applicant:userid,name,email,phonenumber,gender', 
                 'department:depid,shortname,description', 
@@ -460,21 +477,11 @@ class ProposalsController extends Controller
                 'publications:publicationid,proposalidfk,title,publisher,year'
             ])->findOrFail($id);
             
-            // Configure PDF with optimized settings
-            $pdf = Pdf::loadView('pages.proposals.printproposal', compact('proposal'))
-                ->setPaper('A4', 'portrait')
-                ->setOptions([
-                    'isHtml5ParserEnabled' => true,
-                    'isPhpEnabled' => false,
-                    'isRemoteEnabled' => false,
-                    'defaultFont' => 'DejaVu Sans',
-                    'dpi' => 96,
-                    'enable_font_subsetting' => true
-                ]);
-            
+            $html = view('pages.proposals.printproposal', compact('proposal'))->render();
             $filename = 'Research-Proposal-' . str_replace(['/', ' ', '\\'], ['-', '-', '-'], $proposal->proposalcode) . '.pdf';
             
-            // Add headers for better browser handling
+            $pdf = SnappyPdf::loadHTML($html);
+            
             return response($pdf->output(), 200, [
                 'Content-Type' => 'application/pdf',
                 'Content-Disposition' => 'inline; filename="' . $filename . '"',
@@ -495,13 +502,34 @@ class ProposalsController extends Controller
             ], 500);
         }
     }
+    
+    public function testSnappy()
+    {
+        try {
+            $html = '<html><body><h1>Test PDF Generation with Snappy</h1><p>This is a test document to verify that laravel-snappy is working correctly.</p><p>Generated at: ' . now() . '</p></body></html>';
+            
+            $pdf = SnappyPdf::loadHTML($html);
+            
+            return response($pdf->output(), 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="test-snappy.pdf"'
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Snappy test failed',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function geteditsingleproposalpage(Request $req, $id)
     {
         $prop = Proposal::findOrFail($id);
         if (!auth()->user()->userid == $prop->useridfk) {
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Edit the requested Proposal!");
         }
-        if (!$prop->caneditstatus || $prop->approvalstatus != 'Pending') {
+        if (!$prop->caneditstatus || $prop->approvalstatus != ApprovalStatus::PENDING) {
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "The Proposal is not Editable!");
         }
         $grants = Grant::all();
@@ -525,7 +553,7 @@ class ProposalsController extends Controller
                 'proposalid' => $proposal->proposalid,
                 'title' => $proposal->researchtitle,
                 'abstract' => $proposal->objectives,
-                'approvalstatus' => strtolower($proposal->approvalstatus),
+                'approvalstatus' => $proposal->approvalstatus,
                 'theme_name' => $proposal->themeitem->themename ?? 'N/A',
                 'grant_name' => $proposal->grantitem->grantname ?? 'N/A',
                 'requested_amount' => $proposal->grantitem->amount ?? 0,
@@ -561,6 +589,30 @@ class ProposalsController extends Controller
             return response()->json(['success' => true, 'data' => $data]);
         } catch (Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage(), 'data' => []], 500);
+        }
+    }
+
+    public function fetchsingleproposal($id)
+    {
+        try {
+            $proposal = Proposal::with('department', 'grantitem', 'themeitem', 'applicant')->findOrFail($id);
+            $data = [
+                'proposalid' => $proposal->proposalid,
+                'researchtitle' => $proposal->researchtitle,
+                'objectives' => $proposal->objectives,
+                'approvalstatus' => $proposal->approvalstatus,
+                'submittedstatus' => $proposal->submittedstatus,
+                'receivedstatus' => $proposal->receivedstatus,
+                'caneditstatus' => $proposal->caneditstatus,
+                'theme_name' => $proposal->themeitem->themename ?? 'N/A',
+                'grant_name' => $proposal->grantitem->grantname ?? 'N/A',
+                'created_at' => $proposal->created_at,
+                'applicant_name' => $proposal->applicant->name ?? 'N/A',
+                'department_name' => $proposal->department->departmentname ?? 'N/A'
+            ];
+            return response()->json(['success' => true, 'data' => $data]);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 
