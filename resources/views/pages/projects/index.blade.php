@@ -27,10 +27,10 @@
                 <label class="form-label fw-medium">Status</label>
                 <select class="form-select" id="statusFilter">
                     <option value="">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="completed">Completed</option>
-                    <option value="paused">Paused</option>
-                    <option value="cancelled">Cancelled</option>
+                    <option value="ACTIVE">Active</option>
+                    <option value="COMPLETED">Completed</option>
+                    <option value="PAUSED">Paused</option>
+                    <option value="CANCELLED">Cancelled</option>
                 </select>
             </div>
             <div class="col-md-4">
@@ -123,7 +123,7 @@ async function loadProjects() {
                         </td>
                         <td>${project.start_date ? new Date(project.start_date).toLocaleDateString() : 'N/A'}</td>
                         <td>
-                            <button class="btn btn-sm btn-outline-primary" onclick="viewProject('${project.id}')">
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewProject('${project.researchid || project.id || project.projectid}')">
                                 <i class="bi bi-eye"></i>
                             </button>
                         </td>
@@ -143,15 +143,19 @@ async function loadProjects() {
 
 function getStatusBadge(status) {
     const badges = {
-        'active': '<span class="badge bg-success">Active</span>',
-        'completed': '<span class="badge bg-primary">Completed</span>',
-        'paused': '<span class="badge bg-warning">Paused</span>',
-        'cancelled': '<span class="badge bg-danger">Cancelled</span>'
+        'ACTIVE': '<span class="badge bg-success">Active</span>',
+        'COMPLETED': '<span class="badge bg-primary">Completed</span>',
+        'PAUSED': '<span class="badge bg-warning">Paused</span>',
+        'CANCELLED': '<span class="badge bg-danger">Cancelled</span>'
     };
     return badges[status] || '<span class="badge bg-secondary">Unknown</span>';
 }
 
 function viewProject(projectId) {
+    if (!projectId || projectId === 'undefined') {
+        console.error('Invalid project ID:', projectId);
+        return;
+    }
     const scope = document.getElementById('scopeFilter').value;
     const route = scope === 'my' ? `/projects/myprojects/${projectId}` : `/projects/allprojects/${projectId}`;
     window.location.href = route;

@@ -56,7 +56,7 @@
                     <tr>
                         <th>Title</th>
                         <th>Researcher</th>
-                        <th>Grant</th>
+                        <th>Financial Year</th>
                         <th>Status</th>
                         <th>Submitted</th>
                         <th>Actions</th>
@@ -110,23 +110,25 @@ async function loadProposals() {
         if (result.success && result.data) {
             result.data.forEach(proposal => {
                 const statusBadge = getStatusBadge(proposal.approvalstatus);
+                const editButton = proposal.is_editable ? 
+                    `<button class="btn btn-sm btn-outline-secondary" onclick="editProposal('${proposal.proposalid}')">
+                        <i class="bi bi-pencil"></i>
+                    </button>` : '';
                 const row = `
                     <tr>
                         <td>
-                            <strong>${proposal.researchtitle || 'Untitled'}</strong>
+                            <strong>${proposal.researchtitle || proposal.title || 'Untitled'}</strong>
                             <small class="text-muted d-block">${proposal.theme_name || ''}</small>
                         </td>
                         <td>${proposal.applicant_name || 'N/A'}</td>
-                        <td>${proposal.grant_name || 'N/A'}</td>
+                        <td>${proposal.financial_year || 'N/A'}</td>
                         <td>${statusBadge}</td>
                         <td>${proposal.created_at ? new Date(proposal.created_at).toLocaleDateString() : 'N/A'}</td>
                         <td>
-                            <button class="btn btn-sm btn-outline-primary" onclick="viewProposal('${proposal.proposalid}')">
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewProposal('${proposal.proposalid}')" data-proposal-id="${proposal.proposalid}">
                                 <i class="bi bi-eye"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-secondary" onclick="editProposal('${proposal.proposalid}')">
-                                <i class="bi bi-pencil"></i>
-                            </button>
+                            ${editButton}
                         </td>
                     </tr>
                 `;
@@ -155,6 +157,10 @@ function getStatusBadge(status) {
 
 
 function viewProposal(proposalId) {
+    if (!proposalId || proposalId === 'undefined') {
+        console.error('Invalid proposal ID:', proposalId);
+        return;
+    }
     window.location.href = `/proposals/view/${proposalId}`;
 }
 

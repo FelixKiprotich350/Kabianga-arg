@@ -49,9 +49,9 @@ class DashboardController extends Controller
             'approvedProposals' => $proposals->where('approvalstatus', 'APPROVED')->count(),
             'pendingProposals' => $proposals->where('approvalstatus', 'PENDING')->count(),
             'rejectedProposals' => $proposals->where('approvalstatus', 'REJECTED')->count(),
-            'activeProjects' => $projects->where('projectstatus', 'Active')->count(),
-            'completedProjects' => $projects->where('projectstatus', 'Completed')->count(),
-            'cancelledProjects' => $projects->where('projectstatus', 'Cancelled')->count(),
+            'activeProjects' => $projects->where('projectstatus', ResearchProject::STATUS_ACTIVE)->count(),
+            'completedProjects' => $projects->where('projectstatus', ResearchProject::STATUS_COMPLETED)->count(),
+            'cancelledProjects' => $projects->where('projectstatus', ResearchProject::STATUS_CANCELLED)->count(),
             'totalFunding' => $fundings->sum('amount'),
             'recentProposals' => $proposals->sortByDesc('created_at')->take(5),
             'recentProjects' => $projects->sortByDesc('created_at')->take(5)
@@ -236,9 +236,9 @@ class DashboardController extends Controller
                 ],
                 'projects' => [
                     'total' => ResearchProject::count(),
-                    'active' => ResearchProject::where('projectstatus', 'Active')->count(),
-                    'completed' => ResearchProject::where('projectstatus', 'Completed')->count(),
-                    'cancelled' => ResearchProject::where('projectstatus', 'Cancelled')->count()
+                    'active' => ResearchProject::where('projectstatus', ResearchProject::STATUS_ACTIVE)->count(),
+                    'completed' => ResearchProject::where('projectstatus', ResearchProject::STATUS_COMPLETED)->count(),
+                    'cancelled' => ResearchProject::where('projectstatus', ResearchProject::STATUS_CANCELLED)->count()
                 ],
                 'funding' => [
                     'total' => ResearchFunding::sum('amount') ?? 0,

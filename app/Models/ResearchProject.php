@@ -11,6 +11,18 @@ class ResearchProject extends Model
     use HasFactory;
     protected $table = 'researchprojects';
 
+    const STATUS_ACTIVE = 'ACTIVE';
+    const STATUS_PAUSED = 'PAUSED';
+    const STATUS_CANCELLED = 'CANCELLED';
+    const STATUS_COMPLETED = 'COMPLETED';
+
+    const VALID_STATUSES = [
+        self::STATUS_ACTIVE,
+        self::STATUS_PAUSED,
+        self::STATUS_CANCELLED,
+        self::STATUS_COMPLETED,
+    ];
+
 
 
     // Use UUIDs instead of auto-incrementing IDs
@@ -37,6 +49,17 @@ class ResearchProject extends Model
         'projectstatus',
         'ispaused',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::saving(function ($model) {
+            if (!in_array($model->projectstatus, self::VALID_STATUSES)) {
+                throw new \InvalidArgumentException('Invalid project status. Must be one of: ' . implode(', ', self::VALID_STATUSES));
+            }
+        });
+    }
 
     public function fundingsummary()
     {

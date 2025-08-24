@@ -179,14 +179,14 @@ Route::prefix('v1')->middleware(['web', 'auth'])->group(function () {
         Route::get('/my-active', [ProjectsController::class, 'fetchmyactiveprojects']);
         Route::get('/search', [ProjectsController::class, 'fetchsearchallprojects']);
         Route::get('/{id}', [ProjectsController::class, 'viewanyproject']);
-        Route::post('/{id}/progress', [ProjectsController::class, 'submitmyprogress']);
-        Route::get('/{id}/progress', [ProjectsController::class, 'fetchprojectprogress']);
-        Route::post('/{id}/funding', [ProjectsController::class, 'addfunding']);
-        Route::get('/{id}/funding', [ProjectsController::class, 'fetchprojectfunding']);
-        Route::patch('/{id}/pause', [ProjectsController::class, 'pauseproject']);
-        Route::patch('/{id}/resume', [ProjectsController::class, 'resumeproject']);
-        Route::patch('/{id}/cancel', [ProjectsController::class, 'cancelproject']);
-        Route::patch('/{id}/complete', [ProjectsController::class, 'completeproject']);
+        Route::post('/{id}/progress', [ProjectsController::class, 'submitmyprogress'])->name('api.projects.submitmyprogress');
+        Route::get('/{id}/progress', [ProjectsController::class, 'fetchprojectprogress'])->name('api.projects.fetchprojectprogress');
+        Route::post('/{id}/funding', [ProjectsController::class, 'addfunding'])->name('api.projects.addfunding');
+        Route::get('/{id}/funding', [ProjectsController::class, 'fetchprojectfunding'])->name('api.projects.fetchprojectfunding');
+        Route::patch('/{id}/pause', [ProjectsController::class, 'pauseproject'])->name('api.projects.pauseproject');
+        Route::patch('/{id}/resume', [ProjectsController::class, 'resumeproject'])->name('api.projects.resumeproject');
+        Route::patch('/{id}/cancel', [ProjectsController::class, 'cancelproject'])->name('api.projects.cancelproject');
+        Route::patch('/{id}/complete', [ProjectsController::class, 'completeproject'])->name('api.projects.completeproject');
         Route::patch('/{id}/assign', [ProjectsController::class, 'assignme']);
     });
     

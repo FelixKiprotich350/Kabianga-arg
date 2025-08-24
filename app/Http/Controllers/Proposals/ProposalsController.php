@@ -398,7 +398,7 @@ class ProposalsController extends Controller
                 $project = new ResearchProject();
                 $project->researchnumber = $generatedCode;
                 $project->proposalidfk = $proposal->proposalid;
-                $project->projectstatus = 'Active';
+                $project->projectstatus = ResearchProject::STATUS_ACTIVE;
                 $project->ispaused = false;
                 $project->fundingfinyearfk = $request->input('fundingfinyearfk');
                 $project->saveOrFail();
@@ -555,18 +555,18 @@ class ProposalsController extends Controller
         //     return response()->json(['data' => []]);
         // }
         $user = auth()->user();
-        $myapplications = Proposal::where('useridfk', $user->userid)->with('department', 'grantitem', 'themeitem', 'applicant')->get();
+        $myapplications = Proposal::where('useridfk', $user->userid)->with('department', 'grantitem.financialyear', 'themeitem', 'applicant')->get();
         $proposals = $myapplications->map(function ($proposal) {
             return [
                 'proposalid' => $proposal->proposalid,
-                'title' => $proposal->researchtitle,
-                'abstract' => $proposal->objectives,
+                'researchtitle' => $proposal->researchtitle,
+                'objectives' => $proposal->objectives,
                 'approvalstatus' => $proposal->approvalstatus,
                 'theme_name' => $proposal->themeitem->themename ?? 'N/A',
-                'grant_name' => $proposal->grantitem->grantname ?? 'N/A',
-                'requested_amount' => $proposal->grantitem->amount ?? 0,
+                'financial_year' => $proposal->grantitem->financialyear->finyear ?? 'N/A',
                 'created_at' => $proposal->created_at,
-                'themefk' => $proposal->themefk
+                'applicant_name' => $proposal->applicant->name ?? 'N/A',
+                'is_editable' => $proposal->isEditable()
             ];
         });
         return response()->json(data: ['data' => $proposals, 'success' => true]);
@@ -579,7 +579,7 @@ class ProposalsController extends Controller
         }
 
         try {
-            $proposals = Proposal::with('department', 'grantitem', 'themeitem', 'applicant')->get();
+            $proposals = Proposal::with('department', 'grantitem.financialyear', 'themeitem', 'applicant')->get();
             $data = $proposals->map(function ($proposal) {
                 return [
                     'proposalid' => $proposal->proposalid,
@@ -587,11 +587,11 @@ class ProposalsController extends Controller
                     'objectives' => $proposal->objectives,
                     'approvalstatus' => $proposal->approvalstatus,
                     'theme_name' => $proposal->themeitem->themename ?? 'N/A',
-                    'grant_name' => $proposal->grantitem->grantname ?? 'N/A',
-                    'requested_amount' => $proposal->grantitem->amount ?? 0,
+                    'financial_year' => $proposal->grantitem->financialyear->finyear ?? 'N/A',
                     'created_at' => $proposal->created_at,
                     'applicant_name' => $proposal->applicant->name ?? 'N/A',
-                    'department_name' => $proposal->department->departmentname ?? 'N/A'
+                    'department_name' => $proposal->department->departmentname ?? 'N/A',
+                    'is_editable' => $proposal->isEditable()
                 ];
             });
             return response()->json(['success' => true, 'data' => $data]);
@@ -818,7 +818,7 @@ class ProposalsController extends Controller
                 $project = new ResearchProject();
                 $project->researchnumber = $generatedCode;
                 $project->proposalidfk = $proposal->proposalid;
-                $project->projectstatus = 'Active';
+                $project->projectstatus = ResearchProject::STATUS_ACTIVE;
                 $project->ispaused = false;
                 $project->fundingfinyearfk = $request->input('fundingfinyearfk');
                 $project->save();

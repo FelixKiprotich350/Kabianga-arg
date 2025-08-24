@@ -40,7 +40,7 @@ class ProjectsController extends Controller
                 ->whereHas('proposal', function ($query) use ($userid) {
                     $query->where('useridfk', $userid);
                 })
-                ->where('projectstatus', 'Active')
+                ->where('projectstatus', ResearchProject::STATUS_ACTIVE)
                 ->get()
                 ->map(function($project) {
                     return [
@@ -106,7 +106,7 @@ class ProjectsController extends Controller
         }
 
         try {
-            $allprojects = ResearchProject::where('projectstatus', 'Active')
+            $allprojects = ResearchProject::where('projectstatus', ResearchProject::STATUS_ACTIVE)
                 ->with(['proposal.applicant'])
                 ->get()
                 ->map(function($project) {
@@ -303,10 +303,10 @@ class ProjectsController extends Controller
         }
         $item = ResearchProject::findOrFail($id);
 
-        if ($item->projectstatus != 'Active') {
+        if ($item->projectstatus != ResearchProject::STATUS_ACTIVE) {
             return redirect()->back()->with('projectnotcancelledmessage', 'This Project cannot be Cancelled because its not Active!');
         }
-        $item->projectstatus = 'Cancelled';
+        $item->projectstatus = ResearchProject::STATUS_CANCELLED;
         $item->save();
         $mailingController = new MailingController();
         $url = route('pages.projects.viewanyproject', ['id' => $item->researchid]);
@@ -323,10 +323,10 @@ class ProjectsController extends Controller
 
         $item = ResearchProject::findOrFail($id);
 
-        if ($item->projectstatus != 'Active' || $item->ispaused) {
+        if ($item->projectstatus != ResearchProject::STATUS_ACTIVE || $item->ispaused) {
             return redirect()->back()->with('projectnotcompletedmessage', 'This Project cannot be Completed because its not Active or it has been Paused!');
         }
-        $item->projectstatus = 'Completed';
+        $item->projectstatus = ResearchProject::STATUS_COMPLETED;
         $item->save();
 
         $mailingController = new MailingController();

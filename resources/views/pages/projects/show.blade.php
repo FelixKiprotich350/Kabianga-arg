@@ -27,7 +27,7 @@
             <div class="form-card mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Project Overview</h5>
-                    <span class="badge {{ $project->projectstatus == 'Active' ? 'bg-success' : ($project->projectstatus == 'Completed' ? 'bg-info' : 'bg-warning') }}">
+                    <span class="badge {{ $project->projectstatus == \App\Models\ResearchProject::STATUS_ACTIVE ? 'bg-success' : ($project->projectstatus == \App\Models\ResearchProject::STATUS_COMPLETED ? 'bg-info' : 'bg-warning') }}">
                         {{ $project->projectstatus }}
                     </span>
                 </div>
@@ -137,7 +137,7 @@
             <div class="form-card">
                 <h6 class="mb-3"><i class="bi bi-gear me-2"></i>Project Actions</h6>
                 <div class="d-grid gap-2">
-                    @if($project->projectstatus == 'Active' && !$project->ispaused)
+                    @if($project->projectstatus == \App\Models\ResearchProject::STATUS_ACTIVE && !$project->ispaused)
                     <button class="btn btn-warning" onclick="pauseProject()">
                         <i class="bi bi-pause-circle me-2"></i>Pause Project
                     </button>
@@ -149,7 +149,7 @@
                     </button>
                     @endif
                     
-                    @if($project->projectstatus == 'Active')
+                    @if($project->projectstatus == \App\Models\ResearchProject::STATUS_ACTIVE)
                     <button class="btn btn-info" onclick="completeProject()">
                         <i class="bi bi-check-circle me-2"></i>Mark Complete
                     </button>
