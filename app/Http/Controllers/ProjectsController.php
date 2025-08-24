@@ -218,10 +218,9 @@ class ProjectsController extends Controller
         $item->reportedbyfk = $request->input('reportedbyfk');
         $item->report = $request->input('report');
         $item->save();
-        //notify
-        $mailingController = new MailingController();
-        $url = route('pages.projects.viewanyproject', ['id' => $item->researchidfk]);
-        $mailingController->notifyUsersOfProposalActivity('projectprogressreport', 'Project Progress!', 'success', ['Researcher ' . $project->applicant->name . ' has  Submitted his/her progress for this Project.', 'Project Refference : ' . $project->researchnumber], 'View Project', $url);
+        
+        // Notify supervisors and admins using new system
+        $this->notifyProgressSubmitted($project, $item);
 
         // Optionally, return a response or redirect
         return response(['message' => 'Report Submitted Successfully!!', 'type' => 'success']);
@@ -251,9 +250,11 @@ class ProjectsController extends Controller
 
         $item->supervisorfk = $request->input('supervisorfk');
         $item->save();
-        $mailingController = new MailingController();
-        $url = route('pages.projects.viewanyproject', ['id' => $item->researchid]);
-        $mailingController->notifyUsersOfProposalActivity('projectassignedmande', 'Project Monitoring Assignment!', 'success', ['This Project has been assigned M & E Team.'], 'View Project', $url);
+        
+        // Notify using new system
+        $project = ResearchProject::with(['proposal', 'applicant'])->findOrFail($id);
+        $supervisor = User::findOrFail($request->input('supervisorfk'));
+        $this->notifyProjectAssigned($project, $supervisor);
 
         // Optionally, return a response or redirect
         return redirect(route('pages.projects.viewanyproject', ['id' => $id]));
@@ -275,6 +276,10 @@ class ProjectsController extends Controller
         $item->ispaused = true;
         $item->save();
         
+        // Notify project owner
+        $project = ResearchProject::with(['proposal', 'applicant'])->findOrFail($id);
+        $this->notifyProjectStatusChanged($project, 'PAUSED');
+        
         return response()->json(['success' => true, 'message' => 'Project paused successfully']);
     }
     public function resumeproject(Request $request, $id)
@@ -290,6 +295,10 @@ class ProjectsController extends Controller
         $item->projectstatus = ResearchProject::STATUS_ACTIVE;
         $item->ispaused = false;
         $item->save();
+        
+        // Notify project owner
+        $project = ResearchProject::with(['proposal', 'applicant'])->findOrFail($id);
+        $this->notifyProjectStatusChanged($project, 'ACTIVE');
 
         return response()->json(['success' => true, 'message' => 'Project resumed successfully']);
     }
@@ -306,6 +315,10 @@ class ProjectsController extends Controller
         $item->projectstatus = ResearchProject::STATUS_CANCELLED;
         $item->save();
         
+        // Notify project owner
+        $project = ResearchProject::with(['proposal', 'applicant'])->findOrFail($id);
+        $this->notifyProjectStatusChanged($project, 'CANCELLED');
+        
         return response()->json(['success' => true, 'message' => 'Project cancelled successfully']);
     }
     public function completeproject(Request $request, $id)
@@ -321,6 +334,10 @@ class ProjectsController extends Controller
         }
         $item->projectstatus = ResearchProject::STATUS_COMPLETED;
         $item->save();
+        
+        // Notify project owner
+        $project = ResearchProject::with(['proposal', 'applicant'])->findOrFail($id);
+        $this->notifyProjectStatusChanged($project, 'COMPLETED');
 
         return response()->json(['success' => true, 'message' => 'Project completed successfully']);
     }

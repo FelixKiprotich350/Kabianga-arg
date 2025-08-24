@@ -7,6 +7,7 @@ use App\Models\NotifiableUser;
 use App\Models\NotificationType;
 use App\Models\Permission;
 use App\Models\User;
+use App\Traits\NotifiesUsers;
 use Faker\Core\Number;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,6 +17,7 @@ use Illuminate\Support\Str; // For generating UUIDs
 
 class UsersController extends Controller
 {
+    use NotifiesUsers;
     //
     public function viewallusers()
     {
@@ -58,6 +60,10 @@ class UsersController extends Controller
                     }
                 }
             });
+            
+            // Notify user of permission changes
+            $this->notifyUserPermissionsChanged($user);
+            
             return response()->json(['message' => 'Permissions updated successfully.', 'type' => "success"]);
         }
         else {
@@ -78,6 +84,9 @@ class UsersController extends Controller
             return response()->json(['message' => 'Super Administrator has exclusively all rights!', 'type' => 'warning']);
         }
 
+        $oldRole = $user->role;
+        $oldActive = $user->isactive;
+        
         DB::transaction(function () use ($user, $request) {
             // Detach all permissions
             $user->permissions()->detach();
@@ -99,10 +108,22 @@ class UsersController extends Controller
             // Update active status
             $user->isactive = $request->has('userisactive') && $request->input('userisactive') == 'on';
 
-             
-
             $user->saveOrFail();
         });
+        
+        // Send notifications for changes
+        if ($oldRole != $user->role) {
+            $roles = [1 => 'Administrator', 2 => 'Researcher', 3 => 'Guest'];
+            $this->notifyUserRoleChanged($user, $roles[$user->role] ?? 'Unknown');
+        }
+        
+        if ($oldActive != $user->isactive) {
+            if ($user->isactive) {
+                $this->notifyUserEnabled($user);
+            } else {
+                $this->notifyUserDisabled($user);
+            }
+        }
 
         return response()->json(['message' => 'Role updated successfully!', 'type' => 'success']);
     }
@@ -401,15 +422,20 @@ class UsersController extends Controller
             return response()->json(['message' => $validator->errors(), 'type' => 'danger'], 400);
         }
 
+        $password = $request->input('password');
+        
         $user = new User();
         $user->name = $request->input('name');
         $user->email = $request->input('email');
         $user->pfno = $request->input('pfno');
         $user->phonenumber = $request->input('phonenumber');
         $user->role = $request->input('role');
-        $user->password = bcrypt($request->input('password'));
+        $user->password = bcrypt($password);
         $user->isactive = true;
         $user->save();
+        
+        // Notify new user
+        $this->notifyUserCreated($user, $password);
 
         return response()->json(['message' => 'User created successfully!', 'type' => 'success', 'user' => $user]);
     }
@@ -427,6 +453,9 @@ class UsersController extends Controller
 
         $user->isactive = false;
         $user->save();
+        
+        // Notify user of account disable
+        $this->notifyUserDisabled($user);
 
         return response()->json(['message' => 'User disabled successfully!', 'type' => 'success']);
     }
@@ -440,6 +469,9 @@ class UsersController extends Controller
         $user = User::findOrFail($id);
         $user->isactive = true;
         $user->save();
+        
+        // Notify user of account enable
+        $this->notifyUserEnabled($user);
 
         return response()->json(['message' => 'User enabled successfully!', 'type' => 'success']);
     }
