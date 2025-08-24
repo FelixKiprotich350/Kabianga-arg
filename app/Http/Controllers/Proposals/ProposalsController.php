@@ -451,16 +451,21 @@ class ProposalsController extends Controller
 
     public function getsingleproposalpage($id)
     {
-        $user = Auth::user();
-        // Find the proposal by ID or fail with a 404 error
-        $prop = Proposal::with(['applicant', 'department', 'themeitem', 'grantitem'])->findOrFail($id);
+        try {
+            $user = Auth::user();
+            // Find the proposal by ID or fail with a 404 error
+            $prop = Proposal::with(['applicant', 'department', 'themeitem', 'grantitem'])->findOrFail($id);
 
-        if (!$user->haspermission('canreadproposaldetails') && $user->userid != $prop->useridfk) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to read the requested Proposal!");
+            if (!$user->haspermission('canreadproposaldetails') && $user->userid != $prop->useridfk) {
+                return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to read the requested Proposal!");
+            }
+            
+            $finyears = FinancialYear::all();
+            return view('pages.proposals.show', compact('prop', 'finyears'));
+        } catch (\Exception $e) {
+            \Log::error('Error loading proposal details: ' . $e->getMessage(), ['proposal_id' => $id]);
+            return redirect()->route('pages.proposals.index')->with('error', 'Failed to load proposal details: ' . $e->getMessage());
         }
-        
-        $finyears = FinancialYear::all();
-        return view('pages.proposals.show', compact('prop', 'finyears'));
     }
     public function printpdf($id)
     {

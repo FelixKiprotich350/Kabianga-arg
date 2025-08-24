@@ -31,8 +31,8 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Basic Information</h5>
                         <span
-                            class="badge {{ $prop->approvalstatus->value == 'APPROVED' ? 'bg-success' : ($prop->approvalstatus->value == 'REJECTED' ? 'bg-danger' : 'bg-warning') }}">
-                            {{ $prop->approvalstatus->value }}
+                            class="badge {{ ($prop->approvalstatus && $prop->approvalstatus->value == 'APPROVED') ? 'bg-success' : (($prop->approvalstatus && $prop->approvalstatus->value == 'REJECTED') ? 'bg-danger' : 'bg-warning') }}">
+                            {{ $prop->approvalstatus ? $prop->approvalstatus->value : 'PENDING' }}
                         </span>
                     </div>
                     <div class="row">
@@ -144,7 +144,7 @@
                                     {{ $prop->created_at ? $prop->created_at->format('M d, Y H:i') : 'N/A' }}</p>
                             </div>
                         </div>
-                        @if ($prop->submittedstatus->value == 'SUBMITTED')
+                        @if ($prop->submittedstatus && $prop->submittedstatus->value == 'SUBMITTED')
                             <div class="timeline-item">
                                 <div class="timeline-marker bg-info"></div>
                                 <div class="timeline-content">
@@ -154,13 +154,13 @@
                                 </div>
                             </div>
                         @endif
-                        @if ($prop->approvalstatus->value != 'PENDING')
+                        @if ($prop->approvalstatus && $prop->approvalstatus->value != 'PENDING')
                             <div class="timeline-item">
                                 <div
-                                    class="timeline-marker {{ $prop->approvalstatus->value == 'APPROVED' ? 'bg-success' : 'bg-danger' }}">
+                                    class="timeline-marker {{ ($prop->approvalstatus && $prop->approvalstatus->value == 'APPROVED') ? 'bg-success' : 'bg-danger' }}">
                                 </div>
                                 <div class="timeline-content">
-                                    <h6 class="small mb-1">{{ $prop->approvalstatus->value }}</h6>
+                                    <h6 class="small mb-1">{{ $prop->approvalstatus ? $prop->approvalstatus->value : 'PENDING' }}</h6>
                                     <p class="small text-muted">
                                         {{ $prop->updated_at ? $prop->updated_at->format('M d, Y H:i') : 'N/A' }}</p>
                                 </div>
@@ -170,7 +170,7 @@
                 </div>
 
                 <!-- Actions -->
-                @if (Auth::user()->haspermission('canapproveproposal') && $prop->approvalstatus->value == 'PENDING')
+                @if (Auth::user()->haspermission('canapproveproposal') && $prop->approvalstatus && $prop->approvalstatus->value == 'PENDING')
                     <div class="form-card">
                         <h6 class="mb-3"><i class="bi bi-gear me-2"></i>Actions</h6>
                         <div class="d-grid gap-2">

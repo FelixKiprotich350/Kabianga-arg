@@ -13,11 +13,14 @@ class ExpendituresController extends Controller
     //
     public function postexpenditure(Request $request)
     {
-        if(!auth()->user()->haspermission('canmakenewproposal')){
-            return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
+        $proposal = \App\Models\Proposal::findOrFail($request->input('proposalidfk'));
+        
+        // Check if user owns the proposal
+        if (auth()->user()->userid !== $proposal->useridfk) {
+            return response()->json(['message' => 'Unauthorized - You can only edit your own proposals', 'type' => 'danger'], 403);
         }
         
-        $proposal = \App\Models\Proposal::findOrFail($request->input('proposalidfk'));
+        // Check if proposal can be edited
         if (!$proposal->canBeEdited()) {
             return response()->json(['message' => 'This proposal cannot be edited at this time.', 'type' => 'danger'], 403);
         }
@@ -80,29 +83,44 @@ class ExpendituresController extends Controller
         $proposalId = $request->input('proposalid');
         if ($proposalId) {
             $data = Expenditureitem::where('proposalidfk', $proposalId)->get();
+            
+            $totalBudget = $data->sum('total');
+            $rule_40 = $data->whereIn('itemtype', ['Travel/Other', 'Travels', 'Personnel/Subsistence'])->sum('total');
+            $rule_60 = $data->whereIn('itemtype', ['Facilities/Equipment', 'Consumables'])->sum('total');
+            $isCompliant = $totalBudget > 0 ? ($rule_60 >= (0.6 * $totalBudget)) : true;
+            
+            return response()->json([
+                'items' => $data,
+                'is_compliant' => $isCompliant,
+                'total_budget' => $totalBudget
+            ]);
         } else {
             $data = Expenditureitem::all();
+            return response()->json($data);
         }
-        return response()->json($data);
     }
 
     public function fetchsearch(Request $request)
     {
         $searchTerm = $request->input('search');
-        $data = Expenditureitem::with('department', 'grantitem', 'themeitem', 'applicant')
-            ->where('approvalstatus', 'like', '%' . $searchTerm . '%')
-            ->orWhere('highqualification', 'like', '%' . $searchTerm . '%')
-            ->orWhereHas('themeitem', function ($query) use ($searchTerm) {
-                $query->where('themename', 'like', '%' . $searchTerm . '%');
-            })
-            ->orWhereHas('applicant', function ($query1) use ($searchTerm) {
-                $query1->where('name', 'like', '%' . $searchTerm . '%');
-            })
-            ->orWhereHas('department', function ($query) use ($searchTerm) {
-                $query->where('shortname', 'like', '%' . $searchTerm . '%');
+        $proposalId = $request->input('proposalid');
+        
+        $query = Expenditureitem::query();
+        
+        // Filter by proposal if provided
+        if ($proposalId) {
+            $query->where('proposalidfk', $proposalId);
+        }
+        
+        // Apply search filters
+        $data = $query->where(function($q) use ($searchTerm) {
+                $q->where('itemtype', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('item', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('total', 'like', '%' . $searchTerm . '%');
             })
             ->get();
-        return response()->json($data); // Return filtered data as JSON
+            
+        return response()->json($data);
     }
 
     public function geteditsingleexpenditurepage($id)
@@ -194,4 +212,6 @@ class ExpendituresController extends Controller
 
         return response()->json(['message' => 'Expenditure deleted successfully!', 'type' => 'success']);
     }
+
+
 }

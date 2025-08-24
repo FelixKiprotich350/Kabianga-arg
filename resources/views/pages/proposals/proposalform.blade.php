@@ -742,11 +742,11 @@
                     console.error('Error loading publications:', error);
                 });
 
-            // Load expenditures
-            fetch(`/api/v1/proposals/${proposalId}/expenditures`)
+            // Load expenditures and budget data
+            fetch(`/api/v1/expenditures?proposalid=${proposalId}`)
                 .then(response => response.json())
                 .then(data => {
-                    budgetItems = data.map(item => ({
+                    budgetItems = data.items.map(item => ({
                         itemtype: item.itemtype,
                         item: item.item,
                         quantity: item.quantity,
@@ -754,8 +754,20 @@
                         total: item.total,
                         expenditureid: item.expenditureid
                     }));
+
+                    // Set total budget from API
+                    document.getElementById('totalBudget').value =
+                        Number(data.total_budget).toFixed(2);
+
+                    // Set validation status
+                    const statusDiv = document.getElementById('budgetRuleStatus');
+                    if (data.is_compliant) {
+                        statusDiv.innerHTML = `<span class="text-success">✓ Compliant (60/40 rule satisfied)</span>`;
+                    } else {
+                        statusDiv.innerHTML = `<span class="text-danger">✗ Non-compliant (60/40 rule violated)</span>`;
+                    }
+
                     updateBudgetTable();
-                    updateTotalBudget();
                 })
                 .catch(error => {
                     console.error('Error loading expenditures:', error);
@@ -811,6 +823,7 @@
 
             document.getElementById(step + '-content').classList.remove('d-none');
             document.querySelector(`[data-step="${step}"]`).classList.add('active');
+
 
             if (step === 'submit') {
                 updateSummary();
@@ -1070,26 +1083,33 @@
             updateTotalBudget();
         }
 
+
+
         function updateTotalBudget() {
-
-
             // Get validation status from API if proposal exists
             if (proposalId) {
-                fetch(`/api/v1/proposals/${proposalId}/budget-validation`)
+                fetch(`/api/v1/expenditures?proposalid=${proposalId}`)
                     .then(response => response.json())
                     .then(data => {
+                        document.getElementById('totalBudget').value = data.total_budget.toLocaleString();
+
                         const statusDiv = document.getElementById('budgetRuleStatus');
                         if (data.is_compliant) {
-                            document.getElementById('totalBudget').value = data.total_budget;
                             statusDiv.innerHTML =
-                                `<span class="text-success">✓ ${data.status} (${data.message})</span>`;
+                                `<span class="text-success">✓ Compliant (60/40 rule satisfied)</span>`;
                         } else {
-                            statusDiv.innerHTML = `<span class="text-danger">✗ ${data.status} (${data.message})</span>`;
+                            statusDiv.innerHTML =
+                                `<span class="text-danger">✗ Non-compliant (60/40 rule violated)</span>`;
                         }
                     })
                     .catch(error => {
                         console.error('Error fetching budget validation:', error);
+                        const statusDiv = document.getElementById('budgetRuleStatus');
+                        statusDiv.innerHTML = `<span class="text-warning">⚠ Unable to validate budget</span>`;
                     });
+            } else {
+                const total = budgetItems.reduce((sum, item) => sum + parseFloat(item.total || 0), 0);
+                document.getElementById('totalBudget').value = total.toLocaleString();
             }
         }
 

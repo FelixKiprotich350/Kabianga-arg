@@ -144,6 +144,7 @@ Route::prefix('v1')->middleware(['web', 'auth'])->group(function () {
         Route::get('/', [ExpendituresController::class, 'fetchall']);
         Route::post('/', [ExpendituresController::class, 'postexpenditure']);
         Route::get('/search', [ExpendituresController::class, 'fetchsearch']);
+        Route::get('/budget-validation', [ExpendituresController::class, 'getBudgetValidation']);
         Route::put('/{id}', [ExpendituresController::class, 'updateExpenditure']);
         Route::delete('/{id}', [ExpendituresController::class, 'deleteExpenditure']);
     });

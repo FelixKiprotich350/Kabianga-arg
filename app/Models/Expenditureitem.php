@@ -31,4 +31,9 @@ class Expenditureitem extends Model
             }
         });
     }
+
+    public function proposal()
+    {
+        return $this->belongsTo(Proposal::class, 'proposalidfk', 'proposalid');
+    }
 }

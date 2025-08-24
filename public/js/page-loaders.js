@@ -101,12 +101,7 @@ async function loadProposalDetails(proposalId) {
             API.getProposalResearchDesign(proposalId)
         ]);
 
-        renderProposalDetails(proposal);
-        renderCollaborators(collaborators);
-        renderPublications(publications);
-        renderExpenditures(expenditures);
-        renderWorkplans(workplans);
-        renderResearchDesign(researchDesign);
+        console.log('Proposal details loaded successfully');
         
     } catch (error) {
         ARGPortal.showError('Failed to load proposal details');
