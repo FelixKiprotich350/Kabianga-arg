@@ -67,14 +67,14 @@ class Proposal extends Model
         'officephone',
         'submittedstatus',
         'receivedstatus',
-        'caneditstatus'
+        'allowediting'
     ];
 
     protected $casts = [
         'submittedstatus' => SubmittedStatus::class,
         'receivedstatus' => ReceivedStatus::class,
         'approvalstatus' => ApprovalStatus::class,
-        'caneditstatus' => 'boolean',
+        'allowediting' => 'boolean',
     ];
 
 
@@ -148,7 +148,7 @@ class Proposal extends Model
     {
         try {
             $user = Auth::user();
-            if (($user->userid == $this->useridfk) && $this->caneditstatus && $this->approvalstatus == ApprovalStatus::PENDING) {
+            if (($user->userid == $this->useridfk) && $this->allowediting && $this->approvalstatus == ApprovalStatus::PENDING) {
                 return true;
             }
             else {
@@ -160,8 +160,13 @@ class Proposal extends Model
 
     }
 
-    public function canBeEdited()
+    public function isEditable()
     {
-        return $this->receivedstatus == ReceivedStatus::PENDING || $this->caneditstatus;
+        // Cannot edit if approved or rejected
+        if ($this->approvalstatus == ApprovalStatus::APPROVED || $this->approvalstatus == ApprovalStatus::REJECTED) {
+            return false;
+        }
+        
+        return $this->receivedstatus == ReceivedStatus::PENDING || $this->allowediting;
     }
 }

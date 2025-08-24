@@ -113,7 +113,7 @@ class ProposalsController extends Controller
         $proposal->approvalstatus = ApprovalStatus::PENDING;
         $proposal->submittedstatus = SubmittedStatus::PENDING;
         $proposal->receivedstatus = ReceivedStatus::PENDING;
-        $proposal->caneditstatus = true;
+        $proposal->allowediting = true;
         $proposal->highqualification = $request->input('highestqualification');
         $proposal->officephone = $request->input('officephone');
         $proposal->cellphone = $request->input('cellphone');
@@ -158,7 +158,7 @@ class ProposalsController extends Controller
                 'message' => 'You are not Authorized to edit this Proposal. Only the owner can Edit!'
             ], 403);
         }
-        if (!$proposal->canBeEdited()) {
+        if (!$proposal->isEditable()) {
             return response()->json([
                 'success' => false,
                 'message' => 'This proposal cannot be edited at this time.'
@@ -214,7 +214,7 @@ class ProposalsController extends Controller
                 'message' => 'You are not Authorized to edit this Proposal. Only the owner can Edit!'
             ], 403);
         }
-        if (!$proposal->canBeEdited()) {
+        if (!$proposal->isEditable()) {
             return response()->json([
                 'success' => false,
                 'message' => 'This proposal cannot be edited at this time.'
@@ -284,7 +284,7 @@ class ProposalsController extends Controller
         $cansubmit = $this->cansubmit($id);
         if (isset($cansubmit)) {
             $proposal->submittedstatus = SubmittedStatus::SUBMITTED;
-            $proposal->caneditstatus = false;
+            $proposal->allowediting = false;
             $proposal->save();
             //notifiable users to be informed of new proposal
             $mailingController = new MailingController();
@@ -314,7 +314,7 @@ class ProposalsController extends Controller
             return response(['message' => 'This Proposal has been received before!!', 'type' => 'danger']);
         }
         $proposal->receivedstatus = ReceivedStatus::RECEIVED;
-        $proposal->caneditstatus = false;
+        $proposal->allowediting = false;
         $proposal->save();
         $mailingController = new MailingController();
         $Url = route('pages.proposals.viewproposal', ['id' => $proposal->proposalid]);
@@ -334,7 +334,7 @@ class ProposalsController extends Controller
 
         $proposal = Proposal::findOrFail($id);
 
-        $proposal->caneditstatus = false;
+        $proposal->allowediting = false;
         $proposal->save();
         $mailingController = new MailingController();
         $mailingController->notifyUserReceivedProposal($proposal);
@@ -384,7 +384,7 @@ class ProposalsController extends Controller
             $proposal = Proposal::findOrFail($id);
             $proposal->approvalstatus = $request->input('status');
             $proposal->comment = $request->input('comment');
-            $proposal->caneditstatus = false;
+            $proposal->allowediting = false;
             $proposal->saveOrFail();
 
             $yearid = GlobalSetting::where('item', 'current_fin_year')->first();
@@ -537,8 +537,8 @@ class ProposalsController extends Controller
         if (!auth()->user()->userid == $prop->useridfk) {
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Edit the requested Proposal!");
         }
-        if (!$prop->caneditstatus || $prop->approvalstatus != ApprovalStatus::PENDING) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "The Proposal is not Editable!");
+        if (!$prop->isEditable()) {
+            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "The Proposal cannot be edited. It may have been approved, rejected, or is not in an editable state.");
         }
         $grants = Grant::all();
         $departments = Department::all();
@@ -611,7 +611,7 @@ class ProposalsController extends Controller
                 'approvalstatus' => $proposal->approvalstatus,
                 'submittedstatus' => $proposal->submittedstatus,
                 'receivedstatus' => $proposal->receivedstatus,
-                'caneditstatus' => $proposal->caneditstatus,
+                'allowediting' => $proposal->allowediting,
                 'theme_name' => $proposal->themeitem->themename ?? 'N/A',
                 'grant_name' => $proposal->grantitem->grantname ?? 'N/A',
                 'created_at' => $proposal->created_at,
@@ -802,7 +802,7 @@ class ProposalsController extends Controller
             DB::transaction(function () use ($proposal, $request) {
                 $proposal->approvalstatus = ApprovalStatus::APPROVED;
                 $proposal->comment = $request->input('comment', 'Approved');
-                $proposal->caneditstatus = false;
+                $proposal->allowediting = false;
                 $proposal->save();
 
                 $yearid = GlobalSetting::where('item', 'current_fin_year')->first();
@@ -852,7 +852,7 @@ class ProposalsController extends Controller
 
         $proposal->approvalstatus = ApprovalStatus::REJECTED;
         $proposal->comment = $request->input('comment');
-        $proposal->caneditstatus = false;
+        $proposal->allowediting = false;
         $proposal->save();
 
         $mailingController = new MailingController();
@@ -876,7 +876,7 @@ class ProposalsController extends Controller
             }
 
             $proposal->approvalstatus = ApprovalStatus::DRAFT;
-            $proposal->caneditstatus = true;
+            $proposal->allowediting = true;
             $proposal->save();
 
             return response()->json(['success' => true, 'message' => 'Proposal marked as draft']);
@@ -915,7 +915,7 @@ class ProposalsController extends Controller
             $change->status = 'Pending';
             $change->save();
 
-            $proposal->caneditstatus = true;
+            $proposal->allowediting = true;
             $proposal->save();
 
             return response()->json(['success' => true, 'message' => 'Change request sent']);

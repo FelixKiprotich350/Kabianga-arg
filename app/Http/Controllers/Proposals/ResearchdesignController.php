@@ -18,7 +18,7 @@ class ResearchdesignController extends Controller
          }
          
          $proposal = \App\Models\Proposal::findOrFail($request->input('proposalidfk'));
-         if (!$proposal->canBeEdited()) {
+         if (!$proposal->isEditable()) {
              return response()->json(['message' => 'This proposal cannot be edited at this time.', 'type' => 'danger'], 403);
          }
          
@@ -99,7 +99,7 @@ class ResearchdesignController extends Controller
      {
          $reditem = ResearchDesignItem::findOrFail($id);
          $proposal = \App\Models\Proposal::findOrFail($reditem->proposalidfk);
-         if (!$proposal->canBeEdited()) {
+         if (!$proposal->isEditable()) {
              return response()->json(['message' => 'This proposal cannot be edited at this time.', 'type' => 'danger'], 403);
          }
          
@@ -133,7 +133,7 @@ class ResearchdesignController extends Controller
      {
          $reditem = ResearchDesignItem::findOrFail($id);
          $proposal = \App\Models\Proposal::findOrFail($reditem->proposalidfk);
-         if (!$proposal->canBeEdited()) {
+         if (!$proposal->isEditable()) {
              return response()->json(['message' => 'This proposal cannot be edited at this time.', 'type' => 'danger'], 403);
          }
          $reditem->delete();

@@ -20,7 +20,7 @@ class PublicationsController extends Controller
         }
         
         $proposal = \App\Models\Proposal::findOrFail($request->input('proposalidfk'));
-        if (!$proposal->canBeEdited()) {
+        if (!$proposal->isEditable()) {
             return response()->json(['message' => 'This proposal cannot be edited at this time.', 'type' => 'danger'], 403);
         }
         
@@ -89,7 +89,7 @@ class PublicationsController extends Controller
         
         $publication = Publication::findOrFail($id);
         $proposal = \App\Models\Proposal::findOrFail($publication->proposalidfk);
-        if (!$proposal->canBeEdited()) {
+        if (!$proposal->isEditable()) {
             return response()->json(['message' => 'This proposal cannot be edited at this time.', 'type' => 'danger'], 403);
         }
 
@@ -129,7 +129,7 @@ class PublicationsController extends Controller
         
         $publication = Publication::findOrFail($id);
         $proposal = \App\Models\Proposal::findOrFail($publication->proposalidfk);
-        if (!$proposal->canBeEdited()) {
+        if (!$proposal->isEditable()) {
             return response()->json(['message' => 'This proposal cannot be edited at this time.', 'type' => 'danger'], 403);
         }
 

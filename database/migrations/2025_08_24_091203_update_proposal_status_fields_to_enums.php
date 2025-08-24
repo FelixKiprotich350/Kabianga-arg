@@ -22,11 +22,11 @@ return new class extends Migration
             // Update approvalstatus to use consistent enum values
             $table->enum('approvalstatus', ['DRAFT', 'PENDING', 'APPROVED', 'REJECTED'])->default('PENDING')->change();
             
-            // Ensure caneditstatus is boolean
-            if (!Schema::hasColumn('proposals', 'caneditstatus')) {
-                $table->boolean('caneditstatus')->default(true);
+            // Ensure allowediting is boolean
+            if (!Schema::hasColumn('proposals', 'allowediting')) {
+                $table->boolean('allowediting')->default(true);
             } else {
-                $table->boolean('caneditstatus')->default(true)->change();
+                $table->boolean('allowediting')->default(true)->change();
             }
         });
     }
@@ -37,7 +37,7 @@ return new class extends Migration
             $table->boolean('submittedstatus')->default(false)->change();
             $table->boolean('receivedstatus')->default(false)->change();
             $table->string('approvalstatus')->default('Pending')->change();
-            $table->boolean('caneditstatus')->default(true)->change();
+            $table->boolean('allowediting')->default(true)->change();
         });
     }
 };

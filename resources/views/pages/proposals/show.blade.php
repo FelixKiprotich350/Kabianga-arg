@@ -13,7 +13,7 @@
                 <a href="/api/v1/proposals/{{ $prop->proposalid }}/pdf" class="btn btn-outline-secondary" target="_blank">
                     <i class="bi bi-download me-2"></i>Download PDF
                 </a>
-                @if (Auth::user()->userid == $prop->useridfk && $prop->caneditstatus)
+                @if (Auth::user()->userid == $prop->useridfk && $prop->allowediting)
                     <a href="{{ route('pages.proposals.editproposal', $prop->proposalid) }}" class="btn btn-outline-primary">
                         <i class="bi bi-pencil me-2"></i>Edit
                     </a>
