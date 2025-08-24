@@ -389,17 +389,26 @@
             };
 
             window.submitChanges = function() {
-                const comment = $('#changesModal textarea[name="comment"]').val();
+                const triggerissue = $('#changesModal textarea[name="triggerissue"]').val();
+                const suggestedchange = $('#changesModal textarea[name="suggestedchange"]').val();
 
-                if (!comment.trim()) {
-                    ARGPortal.showError('Please describe the changes needed');
+                if (!triggerissue.trim()) {
+                    ARGPortal.showError('Please describe the issue or problem');
+                    return;
+                }
+                
+                if (!suggestedchange.trim()) {
+                    ARGPortal.showError('Please describe the suggested changes');
                     return;
                 }
 
                 $.ajax({
                     url: `/api/v1/proposals/{{ $prop->proposalid }}/request-changes`,
                     type: 'POST',
-                    data: { comment: comment },
+                    data: { 
+                        triggerissue: triggerissue,
+                        suggestedchange: suggestedchange
+                    },
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
@@ -420,18 +429,19 @@
         window.showApprovalModal = function() {
             console.log('showApprovalModal called');
             $.ajax({
-                url: '/api/v1/financial-years',
+                url: '/api/v1/financial-years/',
                 type: 'GET',
                 success: function(finyears) {
                     let finyearOptions = '<option value="">Select Funding Year</option>';
                     if (finyears && finyears.length > 0) {
                         finyears.forEach(function(year) {
-                            finyearOptions += `<option value="${year.finyearid}">${year.finyear}</option>`;
+                            finyearOptions += `<option value="${year.id}">${year.finyear}</option>`;
                         });
                     }
                     showModal(finyearOptions);
                 },
                 error: function() {
+                    // Fallback options if API fails
                     const finyearOptions = '<option value="">Select Funding Year</option><option value="1">2024/2025</option><option value="2">2025/2026</option>';
                     showModal(finyearOptions);
                 }
@@ -520,8 +530,12 @@
                             <div class="modal-body">
                                 <form id="changesForm">
                                     <div class="mb-3">
-                                        <label class="form-label">Changes Required *</label>
-                                        <textarea class="form-control" name="comment" rows="4" placeholder="Describe the changes needed..." required></textarea>
+                                        <label class="form-label">Issue/Problem *</label>
+                                        <textarea class="form-control" name="triggerissue" rows="3" placeholder="Describe the issue or problem..." required></textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Suggested Changes *</label>
+                                        <textarea class="form-control" name="suggestedchange" rows="4" placeholder="Describe the changes needed..." required></textarea>
                                     </div>
                                 </form>
                             </div>

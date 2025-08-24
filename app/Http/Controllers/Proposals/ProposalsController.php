@@ -893,11 +893,12 @@ class ProposalsController extends Controller
             }
 
             $validator = Validator::make($request->all(), [
-                'comment' => 'required|string'
+                'triggerissue' => 'required|string',
+                'suggestedchange' => 'required|string'
             ]);
 
             if ($validator->fails()) {
-                return response()->json(['success' => false, 'message' => 'Comment is required'], 400);
+                return response()->json(['success' => false, 'message' => 'Both issue and suggested changes are required'], 400);
             }
 
             $proposal = Proposal::findOrFail($id);
@@ -909,8 +910,8 @@ class ProposalsController extends Controller
             $change = new ProposalChanges();
             $change->proposalidfk = $id;
             $change->suggestedbyfk = auth()->user()->userid;
-            $change->triggerissue = 'Review required';
-            $change->suggestedchange = $request->input('comment');
+            $change->triggerissue = $request->input('triggerissue');
+            $change->suggestedchange = $request->input('suggestedchange');
             $change->status = 'Pending';
             $change->save();
 
