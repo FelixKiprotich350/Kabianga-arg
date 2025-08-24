@@ -298,4 +298,14 @@ class User extends Authenticatable
 
         return in_array($permission, $this->getEffectivePermissions());
     }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class, 'user_id', 'userid');
+    }
+
+    public function unreadNotifications()
+    {
+        return $this->notifications()->unread();
+    }
 }

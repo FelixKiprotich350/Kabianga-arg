@@ -14,20 +14,32 @@
         </div>
         
         <div class="header-actions">
-            <button class="notification-btn" data-bs-toggle="dropdown">
-                <i class="bi bi-bell"></i>
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
-                    3
-                </span>
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-                <li><h6 class="dropdown-header">Notifications</h6></li>
-                <li><a class="dropdown-item" href="#"><i class="bi bi-file-text me-2"></i>New proposal submitted</a></li>
-                <li><a class="dropdown-item" href="#"><i class="bi bi-check-circle me-2"></i>Proposal approved</a></li>
-                <li><a class="dropdown-item" href="#"><i class="bi bi-clock me-2"></i>Deadline reminder</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item text-center" href="#">View all notifications</a></li>
-            </ul>
+            <div class="dropdown">
+                <button class="notification-btn" data-bs-toggle="dropdown" id="notificationDropdown">
+                    <i class="bi bi-bell"></i>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+                          style="font-size: 0.6rem; display: none;" id="notificationBadge">
+                        0
+                    </span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" style="width: 350px;">
+                    <li><h6 class="dropdown-header d-flex justify-content-between align-items-center">
+                        Notifications
+                        <button class="btn btn-sm btn-outline-primary" onclick="markAllNotificationsRead()" style="font-size: 0.7rem;">
+                            Mark all read
+                        </button>
+                    </h6></li>
+                    <div id="notificationsList" style="max-height: 300px; overflow-y: auto;">
+                        <li class="text-center py-3">
+                            <div class="spinner-border spinner-border-sm" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </li>
+                    </div>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-center" href="{{ route('notifications.index') }}">View all notifications</a></li>
+                </ul>
+            </div>
             
             <div class="dropdown">
                 <button class="profile-btn" data-bs-toggle="dropdown">

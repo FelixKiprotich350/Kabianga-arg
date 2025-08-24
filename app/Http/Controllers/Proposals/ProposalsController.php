@@ -29,11 +29,14 @@ use Notification;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\Snappy\Facades\SnappyPdf;
 use App\Models\{SubmittedStatus, ReceivedStatus, ApprovalStatus};
+use App\Services\NotificationService;
+use App\Traits\CreatesNotifications;
 
 
 
 class ProposalsController extends Controller
 {
+    use CreatesNotifications;
     public function index()
     {
         return view('pages.proposals.index');
@@ -286,6 +289,20 @@ class ProposalsController extends Controller
             $proposal->submittedstatus = SubmittedStatus::SUBMITTED;
             $proposal->allowediting = false;
             $proposal->save();
+            
+            // Create notifications for proposal submission
+            $this->notifyProposalSubmitted($proposal);
+            
+            // Notify user of successful submission with email
+            $actionUrl = route('pages.proposals.viewproposal', ['id' => $proposal->proposalid]);
+            NotificationService::createWithEmail(
+                $proposal->applicant,
+                NotificationService::TYPE_PROPOSAL_SUBMITTED,
+                'Proposal Submitted Successfully',
+                "Your research proposal '{$proposal->researchtitle}' has been submitted successfully and is pending review.",
+                $actionUrl
+            );
+            
             //notifiable users to be informed of new proposal
             $mailingController = new MailingController();
             $url = route('pages.proposals.viewproposal', ['id' => $proposal->proposalid]);
@@ -316,6 +333,17 @@ class ProposalsController extends Controller
         $proposal->receivedstatus = ReceivedStatus::RECEIVED;
         $proposal->allowediting = false;
         $proposal->save();
+        
+        // Notify user that proposal was received
+        $actionUrl = route('pages.proposals.viewproposal', ['id' => $proposal->proposalid]);
+        NotificationService::createWithEmail(
+            $proposal->applicant,
+            'proposal_received',
+            'Proposal Received',
+            "Your research proposal '{$proposal->researchtitle}' has been received and is now under review.",
+            $actionUrl
+        );
+        
         $mailingController = new MailingController();
         $Url = route('pages.proposals.viewproposal', ['id' => $proposal->proposalid]);
         $mailingController->notifyUsersOfProposalActivity('proposalreceived', 'Proposal Received!', 'success', ['Your Proposal has been Received Successfully.'], 'View Proposal', $Url);
@@ -823,6 +851,9 @@ class ProposalsController extends Controller
                 $project->fundingfinyearfk = $request->input('fundingfinyearfk');
                 $project->save();
             });
+            
+            // Create notification for proposal approval
+            $this->notifyProposalApproved($proposal);
 
             return response()->json(['success' => true, 'message' => 'Proposal approved successfully']);
         } catch (Exception $e) {
@@ -854,6 +885,9 @@ class ProposalsController extends Controller
         $proposal->comment = $request->input('comment');
         $proposal->allowediting = false;
         $proposal->save();
+        
+        // Create notification for proposal rejection
+        $this->notifyProposalRejected($proposal);
 
         $mailingController = new MailingController();
         $url = route('pages.proposals.viewproposal', ['id' => $id]);
@@ -917,6 +951,9 @@ class ProposalsController extends Controller
 
             $proposal->allowediting = true;
             $proposal->save();
+            
+            // Create notification for changes requested
+            $this->notifyProposalChangesRequested($proposal);
 
             return response()->json(['success' => true, 'message' => 'Change request sent']);
         } catch (Exception $e) {
