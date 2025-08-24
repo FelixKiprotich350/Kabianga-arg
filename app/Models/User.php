@@ -257,6 +257,11 @@ class User extends Authenticatable
         return $this->activeRoles()->pluck('role_type')->toArray();
     }
 
+    public function proposals()
+    {
+        return $this->hasMany(Proposal::class, 'useridfk', 'userid');
+    }
+
     public function getEffectivePermissions()
     {
         $permissions = [];

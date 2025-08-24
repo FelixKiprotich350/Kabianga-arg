@@ -115,6 +115,9 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/grants/view/{id}', [GrantsController::class, 'getviewsinglegrantpage'])->name('pages.grants.viewgrant');
     Route::get('/grants/edit/{id}', [GrantsController::class, 'geteditsinglegrantpage'])->name('pages.grants.editgrant');
 
+    //financial years
+    Route::get('/financial-years', [FinYearController::class, 'index'])->name('pages.finyears.index');
+
     //users
     Route::get('/users/manage', [UsersController::class, 'viewallusers'])->name('pages.users.manage');
     Route::get('/users', [UsersController::class, 'viewallusers'])->name('users.index');
@@ -167,6 +170,13 @@ Route::group(['middleware' => 'auth'], function () {
         $allfinyears = \App\Models\FinancialYear::all();
         return view('pages.reports.financial-dashboard', compact('allgrants', 'allfinyears'));
     })->name('pages.reports.financial');
+    Route::get('/reports/advanced', function() {
+        if (!auth()->user()->haspermission('canviewreports')) {
+            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to View Reports!");
+        }
+        $allgrants = \App\Models\Grant::all();
+        return view('pages.reports.advanced-reports', compact('allgrants'));
+    })->name('pages.reports.advanced');
 
     //themes
     Route::get('/themes', [ResearchThemeController::class, 'index'])->name('pages.themes.index');

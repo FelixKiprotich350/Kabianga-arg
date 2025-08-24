@@ -695,6 +695,188 @@ class ReportsController extends Controller
         }
     }
 
+    // Progress Tracking Report
+    public function getProgressReport(Request $request)
+    {
+        if (!auth()->user()->haspermission('canviewreports')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $statusFilter = $request->input('status');
+        $query = ResearchProject::with('proposal.applicant');
+        
+        if ($statusFilter && $statusFilter != 'all') {
+            $query->where('projectstatus', $statusFilter);
+        }
+
+        $projects = $query->get();
+        $progressData = $projects->map(function($project) {
+            $progressCount = ResearchProgress::where('researchidfk', $project->researchid)->count();
+            $lastProgress = ResearchProgress::where('researchidfk', $project->researchid)
+                ->latest()->first();
+            
+            return [
+                'project_id' => $project->researchid,
+                'title' => $project->proposal->researchtitle ?? 'N/A',
+                'applicant' => $project->proposal->applicant->name ?? 'N/A',
+                'status' => $project->projectstatus,
+                'progress_reports' => $progressCount,
+                'last_report_date' => $lastProgress ? $lastProgress->created_at->format('Y-m-d') : 'Never',
+                'days_since_report' => $lastProgress ? $lastProgress->created_at->diffInDays(now()) : 'N/A'
+            ];
+        });
+
+        return response()->json([
+            'projects' => $progressData,
+            'overdue_projects' => $progressData->filter(function($p) {
+                return is_numeric($p['days_since_report']) && $p['days_since_report'] > 90;
+            })->count()
+        ]);
+    }
+
+    // Compliance Report
+    public function getComplianceReport(Request $request)
+    {
+        if (!auth()->user()->haspermission('canviewreports')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $proposals = Proposal::with('applicant')->get();
+        $projects = ResearchProject::with('proposal.applicant')->get();
+        
+        $complianceData = [
+            'proposals_missing_docs' => $proposals->filter(function($p) {
+                return empty($p->researchtitle) || empty($p->objectives);
+            })->count(),
+            'projects_no_progress' => $projects->filter(function($p) {
+                return ResearchProgress::where('researchidfk', $p->researchid)->count() == 0;
+            })->count(),
+            'overdue_reports' => $projects->filter(function($p) {
+                $lastReport = ResearchProgress::where('researchidfk', $p->researchid)->latest()->first();
+                return !$lastReport || $lastReport->created_at->diffInDays(now()) > 90;
+            })->count(),
+            'inactive_users' => User::where('isactive', false)->count()
+        ];
+
+        return response()->json($complianceData);
+    }
+
+    // Performance Analytics Report
+    public function getPerformanceReport(Request $request)
+    {
+        if (!auth()->user()->haspermission('canviewreports')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $yearFilter = $request->input('year', date('Y'));
+        
+        $proposals = Proposal::with('applicant', 'grantitem')
+            ->whereYear('created_at', $yearFilter)->get();
+        $projects = ResearchProject::with('proposal.applicant')
+            ->whereYear('created_at', $yearFilter)->get();
+        
+        $performance = [
+            'approval_rate' => $proposals->count() > 0 ? 
+                round(($proposals->where('approvalstatus', 'APPROVED')->count() / $proposals->count()) * 100, 2) : 0,
+            'completion_rate' => $projects->count() > 0 ? 
+                round(($projects->where('projectstatus', 'COMPLETED')->count() / $projects->count()) * 100, 2) : 0,
+            'avg_processing_time' => $this->calculateAvgProcessingTime($proposals),
+            'top_performers' => $this->getTopPerformers($yearFilter),
+            'grant_efficiency' => $this->getGrantEfficiency($yearFilter)
+        ];
+
+        return response()->json($performance);
+    }
+
+    // Budget vs Actual Report
+    public function getBudgetActualReport(Request $request)
+    {
+        if (!auth()->user()->haspermission('canviewreports')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $grantFilter = $request->input('grant');
+        $query = Proposal::with('expenditures', 'grantitem');
+        
+        if ($grantFilter && $grantFilter != 'all') {
+            $query->where('grantnofk', $grantFilter);
+        }
+
+        $proposals = $query->where('approvalstatus', 'APPROVED')->get();
+        
+        $budgetData = $proposals->map(function($proposal) {
+            $budgetAmount = $proposal->expenditures->sum('amount');
+            $actualFunding = ResearchFunding::whereHas('project.proposal', function($q) use ($proposal) {
+                $q->where('proposalid', $proposal->proposalid);
+            })->sum('amount');
+            
+            return [
+                'proposal_id' => $proposal->proposalid,
+                'title' => $proposal->researchtitle ?? 'N/A',
+                'grant' => $proposal->grantitem->grantid ?? 'N/A',
+                'budget_amount' => $budgetAmount,
+                'actual_funding' => $actualFunding,
+                'variance' => $actualFunding - $budgetAmount,
+                'variance_percentage' => $budgetAmount > 0 ? 
+                    round((($actualFunding - $budgetAmount) / $budgetAmount) * 100, 2) : 0
+            ];
+        });
+
+        return response()->json([
+            'budget_analysis' => $budgetData,
+            'total_budget' => $budgetData->sum('budget_amount'),
+            'total_actual' => $budgetData->sum('actual_funding'),
+            'overall_variance' => $budgetData->sum('variance')
+        ]);
+    }
+
+    private function calculateAvgProcessingTime($proposals)
+    {
+        $approvedProposals = $proposals->where('approvalstatus', 'APPROVED');
+        if ($approvedProposals->count() == 0) return 0;
+        
+        $totalDays = $approvedProposals->sum(function($p) {
+            return $p->created_at->diffInDays($p->updated_at);
+        });
+        
+        return round($totalDays / $approvedProposals->count(), 1);
+    }
+
+    private function getTopPerformers($year)
+    {
+        return User::withCount([
+            'proposals as approved_count' => function($q) use ($year) {
+                $q->where('approvalstatus', 'APPROVED')->whereYear('created_at', $year);
+            }
+        ])->orderBy('approved_count', 'desc')->take(5)->get()
+        ->map(function($user) {
+            return [
+                'name' => $user->name,
+                'approved_proposals' => $user->approved_count
+            ];
+        });
+    }
+
+    private function getGrantEfficiency($year)
+    {
+        return Grant::withCount([
+            'proposals as total_proposals' => function($q) use ($year) {
+                $q->whereYear('created_at', $year);
+            },
+            'proposals as approved_proposals' => function($q) use ($year) {
+                $q->where('approvalstatus', 'APPROVED')->whereYear('created_at', $year);
+            }
+        ])->get()->map(function($grant) {
+            return [
+                'grant_id' => $grant->grantid,
+                'total_proposals' => $grant->total_proposals,
+                'approved_proposals' => $grant->approved_proposals,
+                'efficiency_rate' => $grant->total_proposals > 0 ? 
+                    round(($grant->approved_proposals / $grant->total_proposals) * 100, 2) : 0
+            ];
+        });
+    }
+
     // Dashboard Summary for Reports
     public function getReportsSummary()
     {

@@ -230,6 +230,10 @@ Route::prefix('v1')->middleware(['web', 'auth'])->group(function () {
         Route::post('/', [FinYearController::class, 'postnewfinyear']);
     });
     
+    // Legacy financial year routes
+    Route::get('/finyear/fetchallfinyears', [FinYearController::class, 'fetchallfinyears'])->name('api.finyear.fetchallfinyears');
+    Route::post('/finyear/post', [FinYearController::class, 'postnewfinyear'])->name('api.finyear.post');
+    
     // Research Themes
     Route::prefix('themes')->group(function () {
         Route::get('/', [ResearchThemeController::class, 'fetchAllThemes']);
@@ -263,6 +267,10 @@ Route::prefix('v1')->middleware(['web', 'auth'])->group(function () {
         Route::get('/projects', [ReportsController::class, 'getProjectsReport']);
         Route::get('/users', [ReportsController::class, 'getUserActivityReport']);
         Route::get('/publications', [ReportsController::class, 'getPublicationsReport']);
+        Route::get('/progress', [ReportsController::class, 'getProgressReport']);
+        Route::get('/compliance', [ReportsController::class, 'getComplianceReport']);
+        Route::get('/performance', [ReportsController::class, 'getPerformanceReport']);
+        Route::get('/budget-actual', [ReportsController::class, 'getBudgetActualReport']);
         Route::post('/export', [ReportsController::class, 'exportReport']);
     });
     

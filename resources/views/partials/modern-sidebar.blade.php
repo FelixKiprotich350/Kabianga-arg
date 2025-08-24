@@ -85,6 +85,16 @@
                 </li>
             @endif
 
+            @if (Auth::user()->haspermission('canviewgrants'))
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('pages.finyears.*') ? 'active' : '' }}"
+                        href="{{ route('pages.finyears.index') }}">
+                        <i class="bi bi-calendar-range"></i>
+                        Financial Years
+                    </a>
+                </li>
+            @endif
+
             @if (Auth::user()->haspermission('canviewdepartmentsandschools'))
                 <li class="nav-item">
                     <a class="nav-link {{ request()->routeIs('pages.schools.*') ? 'active' : '' }}"

@@ -8,6 +8,16 @@ use Illuminate\Support\Facades\Validator;
 
 class FinYearController extends Controller
 {
+    public function index()
+    {
+        if (!auth()->user()->haspermission('canviewgrants')) {
+            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to view Financial Years!");
+        }
+        
+        $finyears = FinancialYear::all();
+        return view('pages.grants.finyears', compact('finyears'));
+    }
+
     //
     public function postnewfinyear(Request $request)
     {
