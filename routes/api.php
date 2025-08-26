@@ -212,6 +212,7 @@ Route::prefix('v1')->middleware(['web', 'auth'])->group(function () {
     // Departments Management
     Route::prefix('departments')->group(function () {
         Route::get('/', [DepartmentsController::class, 'fetchalldepartments']);
+        Route::get('/for-proposals', [DepartmentsController::class, 'fetchdepartmentsforproposals']);
         Route::post('/', [DepartmentsController::class, 'postnewdepartment']);
         Route::get('/{id}', [DepartmentsController::class, 'getviewdepartmentpage']);
         Route::put('/{id}', [DepartmentsController::class, 'updatedepartment']);

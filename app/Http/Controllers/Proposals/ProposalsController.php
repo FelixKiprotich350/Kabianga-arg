@@ -48,7 +48,7 @@ class ProposalsController extends Controller
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Make a new Proposal!");
         }
         $themes = ResearchTheme::all();
-        $departments = Department::all();
+        $departments = Department::select('depid', 'shortname', 'description')->get();
         $user = auth()->user();
         $currentgrant = GlobalSetting::where('item', 'current_open_grant')->first();
         $grants = collect();
@@ -551,7 +551,7 @@ class ProposalsController extends Controller
             return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "The Proposal cannot be edited. It may have been approved, rejected, or is not in an editable state.");
         }
         $grants = Grant::all();
-        $departments = Department::all();
+        $departments = Department::select('depid', 'shortname', 'description')->get();
         $themes = ResearchTheme::all();
         $hasmessage = ($req->input('has_message', 0) == 1) ? true : false;
         // Return the view with the proposal data

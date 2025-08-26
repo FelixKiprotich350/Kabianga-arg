@@ -152,6 +152,23 @@ class DepartmentsController extends Controller
         }
     }
 
+    public function fetchdepartmentsforproposals()
+    {
+        try {
+            // Allow all authenticated users to fetch departments for proposal creation
+            $data = Department::select('depid', 'shortname', 'description')
+                ->with('school:schoolid,shortname')
+                ->get();
+            
+            return response()->json(['data' => $data]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to fetch departments',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function fetchsearchdepartments(Request $request)
     {
         $searchTerm = $request->input('search');

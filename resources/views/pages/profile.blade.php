@@ -186,9 +186,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const updateUrl = `/api/v1/users/${userId}`;
         
         fetch(updateUrl, {
-            method: 'POST',
-            body: formData,
+            method: 'PUT',
+            body: JSON.stringify(Object.fromEntries(formData)),
             headers: {
+                'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             }
         })

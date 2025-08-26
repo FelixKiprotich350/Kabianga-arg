@@ -26,6 +26,11 @@ class ArgMail extends Mailable
     public function build()
     {
         return $this->subject($this->subject)
-                    ->view('emails.simple');
+                    ->view('emails.general-notification', [
+                        'subject' => $this->subject,
+                        'content' => $this->content,
+                        'actionUrl' => $this->actionUrl,
+                        'actionText' => $this->actionText
+                    ]);
     }
 }

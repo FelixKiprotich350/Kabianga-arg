@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Auth;
 use Error;
 use Exception;
@@ -22,7 +22,7 @@ use App\Services\SimpleMailService;
 use App\Traits\HasPermissions;
 
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable, HasPermissions;
     // Table name (optional, if not following Laravel naming conventions)

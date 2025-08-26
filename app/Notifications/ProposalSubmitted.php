@@ -60,15 +60,9 @@ class ProposalSubmitted extends Notification
     {
         return (new MailMessage)
         ->subject($this->subject)
-        ->markdown('notifications.generalproposalactivity', [
-            'greeting' => $this->greeting,
-            'level' => $this->level,
-            'introLines' => $this->introLines,
-            'actionUrl' => $this->actionUrl,
-            'actionText' => $this->actionText,
-            'outroLines' => $this->outroLines,
-            'salutation' => $this->salutation,
-            'displayableActionUrl' => $this->actionUrl, // Add this to show the URL as plain text
+        ->view('emails.proposal-submitted', [
+            'user' => $notifiable,
+            'proposal' => $this->proposal ?? (object)['title' => 'Your Proposal', 'created_at' => now(), 'id' => 1]
         ]);
     }
 

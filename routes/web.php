@@ -65,13 +65,15 @@ Route::match(['post', 'get'], '/logout', [LogoutController::class, 'logout'])->n
 
 // Protected Routes
 //custom account verification
-// Email verification routes (no middleware for now)
-Route::get('email/verify', [CustomVerificationController::class, 'show'])->name('pages.account.verifyemail');
+// Email verification routes (auth only, no email verification required)
+Route::middleware('auth')->group(function () {
+    Route::get('email/verify', [CustomVerificationController::class, 'show'])->name('pages.account.verifyemail');
+    Route::post('email/resend', [CustomVerificationController::class, 'resend'])->name('verification.resend');
+});
 Route::get('email/verify/{id}/{hash}', [CustomVerificationController::class, 'verify'])->name('verification.verify');
-Route::post('email/resend', [CustomVerificationController::class, 'resend'])->name('verification.resend');
 
-// Protected routes
-Route::group(['middleware' => 'auth'], function () {
+// Protected routes (require authentication and email verification)
+Route::group(['middleware' => ['auth', 'verified']], function () {
 
     //Unauthorized
     Route::get('/unauthorized', [DashboardController::class, 'unauthorized'])->name('pages.unauthorized');

@@ -58,15 +58,9 @@ class ProposalApprovedNotification extends Notification
     {
         return (new MailMessage)
             ->subject($this->subject)
-            ->markdown('notifications.generalproposalactivity', [
-                'greeting' => $this->greeting,
-                'level' => $this->level,
-                'introLines' => $this->introLines,
-                'actionUrl' => $this->actionUrl,
-                'actionText' => $this->actionText,
-                'outroLines' => $this->outroLines,
-                'salutation' => $this->salutation,
-                'displayableActionUrl' => $this->actionUrl, // Add this to show the URL as plain text
+            ->view('emails.proposal-approved', [
+                'user' => $notifiable,
+                'proposal' => $this->proposal ?? (object)['title' => 'Your Proposal', 'approved_amount' => 0, 'duration' => 12, 'id' => 1]
             ]);
     }
 

@@ -116,7 +116,7 @@ $(document).ready(function() {
     // Form will submit normally and redirect via controller
     
     function loadDepartments() {
-        $.get('/api/v1/departments')
+        $.get('/api/v1/departments/for-proposals')
             .done(function(response) {
                 const data = response.data || response;
                 const select = $('#department');

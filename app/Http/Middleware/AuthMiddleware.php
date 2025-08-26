@@ -25,12 +25,15 @@ class AuthMiddleware
             return redirect()->route('pages.login');
         }
 
-        // Skip email verification check for now to avoid redirect loops
-        // if (method_exists($user, 'hasVerifiedEmail') && !$user->hasVerifiedEmail()) {
-        //     return $request->expectsJson()
-        //         ? response()->json(['message' => 'Email not verified'], 403)
-        //         : redirect()->route('pages.account.verifyemail');
-        // }
+        // Skip email verification for verification routes
+        if (!$request->routeIs('pages.account.verifyemail', 'verification.verify', 'verification.resend')) {
+            // Check email verification
+            if (method_exists($user, 'hasVerifiedEmail') && !$user->hasVerifiedEmail()) {
+                return $request->expectsJson()
+                    ? response()->json(['message' => 'Email not verified'], 403)
+                    : redirect()->route('pages.account.verifyemail');
+            }
+        }
 
         // Check if user is active (skip if property doesn't exist)
         if (property_exists($user, 'isactive') && isset($user->isactive) && !$user->isactive) {

@@ -2,62 +2,64 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use App\Mail\VerifyAccountMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Auth\Events\Verified;
-use Illuminate\Support\Facades\Log;
-use App\Services\MailService;
-use Illuminate\Support\Facades\URL as UrlGenerator;
-
+use Illuminate\Support\Facades\URL;
+use App\Models\User;
 
 class CustomVerificationController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth.custom');
+        $this->middleware('auth')->except('verify');
         $this->middleware('signed')->only('verify');
         $this->middleware('throttle:6,1')->only('verify', 'resend');
     }
 
     public function show(Request $request)
     {
-        $user = Auth::user();
         return Auth::user()->hasVerifiedEmail()
-            ? redirect()->route('pages.index')
+            ? redirect()->route('pages.home')
             : view('pages.auth.verifyemail');
     }
 
-    public function verify(EmailVerificationRequest $request)
+    public function verify(Request $request)
     {
-        if ($request->user()->hasVerifiedEmail()) {
-            return redirect()->route('pages.index');
+        $user = User::find($request->route('id'));
+
+        if (!$user || !hash_equals((string) $request->route('hash'), sha1($user->email))) {
+            return redirect()->route('pages.login')->with('error', 'Invalid verification link.');
         }
 
-        if ($request->user()->markEmailAsVerified()) {
-            event(new Verified($request->user()));
+        if ($user->hasVerifiedEmail()) {
+            return redirect()->route('pages.home')->with('message', 'Email already verified.');
         }
 
-        return redirect()->route('pages.index')->with('verified', true);
+        if ($user->markEmailAsVerified()) {
+            event(new Verified($user));
+        }
+
+        return redirect()->route('pages.home')->with('verified', 'Email verified successfully!');
     }
 
     public function resend(Request $request)
     {
         if ($request->user()->hasVerifiedEmail()) {
-            return redirect()->route('pages.index');
+            return redirect()->route('pages.home');
         }
 
         $user = $request->user();
-        $url = UrlGenerator::temporarySignedRoute(
+        $verificationUrl = URL::temporarySignedRoute(
             'verification.verify',
             now()->addMinutes(60),
             ['id' => $user->userid, 'hash' => sha1($user->email)]
         );
-        
-        $sent = MailService::send($user, 'email_verification', ['url' => $url]);
-        
-        return $sent 
-            ? back()->with('verificationstatus', 'verification-link-sent')
-            : back()->with('error', 'Unable to send verification email. Please try again.');
+
+        Mail::to($user->email)->send(new VerifyAccountMail($user, $verificationUrl));
+
+        return back()->with('resent', 'Verification link sent!');
     }
 }
