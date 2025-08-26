@@ -5,22 +5,18 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
-use Auth;
+use Illuminate\Support\Facades\Auth;
 use App\Models\User;
-use Psy\Readline\Hoa\Console;
 
 class LoginController extends Controller
 {
     //
-    public function subpermission(Request $request)
-    {
-        return response()->json($request);
-    }
+
     public function showLoginForm()
     {
         if (Auth::check()) {
             // return response("authorised");
-            return redirect()->route("pages.dashboard");
+            return redirect()->route('pages.dashboard');
         } else {
             return view('pages.auth.login');
 
@@ -58,8 +54,8 @@ class LoginController extends Controller
 
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
-            $user->tokens()->delete(); // Revoke existing tokens
-            $token = $user->createToken('auth-token', ['*'], now()->addHours(24))->plainTextToken;
+            $user->tokens()->delete();
+            $token = $user->createToken('auth-token')->plainTextToken;
 
             return response()->json([
                 'success' => true,
@@ -97,7 +93,7 @@ class LoginController extends Controller
     {
         $user = $request->user();
         $user->currentAccessToken()->delete();
-        $token = $user->createToken('auth-token', ['*'], now()->addHours(24))->plainTextToken;
+        $token = $user->createToken('auth-token')->plainTextToken;
 
         return response()->json([
             'success' => true,
