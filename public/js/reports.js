@@ -56,12 +56,21 @@ class ReportsManager {
     async loadSummaryData() {
         try {
             const response = await fetch('/api/v1/reports/summary');
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const data = await response.json();
+            
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to load summary data');
+            }
             
             this.updateSummaryCards(data.totals);
         } catch (error) {
             console.error('Error loading summary data:', error);
-            this.showError('Failed to load summary data');
+            this.showError('Failed to load summary data: ' + error.message);
         }
     }
 
@@ -109,34 +118,49 @@ class ReportsManager {
         
         try {
             const response = await fetch(`/api/v1/reports/projects?${params}`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const data = await response.json();
             
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to load projects data');
+            }
+            
             // Status chart
-            const statusData = {
-                labels: Object.keys(data.status_breakdown),
-                datasets: [{
-                    data: Object.values(data.status_breakdown),
-                    backgroundColor: ['#28a745', '#ffc107', '#17a2b8', '#dc3545']
-                }]
-            };
-            this.createChart('projectStatusChart', 'pie', statusData, 'Projects by Status');
+            if (data.status_breakdown) {
+                const statusData = {
+                    labels: Object.keys(data.status_breakdown),
+                    datasets: [{
+                        data: Object.values(data.status_breakdown),
+                        backgroundColor: ['#28a745', '#ffc107', '#17a2b8', '#dc3545']
+                    }]
+                };
+                this.createChart('projectStatusChart', 'pie', statusData, 'Projects by Status');
+            }
             
             // Theme chart
-            const themeData = {
-                labels: Object.keys(data.projects_by_theme),
-                datasets: [{
-                    data: Object.values(data.projects_by_theme),
-                    backgroundColor: this.generateColors(Object.keys(data.projects_by_theme).length)
-                }]
-            };
-            this.createChart('projectsByThemeChart', 'doughnut', themeData, 'Projects by Theme');
+            if (data.projects_by_theme) {
+                const themeData = {
+                    labels: Object.keys(data.projects_by_theme),
+                    datasets: [{
+                        data: Object.values(data.projects_by_theme),
+                        backgroundColor: this.generateColors(Object.keys(data.projects_by_theme).length)
+                    }]
+                };
+                this.createChart('projectsByThemeChart', 'doughnut', themeData, 'Projects by Theme');
+            }
             
             // Update projects table
-            this.populateProjectsTable(data.projects);
+            if (data.projects) {
+                this.populateProjectsTable(data.projects);
+            }
             
         } catch (error) {
             console.error('Error loading projects report:', error);
-            this.showError('Failed to load projects report');
+            this.showError('Failed to load projects report: ' + error.message);
         }
     }
 
@@ -146,31 +170,62 @@ class ReportsManager {
         
         try {
             const response = await fetch(`/api/v1/reports/financial?${params}`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const data = await response.json();
             
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to load financial data');
+            }
+            
             // Update financial summary cards
-            document.getElementById('financial-total').textContent = 'KES ' + this.formatNumber(data.total_funding);
-            document.getElementById('financial-average').textContent = 'KES ' + this.formatNumber(data.average_funding);
-            document.getElementById('financial-count').textContent = data.funding_count;
-            document.getElementById('financial-utilization').textContent = data.budget_utilization + '%';
+            document.getElementById('financial-total').textContent = 'KES ' + this.formatNumber(data.total_funding || 0);
+            document.getElementById('financial-average').textContent = 'KES ' + this.formatNumber(data.average_funding || 0);
+            document.getElementById('financial-count').textContent = data.funding_count || 0;
+            document.getElementById('financial-utilization').textContent = (data.budget_utilization || 0) + '%';
             
             // Monthly funding chart
-            const monthlyData = {
-                labels: data.funding_by_month.labels,
-                datasets: [{
-                    label: 'Funding Amount (KES)',
-                    data: data.funding_by_month.data,
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 2,
-                    fill: true
-                }]
-            };
-            this.createChart('fundingByMonthChart', 'line', monthlyData, 'Monthly Funding Trends');
+            if (data.funding_by_month && data.funding_by_month.labels) {
+                const monthlyData = {
+                    labels: data.funding_by_month.labels,
+                    datasets: [{
+                        label: 'Funding Amount (KES)',
+                        data: data.funding_by_month.data || [],
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 2,
+                        fill: true
+                    }]
+                };
+                this.createChart('fundingByMonthChart', 'line', monthlyData, 'Monthly Funding Trends');
+            } else {
+                // Show empty chart if no data
+                const emptyData = {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: 'Funding Amount (KES)',
+                        data: Array(12).fill(0),
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 2,
+                        fill: true
+                    }]
+                };
+                this.createChart('fundingByMonthChart', 'line', emptyData, 'Monthly Funding Trends (No Data)');
+            }
             
         } catch (error) {
             console.error('Error loading financial report:', error);
-            this.showError('Failed to load financial report');
+            this.showError('Failed to load financial report: ' + error.message);
+            
+            // Show zero values on error
+            document.getElementById('financial-total').textContent = 'KES 0';
+            document.getElementById('financial-average').textContent = 'KES 0';
+            document.getElementById('financial-count').textContent = '0';
+            document.getElementById('financial-utilization').textContent = '0%';
         }
     }
 
@@ -180,28 +235,41 @@ class ReportsManager {
         
         try {
             const response = await fetch(`/api/v1/reports/users?${params}`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const data = await response.json();
             
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to load users data');
+            }
+            
             // Update user summary
-            document.getElementById('users-total').textContent = data.total_users;
-            document.getElementById('users-active').textContent = data.active_users;
+            document.getElementById('users-total').textContent = data.total_users || 0;
+            document.getElementById('users-active').textContent = data.active_users || 0;
             
             // Role distribution chart
-            const roleData = {
-                labels: Object.keys(data.role_distribution),
-                datasets: [{
-                    data: Object.values(data.role_distribution),
-                    backgroundColor: this.generateColors(Object.keys(data.role_distribution).length)
-                }]
-            };
-            this.createChart('roleDistributionChart', 'doughnut', roleData, 'Role Distribution');
+            if (data.role_distribution) {
+                const roleData = {
+                    labels: Object.keys(data.role_distribution),
+                    datasets: [{
+                        data: Object.values(data.role_distribution),
+                        backgroundColor: this.generateColors(Object.keys(data.role_distribution).length)
+                    }]
+                };
+                this.createChart('roleDistributionChart', 'doughnut', roleData, 'Role Distribution');
+            }
             
             // Users table
-            this.populateUsersTable(data.users);
+            if (data.users) {
+                this.populateUsersTable(data.users);
+            }
             
         } catch (error) {
             console.error('Error loading users report:', error);
-            this.showError('Failed to load users report');
+            this.showError('Failed to load users report: ' + error.message);
         }
     }
 
@@ -211,37 +279,52 @@ class ReportsManager {
         
         try {
             const response = await fetch(`/api/v1/reports/publications?${params}`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const data = await response.json();
             
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to load publications data');
+            }
+            
             // Publications by year
-            const yearData = {
-                labels: Object.keys(data.publications_by_year),
-                datasets: [{
-                    label: 'Publications',
-                    data: Object.values(data.publications_by_year),
-                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 1
-                }]
-            };
-            this.createChart('publicationsByYearChart', 'bar', yearData, 'Publications by Year');
+            if (data.publications_by_year) {
+                const yearData = {
+                    labels: Object.keys(data.publications_by_year),
+                    datasets: [{
+                        label: 'Publications',
+                        data: Object.values(data.publications_by_year),
+                        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                };
+                this.createChart('publicationsByYearChart', 'bar', yearData, 'Publications by Year');
+            }
             
             // Publications by theme
-            const themeData = {
-                labels: Object.keys(data.publications_by_theme),
-                datasets: [{
-                    data: Object.values(data.publications_by_theme),
-                    backgroundColor: this.generateColors(Object.keys(data.publications_by_theme).length)
-                }]
-            };
-            this.createChart('publicationsByThemeChart', 'pie', themeData, 'Publications by Theme');
+            if (data.publications_by_theme) {
+                const themeData = {
+                    labels: Object.keys(data.publications_by_theme),
+                    datasets: [{
+                        data: Object.values(data.publications_by_theme),
+                        backgroundColor: this.generateColors(Object.keys(data.publications_by_theme).length)
+                    }]
+                };
+                this.createChart('publicationsByThemeChart', 'pie', themeData, 'Publications by Theme');
+            }
             
             // Publications table
-            this.populatePublicationsTable(data.recent_publications);
+            if (data.recent_publications) {
+                this.populatePublicationsTable(data.recent_publications);
+            }
             
         } catch (error) {
             console.error('Error loading publications report:', error);
-            this.showError('Failed to load publications report');
+            this.showError('Failed to load publications report: ' + error.message);
         }
     }
 

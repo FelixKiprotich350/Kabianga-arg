@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 class AccessControlService
 {
     /**
-     * Check if user has access based on role or permission
+     * Check if user has access based on permission only
      */
     public static function hasAccess($requirement, User $user = null): bool
     {
@@ -17,7 +17,7 @@ class AccessControlService
         if (!$user) return false;
         
         // Super admin bypass
-        if ($user->isadmin || $user->role == 1) return true;
+        if ($user->isadmin) return true;
         
         // Handle array of requirements (OR logic)
         if (is_array($requirement)) {
@@ -35,26 +35,16 @@ class AccessControlService
         $user = $user ?? Auth::user();
         
         if (!$user) return false;
-        if ($user->isadmin || $user->role == 1) return true;
+        if ($user->isadmin) return true;
         
         return collect($requirements)->every(fn($req) => self::checkSingle($req, $user));
     }
     
     /**
-     * Check single requirement (role or permission)
+     * Check single requirement (permission only)
      */
     private static function checkSingle($requirement, User $user): bool
     {
-        // Role-based check (numeric values)
-        if (is_numeric($requirement)) {
-            return $user->role == $requirement;
-        }
-        
-        // Dynamic role check (string role types)
-        if (in_array($requirement, ['committee_member', 'researcher', 'admin'])) {
-            return $user->hasActiveRole($requirement);
-        }
-        
         // Permission-based check (string values)
         if (is_string($requirement)) {
             return $user->hasPermissionDynamic($requirement);
@@ -64,7 +54,7 @@ class AccessControlService
     }
     
     /**
-     * Get user's effective permissions (role + assigned permissions)
+     * Get user's effective permissions (assigned permissions only)
      */
     public static function getEffectivePermissions(User $user = null): array
     {
@@ -73,16 +63,7 @@ class AccessControlService
         if (!$user) return [];
         if ($user->isadmin) return ['*']; // All permissions
         
-        $permissions = [];
-        
-        // Add role-based permissions
-        $rolePermissions = $user->defaultpermissions()->pluck('shortname')->toArray();
-        $permissions = array_merge($permissions, $rolePermissions);
-        
-        // Add user-specific permissions
-        $userPermissions = $user->permissions()->pluck('shortname')->toArray();
-        $permissions = array_merge($permissions, $userPermissions);
-        
-        return array_unique($permissions);
+        // Only user-specific permissions
+        return $user->permissions()->pluck('shortname')->toArray();
     }
 }

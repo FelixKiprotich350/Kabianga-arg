@@ -45,19 +45,9 @@ class UsersController extends Controller
                 $user->permissions()->detach();
                 DB::table('userpermissions')->where('useridfk', $id)->delete();
                 // Add new permissions for the user
-                if ($user->role != 2) {
-                    foreach ($newPermissions as $permissioncode) {
-                        $permission = Permission::where('pid', $permissioncode)->firstOrFail();
-                        if ($permission->targetrole != 2) {
-                            $user->permissions()->attach($permission->pid, ['id' => (string) Str::uuid()]);
-                        }
-                    }
-                }
-                else {
-                    $applicantpermissions = Permission::where('targetrole', $user->role)->get();
-                    foreach ($applicantpermissions as $permission) {
-                        $user->permissions()->attach($permission->pid, ['id' => (string) Str::uuid()]);
-                    }
+                foreach ($newPermissions as $permissioncode) {
+                    $permission = Permission::where('pid', $permissioncode)->firstOrFail();
+                    $user->permissions()->attach($permission->pid, ['id' => (string) Str::uuid()]);
                 }
             });
             
@@ -84,37 +74,23 @@ class UsersController extends Controller
             return response()->json(['message' => 'Super Administrator has exclusively all rights!', 'type' => 'warning']);
         }
 
-        $oldRole = $user->role;
         $oldActive = $user->isactive;
+        $oldAdmin = $user->isadmin;
         
         DB::transaction(function () use ($user, $request) {
-            // Detach all permissions
-            $user->permissions()->detach();
-            DB::table('userpermissions')->where('useridfk', $user->userid)->delete();
-
-            // Update role and admin status
-            if ($request->has('isadmin') && $request->input('isadmin') == 'on') {
-                $user->isadmin = true;
-                $user->role = 1;
-            }
-            elseif ($request->has('userrole')) {
-                $user->role = (int) $request->input('userrole');
-                $user->isadmin = false;
-            }
-            else {
-                $user->isadmin = false;
-            }
-
-            // Update active status
-            $user->isactive = $request->has('userisactive') && $request->input('userisactive') == 'on';
-
+            // Update admin and active status
+            $user->isadmin = $request->has('isadmin');
+            $user->isactive = $request->input('isactive', 0);
             $user->saveOrFail();
         });
         
         // Send notifications for changes
-        if ($oldRole != $user->role) {
-            $roles = [1 => 'Administrator', 2 => 'Researcher', 3 => 'Guest'];
-            $this->notifyUserRoleChanged($user, $roles[$user->role] ?? 'Unknown');
+        if ($oldAdmin != $user->isadmin) {
+            if ($user->isadmin) {
+                $this->notifyUserRoleChanged($user, 'Administrator');
+            } else {
+                $this->notifyUserRoleChanged($user, 'User');
+            }
         }
         
         if ($oldActive != $user->isactive) {
@@ -217,7 +193,7 @@ class UsersController extends Controller
                     'email' => $user->email ?? '',
                     'pfno' => $user->pfno ?? '',
                     'phonenumber' => $user->phonenumber ?? '',
-                    'role' => $user->role ?? 0,
+
                     'isadmin' => $user->isadmin ?? false,
                     'isactive' => $user->isactive ?? true,
                     'created_at' => $user->created_at,
@@ -375,7 +351,7 @@ class UsersController extends Controller
     // Public API methods (no authentication required)
     public function apiGetAllUsers()
     {
-        $users = User::select('userid', 'name', 'email', 'pfno', 'phonenumber', 'role', 'isadmin', 'isactive', 'created_at')
+        $users = User::select('userid', 'name', 'email', 'pfno', 'phonenumber', 'isadmin', 'isactive', 'created_at')
             ->get();
         return response()->json([
             'success' => true,
@@ -386,7 +362,7 @@ class UsersController extends Controller
 
     public function apiGetUser($id)
     {
-        $user = User::select('userid', 'name', 'email', 'pfno', 'phonenumber', 'role', 'isadmin', 'isactive', 'created_at')
+        $user = User::select('userid', 'name', 'email', 'pfno', 'phonenumber', 'isadmin', 'isactive', 'created_at')
             ->find($id);
         
         if (!$user) {
@@ -413,7 +389,7 @@ class UsersController extends Controller
             'email' => 'required|email|unique:users,email',
             'pfno' => 'required|string|unique:users,pfno',
             'phonenumber' => 'required|string|unique:users,phonenumber',
-            'role' => 'required|integer',
+
             'password' => 'required|string|min:6'
         ];
 
@@ -429,7 +405,6 @@ class UsersController extends Controller
         $user->email = $request->input('email');
         $user->pfno = $request->input('pfno');
         $user->phonenumber = $request->input('phonenumber');
-        $user->role = $request->input('role');
         $user->password = bcrypt($password);
         $user->isactive = true;
         $user->save();
@@ -483,23 +458,15 @@ class UsersController extends Controller
         }
 
         $user = User::findOrFail($id);
-        $roles = [1 => 'Admin', 2 => 'Researcher', 3 => 'Guest'];
-        $roleNames = $roles;
         
-        // Get role-based permissions
-        $rolePermissions = Permission::where('targetrole', $user->role)->get();
+        // Get all available permissions
+        $availablePermissions = Permission::all();
         
-        // Get available permissions for additional assignment
-        $availablePermissions = Permission::where('targetrole', '!=', $user->role)
-            ->orWhereNull('targetrole')
-            ->get();
-        
-        // Get user's current additional permissions
+        // Get user's current permissions
         $userPermissions = $user->permissions;
         
         return view('pages.users.permissions', compact(
-            'user', 'roles', 'roleNames', 'rolePermissions', 
-            'availablePermissions', 'userPermissions'
+            'user', 'availablePermissions', 'userPermissions'
         ));
     }
 
@@ -515,16 +482,21 @@ class UsersController extends Controller
             return response()->json(['success' => false, 'message' => 'Cannot modify super administrator']);
         }
 
-        $user->role = $request->input('role');
         $user->isactive = $request->input('isactive', 0);
         $user->isadmin = $request->has('isadmin');
         $user->save();
 
-        return response()->json(['success' => true, 'message' => 'Role updated successfully']);
+        return response()->json(['success' => true, 'message' => 'User updated successfully']);
     }
 
     public function updatePermissions(Request $request, $id)
     {
+        \Log::info('updatePermissions called', [
+            'user_id' => $id,
+            'request_data' => $request->all(),
+            'permissions' => $request->input('permissions', [])
+        ]);
+        
         if (!auth()->user()->haspermission('canchangeuserroleorrights')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
@@ -536,15 +508,94 @@ class UsersController extends Controller
         }
 
         $permissions = $request->input('permissions', []);
+        \Log::info('Permissions to save', ['permissions' => $permissions]);
         
-        DB::transaction(function () use ($user, $permissions) {
-            $user->permissions()->detach();
+        try {
+            // Clear existing permissions
+            $deletedCount = DB::table('userpermissions')->where('useridfk', $id)->delete();
+            \Log::info('Deleted permissions', ['count' => $deletedCount]);
             
+            // Add new permissions
+            $insertedCount = 0;
             foreach ($permissions as $permissionId) {
-                $user->permissions()->attach($permissionId, ['id' => (string) Str::uuid()]);
+                DB::table('userpermissions')->insert([
+                    'id' => (string) Str::uuid(),
+                    'useridfk' => $id,
+                    'permissionidfk' => $permissionId,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+                $insertedCount++;
+                \Log::info('Inserted permission', ['permission_id' => $permissionId]);
             }
-        });
+            
+            // Verify permissions were saved
+            $finalCount = DB::table('userpermissions')->where('useridfk', $id)->count();
+            \Log::info('Final verification', ['final_count' => $finalCount]);
+            
+            return response()->json([
+                'success' => true, 
+                'message' => 'Permissions updated successfully',
+                'debug' => [
+                    'deleted' => $deletedCount,
+                    'inserted' => $insertedCount,
+                    'final_count' => $finalCount,
+                    'permissions_sent' => $permissions
+                ]
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error updating permissions', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false, 
+                'message' => 'Error updating permissions: ' . $e->getMessage()
+            ]);
+        }
+    }
 
-        return response()->json(['success' => true, 'message' => 'Permissions updated successfully']);
+    public function updateStatus(Request $request, $id)
+    {
+        if (!auth()->user()->haspermission('canchangeuserroleorrights')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $user = User::findOrFail($id);
+        
+        if ($user->issuperadmin() && !auth()->user()->issuperadmin()) {
+            return response()->json(['success' => false, 'message' => 'Cannot modify super administrator status']);
+        }
+
+        $user->isactive = $request->input('isactive', 0);
+        $user->save();
+        
+        if ($user->isactive) {
+            $this->notifyUserEnabled($user);
+        } else {
+            $this->notifyUserDisabled($user);
+        }
+
+        return response()->json(['success' => true, 'message' => 'User status updated successfully']);
+    }
+
+    public function updateSuperAdmin(Request $request, $id)
+    {
+        if (!auth()->user()->issuperadmin()) {
+            return response()->json(['success' => false, 'message' => 'Only super administrators can modify super admin status'], 403);
+        }
+
+        $user = User::findOrFail($id);
+        $oldAdmin = $user->isadmin;
+        
+        $user->isadmin = $request->has('isadmin');
+        $user->save();
+        
+        if ($oldAdmin != $user->isadmin) {
+            if ($user->isadmin) {
+                $this->notifyUserRoleChanged($user, 'Super Administrator');
+            } else {
+                $this->notifyUserRoleChanged($user, 'User');
+            }
+        }
+
+        return response()->json(['success' => true, 'message' => 'Super admin status updated successfully']);
     }
 }

@@ -167,21 +167,36 @@ function loadFinancialData() {
     });
     
     fetch(`/api/v1/reports/financial?${params}`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to load financial data');
+            }
             updateSummaryCards(data);
             updateMonthlyChart(data.funding_by_month);
         })
         .catch(error => {
             console.error('Error loading financial data:', error);
+            alert('Failed to load financial data: ' + error.message);
+            
+            // Show zero values on error
+            document.getElementById('total-funding-amount').textContent = 'KES 0';
+            document.getElementById('avg-funding-amount').textContent = 'KES 0';
+            document.getElementById('budget-utilization').textContent = '0%';
+            document.getElementById('funding-count').textContent = '0';
         });
 }
 
 function updateSummaryCards(data) {
-    document.getElementById('total-funding-amount').textContent = 'KES ' + formatNumber(data.total_funding);
-    document.getElementById('avg-funding-amount').textContent = 'KES ' + formatNumber(data.average_funding);
-    document.getElementById('budget-utilization').textContent = data.budget_utilization + '%';
-    document.getElementById('funding-count').textContent = data.funding_count;
+    document.getElementById('total-funding-amount').textContent = 'KES ' + formatNumber(data.total_funding || 0);
+    document.getElementById('avg-funding-amount').textContent = 'KES ' + formatNumber(data.average_funding || 0);
+    document.getElementById('budget-utilization').textContent = (data.budget_utilization || 0) + '%';
+    document.getElementById('funding-count').textContent = data.funding_count || 0;
 }
 
 function updateMonthlyChart(monthlyData) {
@@ -191,13 +206,19 @@ function updateMonthlyChart(monthlyData) {
         monthlyChart.destroy();
     }
     
+    // Use default data if monthlyData is not available
+    const chartData = monthlyData || {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        data: Array(12).fill(0)
+    };
+    
     monthlyChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: monthlyData.labels,
+            labels: chartData.labels,
             datasets: [{
                 label: 'Funding Amount (KES)',
-                data: monthlyData.data,
+                data: chartData.data,
                 backgroundColor: 'rgba(54, 162, 235, 0.2)',
                 borderColor: 'rgba(54, 162, 235, 1)',
                 borderWidth: 2,
@@ -210,7 +231,7 @@ function updateMonthlyChart(monthlyData) {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Monthly Funding Distribution'
+                    text: monthlyData ? 'Monthly Funding Distribution' : 'Monthly Funding Distribution (No Data)'
                 }
             },
             scales: {

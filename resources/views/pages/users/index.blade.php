@@ -18,13 +18,11 @@
     <div class="form-card mb-4">
         <div class="row align-items-end">
             <div class="col-md-3">
-                <label class="form-label fw-medium">Role</label>
-                <select class="form-select" id="roleFilter">
-                    <option value="">All Roles</option>
-                    <option value="admin">Admin</option>
-                    <option value="committee">Committee</option>
-                    <option value="researcher">Researcher</option>
-                    <option value="guest">Guest</option>
+                <label class="form-label fw-medium">Admin Status</label>
+                <select class="form-select" id="adminFilter">
+                    <option value="">All Users</option>
+                    <option value="admin">Administrators</option>
+                    <option value="user">Regular Users</option>
                 </select>
             </div>
             <div class="col-md-3">
@@ -56,7 +54,7 @@
                         <th>User</th>
                         <th>Email</th>
                         <th>Department</th>
-                        <th>Role</th>
+                        <th>Admin</th>
                         <th>Status</th>
                         <th>Last Login</th>
                         <th>Actions</th>
@@ -113,14 +111,7 @@
                                 <option value="">Select Department</option>
                             </select>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Role *</label>
-                            <select class="form-select" name="role" required>
-                                <option value="2">Researcher</option>
-                                <option value="1">Committee</option>
-                                <option value="3">Guest</option>
-                            </select>
-                        </div>
+
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -328,13 +319,12 @@ async function loadUsersData() {
         if (result.success) {
             tableBody.innerHTML = '';
             result.data.forEach(user => {
-                const roleNames = {1: 'Admin', 2: 'Researcher', 3: 'Guest'};
                 const row = `
                     <tr>
                         <td>${user.name || ''}</td>
                         <td>${user.email || ''}</td>
                         <td>-</td>
-                        <td><span class="badge bg-primary">${roleNames[user.role] || 'Unknown'}</span></td>
+                        <td><span class="badge ${user.isadmin ? 'bg-warning' : 'bg-secondary'}">${user.isadmin ? 'Admin' : 'User'}</span></td>
                         <td><span class="badge ${user.isactive ? 'bg-success' : 'bg-danger'}">${user.isactive ? 'Active' : 'Inactive'}</span></td>
                         <td>-</td>
                         <td>

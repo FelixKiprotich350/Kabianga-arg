@@ -15,11 +15,72 @@
     </div>
 
     @if(Auth::user()->haspermission('canviewadmindashboard'))
-    <!-- Statistics Cards -->
-    <div id="dashboard-stats" class="row mb-4">
-        <div class="text-center py-4">
-            <div class="spinner-border text-primary" role="status"></div>
-            <p class="mt-2 text-muted">Loading statistics...</p>
+    <!-- Summary Cards -->
+    <div class="row mb-4" id="summary-cards">
+        <div class="col-md-2 col-sm-6 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title mb-0">Total Proposals</h6>
+                            <h3 class="mb-0" id="total-proposals">-</h3>
+                        </div>
+                        <i class="fas fa-file-alt fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-6 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title mb-0">Active Projects</h6>
+                            <h3 class="mb-0" id="total-projects">-</h3>
+                        </div>
+                        <i class="fas fa-project-diagram fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-6 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title mb-0">Total Funding</h6>
+                            <h3 class="mb-0" id="total-funding">-</h3>
+                        </div>
+                        <i class="fas fa-dollar-sign fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-6 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title mb-0">Publications</h6>
+                            <h3 class="mb-0" id="total-publications">-</h3>
+                        </div>
+                        <i class="fas fa-book fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-6 mb-3">
+            <div class="card bg-secondary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title mb-0">Active Users</h6>
+                            <h3 class="mb-0" id="active-users">-</h3>
+                        </div>
+                        <i class="fas fa-users fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -125,7 +186,7 @@ $(document).ready(function() {
     @endif
     
     @if(Auth::user()->haspermission('canviewadmindashboard'))
-    loadDashboardStats();
+    loadSummaryCards();
     loadDashboardChart();
     loadRecentActivity();
     @else
@@ -134,18 +195,19 @@ $(document).ready(function() {
     @endif
 });
 
-function loadDashboardStats() {
-    $.get('/api/v1/dashboard/stats')
+function loadSummaryCards() {
+    $.get('/api/v1/reports/summary')
         .done(data => {
             if (data.success) {
-                renderDashboardStats(data.data);
-            } else {
-                $('#dashboard-stats').html('<div class="alert alert-warning">No statistics available</div>');
+                $('#total-proposals').text(data.totals.proposals || 0);
+                $('#total-projects').text(data.totals.projects || 0);
+                $('#total-funding').text('KSh ' + (data.totals.funding || 0).toLocaleString());
+                $('#total-publications').text(data.totals.publications || 0);
+                $('#active-users').text(data.totals.active_users || 0);
             }
         })
         .fail(() => {
-            $('#dashboard-stats').html('<div class="alert alert-danger">Failed to load statistics</div>');
-            ARGPortal.showError('Failed to load dashboard statistics');
+            ARGPortal.showError('Failed to load summary statistics');
         });
 }
 

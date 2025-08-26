@@ -17,8 +17,14 @@ class ResearchFunding extends Model
         'researchidfk',
         'amount'
     ];
+    
     public function applicant()
     {
         return $this->belongsTo(User::class, 'createdby', 'userid');
+    }
+    
+    public function project()
+    {
+        return $this->belongsTo(ResearchProject::class, 'researchidfk', 'researchid');
     }
 }

@@ -23,9 +23,3 @@ if (!function_exists('userCan')) {
     }
 }
 
-if (!function_exists('userHasRole')) {
-    function userHasRole($role)
-    {
-        return auth()->check() && auth()->user()->role == $role;
-    }
-}

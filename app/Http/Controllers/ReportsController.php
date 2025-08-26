@@ -413,66 +413,83 @@ class ReportsController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $grantFilter = $request->input('grant');
-        $yearFilter = $request->input('year');
+        try {
+            $grantFilter = $request->input('grant');
+            $yearFilter = $request->input('year');
 
-        $query = ResearchFunding::with('applicant');
-        
-        if ($grantFilter && $grantFilter != 'all') {
-            $query->whereHas('project.proposal.grantitem', function($q) use ($grantFilter) {
-                $q->where('grantid', $grantFilter);
-            });
+            $query = ResearchFunding::with(['applicant', 'project.proposal.grantitem']);
+            
+            if ($grantFilter && $grantFilter != 'all') {
+                $query->whereHas('project.proposal.grantitem', function($q) use ($grantFilter) {
+                    $q->where('grantid', $grantFilter);
+                });
+            }
+
+            if ($yearFilter && $yearFilter != 'all') {
+                $query->whereYear('created_at', $yearFilter);
+            }
+
+            $fundings = $query->get();
+            $totalFunding = $fundings->sum('amount') ?? 0;
+            $avgFunding = $fundings->count() > 0 ? $fundings->avg('amount') : 0;
+            $fundingCount = $fundings->count();
+
+            // Budget vs Actual Analysis
+            $budgetData = Expenditureitem::select(
+                DB::raw('SUM(total) as total_budget'),
+                DB::raw('COUNT(*) as proposal_count')
+            )->first();
+
+            return response()->json([
+                'success' => true,
+                'total_funding' => $totalFunding,
+                'average_funding' => round($avgFunding, 2),
+                'funding_count' => $fundingCount,
+                'total_budget' => $budgetData->total_budget ?? 0,
+                'budget_utilization' => $budgetData->total_budget > 0 ? round(($totalFunding / $budgetData->total_budget) * 100, 2) : 0,
+                'funding_by_month' => $this->getFundingByMonth($yearFilter)
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to load financial data',
+                'message' => $e->getMessage()
+            ], 500);
         }
-
-        if ($yearFilter && $yearFilter != 'all') {
-            $query->whereYear('created_at', $yearFilter);
-        }
-
-        $fundings = $query->get();
-        $totalFunding = $fundings->sum('amount');
-        $avgFunding = $fundings->avg('amount');
-        $fundingCount = $fundings->count();
-
-        // Budget vs Actual Analysis
-        $budgetData = Expenditureitem::select(
-            DB::raw('SUM(amount) as total_budget'),
-            DB::raw('COUNT(*) as proposal_count')
-        )->first();
-
-        return response()->json([
-            'total_funding' => $totalFunding,
-            'average_funding' => round($avgFunding, 2),
-            'funding_count' => $fundingCount,
-            'total_budget' => $budgetData->total_budget ?? 0,
-            'budget_utilization' => $budgetData->total_budget > 0 ? round(($totalFunding / $budgetData->total_budget) * 100, 2) : 0,
-            'funding_by_month' => $this->getFundingByMonth($yearFilter)
-        ]);
     }
 
     private function getFundingByMonth($year = null)
     {
-        $year = $year ?? date('Y');
-        
-        $monthlyFunding = ResearchFunding::select(
-            DB::raw('MONTH(created_at) as month'),
-            DB::raw('SUM(amount) as total')
-        )
-        ->whereYear('created_at', $year)
-        ->groupBy(DB::raw('MONTH(created_at)'))
-        ->orderBy('month')
-        ->get();
+        try {
+            $year = $year ?? date('Y');
+            
+            $monthlyFunding = ResearchFunding::select(
+                DB::raw('MONTH(created_at) as month'),
+                DB::raw('SUM(amount) as total')
+            )
+            ->whereYear('created_at', $year)
+            ->groupBy(DB::raw('MONTH(created_at)'))
+            ->orderBy('month')
+            ->get();
 
-        $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        $data = array_fill(0, 12, 0);
-        
-        foreach ($monthlyFunding as $funding) {
-            $data[$funding->month - 1] = $funding->total;
+            $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            $data = array_fill(0, 12, 0);
+            
+            foreach ($monthlyFunding as $funding) {
+                $data[$funding->month - 1] = floatval($funding->total);
+            }
+
+            return [
+                'labels' => $months,
+                'data' => $data
+            ];
+        } catch (\Exception $e) {
+            // Return empty data if there's an error
+            return [
+                'labels' => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                'data' => array_fill(0, 12, 0)
+            ];
         }
-
-        return [
-            'labels' => $months,
-            'data' => $data
-        ];
     }
 
     // Project Reports
@@ -482,53 +499,62 @@ class ReportsController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $statusFilter = $request->input('status');
-        $grantFilter = $request->input('grant');
+        try {
+            $statusFilter = $request->input('status');
+            $grantFilter = $request->input('grant');
 
-        $query = ResearchProject::with('proposal.applicant', 'proposal.grantitem', 'proposal.themeitem');
-        
-        if ($statusFilter && $statusFilter != 'all') {
-            $query->where('projectstatus', $statusFilter);
+            $query = ResearchProject::with(['proposal.applicant', 'proposal.grantitem', 'proposal.themeitem']);
+            
+            if ($statusFilter && $statusFilter != 'all') {
+                $query->where('projectstatus', $statusFilter);
+            }
+
+            if ($grantFilter && $grantFilter != 'all') {
+                $query->whereHas('proposal.grantitem', function($q) use ($grantFilter) {
+                    $q->where('grantid', $grantFilter);
+                });
+            }
+
+            $projects = $query->get();
+
+            $statusCounts = [
+                'ACTIVE' => $projects->where('projectstatus', 'ACTIVE')->count(),
+                'PAUSED' => $projects->where('projectstatus', 'PAUSED')->count(),
+                'COMPLETED' => $projects->where('projectstatus', 'COMPLETED')->count(),
+                'CANCELLED' => $projects->where('projectstatus', 'CANCELLED')->count(),
+            ];
+
+            $projectsByTheme = $projects->groupBy('proposal.themeitem.themename')
+                ->map(function($group) {
+                    return $group->count();
+                });
+
+            return response()->json([
+                'success' => true,
+                'total_projects' => $projects->count(),
+                'status_breakdown' => $statusCounts,
+                'projects_by_theme' => $projectsByTheme,
+                'completion_rate' => $projects->count() > 0 ? round(($statusCounts['COMPLETED'] / $projects->count()) * 100, 2) : 0,
+                'projects' => $projects->map(function($project) {
+                    return [
+                        'id' => $project->researchid,
+                        'number' => $project->researchnumber,
+                        'title' => $project->proposal->researchtitle ?? 'N/A',
+                        'applicant' => $project->proposal->applicant->name ?? 'N/A',
+                        'status' => $project->projectstatus,
+                        'theme' => $project->proposal->themeitem->themename ?? 'N/A',
+                        'grant' => $project->proposal->grantitem->grantid ?? 'N/A',
+                        'created_at' => $project->created_at->format('Y-m-d')
+                    ];
+                })
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to load projects report',
+                'message' => $e->getMessage()
+            ], 500);
         }
-
-        if ($grantFilter && $grantFilter != 'all') {
-            $query->whereHas('proposal.grantitem', function($q) use ($grantFilter) {
-                $q->where('grantid', $grantFilter);
-            });
-        }
-
-        $projects = $query->get();
-
-        $statusCounts = [
-            'ACTIVE' => $projects->where('projectstatus', 'ACTIVE')->count(),
-            'PAUSED' => $projects->where('projectstatus', 'PAUSED')->count(),
-            'COMPLETED' => $projects->where('projectstatus', 'COMPLETED')->count(),
-            'CANCELLED' => $projects->where('projectstatus', 'CANCELLED')->count(),
-        ];
-
-        $projectsByTheme = $projects->groupBy('proposal.themeitem.themename')
-            ->map(function($group) {
-                return $group->count();
-            });
-
-        return response()->json([
-            'total_projects' => $projects->count(),
-            'status_breakdown' => $statusCounts,
-            'projects_by_theme' => $projectsByTheme,
-            'completion_rate' => $projects->count() > 0 ? round(($statusCounts['COMPLETED'] / $projects->count()) * 100, 2) : 0,
-            'projects' => $projects->map(function($project) {
-                return [
-                    'id' => $project->researchid,
-                    'number' => $project->researchnumber,
-                    'title' => $project->proposal->title ?? 'N/A',
-                    'applicant' => $project->proposal->applicant->name ?? 'N/A',
-                    'status' => $project->projectstatus,
-                    'theme' => $project->proposal->themeitem->themename ?? 'N/A',
-                    'grant' => $project->proposal->grantitem->grantid ?? 'N/A',
-                    'created_at' => $project->created_at->format('Y-m-d')
-                ];
-            })
-        ]);
     }
 
     // User Activity Reports
@@ -538,55 +564,85 @@ class ReportsController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $departmentFilter = $request->input('department');
-        $roleFilter = $request->input('role');
+        try {
+            $departmentFilter = $request->input('department');
+            $roleFilter = $request->input('role');
 
-        $query = User::with('department');
-        
-        if ($departmentFilter && $departmentFilter != 'all') {
-            $query->whereHas('department', function($q) use ($departmentFilter) {
-                $q->where('depid', $departmentFilter);
+            $query = User::with(['department', 'userRoles']);
+            
+            if ($departmentFilter && $departmentFilter != 'all') {
+                $query->whereHas('department', function($q) use ($departmentFilter) {
+                    $q->where('depid', $departmentFilter);
+                });
+            }
+
+            if ($roleFilter && $roleFilter != 'all') {
+                $query->whereHas('userRoles', function($q) use ($roleFilter) {
+                    $q->where('role_type', $roleFilter);
+                });
+            }
+
+            $users = $query->get();
+
+            $userStats = $users->map(function($user) {
+                $proposalCount = Proposal::where('useridfk', $user->userid)->count();
+                $approvedProposals = Proposal::where('useridfk', $user->userid)
+                    ->where('approvalstatus', 'APPROVED')->count();
+                $activeProjects = ResearchProject::whereHas('proposal', function($q) use ($user) {
+                    $q->where('useridfk', $user->userid);
+                })->where('projectstatus', 'ACTIVE')->count();
+
+                // Get user role - check if admin first, then user roles
+                $role = 'User';
+                if ($user->isadmin) {
+                    $role = 'Admin';
+                } elseif ($user->userRoles->isNotEmpty()) {
+                    $role = $user->userRoles->first()->role_type ?? 'User';
+                }
+
+                return [
+                    'id' => $user->userid,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $role,
+                    'department' => $user->department->shortname ?? 'N/A',
+                    'proposal_count' => $proposalCount,
+                    'approved_proposals' => $approvedProposals,
+                    'active_projects' => $activeProjects,
+                    'success_rate' => $proposalCount > 0 ? round(($approvedProposals / $proposalCount) * 100, 2) : 0,
+                    'last_login' => $user->updated_at->format('Y-m-d H:i:s')
+                ];
             });
+
+            // Calculate role distribution
+            $roleDistribution = [];
+            foreach ($users as $user) {
+                if ($user->isadmin) {
+                    $roleDistribution['Admin'] = ($roleDistribution['Admin'] ?? 0) + 1;
+                } elseif ($user->userRoles->isNotEmpty()) {
+                    foreach ($user->userRoles as $userRole) {
+                        $roleType = $userRole->role_type;
+                        $roleDistribution[$roleType] = ($roleDistribution[$roleType] ?? 0) + 1;
+                    }
+                } else {
+                    $roleDistribution['User'] = ($roleDistribution['User'] ?? 0) + 1;
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'total_users' => $users->count(),
+                'active_users' => $users->where('isactive', true)->count(),
+                'role_distribution' => $roleDistribution,
+                'users' => $userStats
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to load user activity report',
+                'message' => $e->getMessage()
+            ], 500);
         }
-
-        if ($roleFilter && $roleFilter != 'all') {
-            $query->where('role', $roleFilter);
-        }
-
-        $users = $query->get();
-
-        $userStats = $users->map(function($user) {
-            $proposalCount = Proposal::where('useridfk', $user->userid)->count();
-            $approvedProposals = Proposal::where('useridfk', $user->userid)
-                ->where('approvalstatus', 'APPROVED')->count();
-            $activeProjects = ResearchProject::whereHas('proposal', function($q) use ($user) {
-                $q->where('useridfk', $user->userid);
-            })->where('projectstatus', 'ACTIVE')->count();
-
-            return [
-                'id' => $user->userid,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role,
-                'department' => $user->department->shortname ?? 'N/A',
-                'proposal_count' => $proposalCount,
-                'approved_proposals' => $approvedProposals,
-                'active_projects' => $activeProjects,
-                'success_rate' => $proposalCount > 0 ? round(($approvedProposals / $proposalCount) * 100, 2) : 0,
-                'last_login' => $user->updated_at->format('Y-m-d H:i:s')
-            ];
-        });
-
-        $roleDistribution = $users->groupBy('role')->map(function($group) {
-            return $group->count();
-        });
-
-        return response()->json([
-            'total_users' => $users->count(),
-            'active_users' => $users->where('isactive', true)->count(),
-            'role_distribution' => $roleDistribution,
-            'users' => $userStats
-        ]);
     }
 
     // Publications Report
@@ -596,48 +652,57 @@ class ReportsController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $yearFilter = $request->input('year');
-        $themeFilter = $request->input('theme');
+        try {
+            $yearFilter = $request->input('year');
+            $themeFilter = $request->input('theme');
 
-        $query = Publication::with('proposal.themeitem', 'proposal.applicant');
-        
-        if ($yearFilter && $yearFilter != 'all') {
-            $query->where('year', $yearFilter);
+            $query = Publication::with(['proposal.themeitem', 'proposal.applicant']);
+            
+            if ($yearFilter && $yearFilter != 'all') {
+                $query->where('year', $yearFilter);
+            }
+
+            if ($themeFilter && $themeFilter != 'all') {
+                $query->whereHas('proposal.themeitem', function($q) use ($themeFilter) {
+                    $q->where('themeid', $themeFilter);
+                });
+            }
+
+            $publications = $query->get();
+
+            $publicationsByYear = $publications->groupBy('year')
+                ->map(function($group) {
+                    return $group->count();
+                })->sortKeys();
+
+            $publicationsByTheme = $publications->groupBy('proposal.themeitem.themename')
+                ->map(function($group) {
+                    return $group->count();
+                });
+
+            return response()->json([
+                'success' => true,
+                'total_publications' => $publications->count(),
+                'publications_by_year' => $publicationsByYear,
+                'publications_by_theme' => $publicationsByTheme,
+                'recent_publications' => $publications->sortByDesc('year')->take(10)->map(function($pub) {
+                    return [
+                        'title' => $pub->title,
+                        'authors' => $pub->authors,
+                        'year' => $pub->year,
+                        'publisher' => $pub->publisher,
+                        'theme' => $pub->proposal->themeitem->themename ?? 'N/A',
+                        'applicant' => $pub->proposal->applicant->name ?? 'N/A'
+                    ];
+                })
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to load publications report',
+                'message' => $e->getMessage()
+            ], 500);
         }
-
-        if ($themeFilter && $themeFilter != 'all') {
-            $query->whereHas('proposal.themeitem', function($q) use ($themeFilter) {
-                $q->where('themeid', $themeFilter);
-            });
-        }
-
-        $publications = $query->get();
-
-        $publicationsByYear = $publications->groupBy('year')
-            ->map(function($group) {
-                return $group->count();
-            })->sortKeys();
-
-        $publicationsByTheme = $publications->groupBy('proposal.themeitem.themename')
-            ->map(function($group) {
-                return $group->count();
-            });
-
-        return response()->json([
-            'total_publications' => $publications->count(),
-            'publications_by_year' => $publicationsByYear,
-            'publications_by_theme' => $publicationsByTheme,
-            'recent_publications' => $publications->sortByDesc('year')->take(10)->map(function($pub) {
-                return [
-                    'title' => $pub->title,
-                    'authors' => $pub->authors,
-                    'year' => $pub->year,
-                    'publisher' => $pub->publisher,
-                    'theme' => $pub->proposal->themeitem->themename ?? 'N/A',
-                    'applicant' => $pub->proposal->applicant->name ?? 'N/A'
-                ];
-            })
-        ]);
     }
 
     // Export Reports to PDF
@@ -702,36 +767,45 @@ class ReportsController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $statusFilter = $request->input('status');
-        $query = ResearchProject::with('proposal.applicant');
-        
-        if ($statusFilter && $statusFilter != 'all') {
-            $query->where('projectstatus', $statusFilter);
-        }
-
-        $projects = $query->get();
-        $progressData = $projects->map(function($project) {
-            $progressCount = ResearchProgress::where('researchidfk', $project->researchid)->count();
-            $lastProgress = ResearchProgress::where('researchidfk', $project->researchid)
-                ->latest()->first();
+        try {
+            $statusFilter = $request->input('status');
+            $query = ResearchProject::with(['proposal.applicant']);
             
-            return [
-                'project_id' => $project->researchid,
-                'title' => $project->proposal->researchtitle ?? 'N/A',
-                'applicant' => $project->proposal->applicant->name ?? 'N/A',
-                'status' => $project->projectstatus,
-                'progress_reports' => $progressCount,
-                'last_report_date' => $lastProgress ? $lastProgress->created_at->format('Y-m-d') : 'Never',
-                'days_since_report' => $lastProgress ? $lastProgress->created_at->diffInDays(now()) : 'N/A'
-            ];
-        });
+            if ($statusFilter && $statusFilter != 'all') {
+                $query->where('projectstatus', $statusFilter);
+            }
 
-        return response()->json([
-            'projects' => $progressData,
-            'overdue_projects' => $progressData->filter(function($p) {
-                return is_numeric($p['days_since_report']) && $p['days_since_report'] > 90;
-            })->count()
-        ]);
+            $projects = $query->get();
+            $progressData = $projects->map(function($project) {
+                $progressCount = ResearchProgress::where('researchidfk', $project->researchid)->count();
+                $lastProgress = ResearchProgress::where('researchidfk', $project->researchid)
+                    ->latest()->first();
+                
+                return [
+                    'project_id' => $project->researchid,
+                    'title' => $project->proposal->researchtitle ?? 'N/A',
+                    'applicant' => $project->proposal->applicant->name ?? 'N/A',
+                    'status' => $project->projectstatus,
+                    'progress_reports' => $progressCount,
+                    'last_report_date' => $lastProgress ? $lastProgress->created_at->format('Y-m-d') : 'Never',
+                    'days_since_report' => $lastProgress ? $lastProgress->created_at->diffInDays(now()) : 'N/A'
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'projects' => $progressData,
+                'overdue_projects' => $progressData->filter(function($p) {
+                    return is_numeric($p['days_since_report']) && $p['days_since_report'] > 90;
+                })->count()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to load progress report',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     // Compliance Report
@@ -741,24 +815,35 @@ class ReportsController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $proposals = Proposal::with('applicant')->get();
-        $projects = ResearchProject::with('proposal.applicant')->get();
-        
-        $complianceData = [
-            'proposals_missing_docs' => $proposals->filter(function($p) {
-                return empty($p->researchtitle) || empty($p->objectives);
-            })->count(),
-            'projects_no_progress' => $projects->filter(function($p) {
-                return ResearchProgress::where('researchidfk', $p->researchid)->count() == 0;
-            })->count(),
-            'overdue_reports' => $projects->filter(function($p) {
-                $lastReport = ResearchProgress::where('researchidfk', $p->researchid)->latest()->first();
-                return !$lastReport || $lastReport->created_at->diffInDays(now()) > 90;
-            })->count(),
-            'inactive_users' => User::where('isactive', false)->count()
-        ];
+        try {
+            $proposals = Proposal::with(['applicant'])->get();
+            $projects = ResearchProject::with(['proposal.applicant'])->get();
+            
+            $complianceData = [
+                'proposals_missing_docs' => $proposals->filter(function($p) {
+                    return empty($p->researchtitle) || empty($p->objectives);
+                })->count(),
+                'projects_no_progress' => $projects->filter(function($p) {
+                    return ResearchProgress::where('researchidfk', $p->researchid)->count() == 0;
+                })->count(),
+                'overdue_reports' => $projects->filter(function($p) {
+                    $lastReport = ResearchProgress::where('researchidfk', $p->researchid)->latest()->first();
+                    return !$lastReport || $lastReport->created_at->diffInDays(now()) > 90;
+                })->count(),
+                'inactive_users' => User::where('isactive', false)->count()
+            ];
 
-        return response()->json($complianceData);
+            return response()->json([
+                'success' => true,
+                'data' => $complianceData
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to load compliance report',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     // Performance Analytics Report
@@ -768,24 +853,35 @@ class ReportsController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $yearFilter = $request->input('year', date('Y'));
-        
-        $proposals = Proposal::with('applicant', 'grantitem')
-            ->whereYear('created_at', $yearFilter)->get();
-        $projects = ResearchProject::with('proposal.applicant')
-            ->whereYear('created_at', $yearFilter)->get();
-        
-        $performance = [
-            'approval_rate' => $proposals->count() > 0 ? 
-                round(($proposals->where('approvalstatus', 'APPROVED')->count() / $proposals->count()) * 100, 2) : 0,
-            'completion_rate' => $projects->count() > 0 ? 
-                round(($projects->where('projectstatus', 'COMPLETED')->count() / $projects->count()) * 100, 2) : 0,
-            'avg_processing_time' => $this->calculateAvgProcessingTime($proposals),
-            'top_performers' => $this->getTopPerformers($yearFilter),
-            'grant_efficiency' => $this->getGrantEfficiency($yearFilter)
-        ];
+        try {
+            $yearFilter = $request->input('year', date('Y'));
+            
+            $proposals = Proposal::with(['applicant', 'grantitem'])
+                ->whereYear('created_at', $yearFilter)->get();
+            $projects = ResearchProject::with(['proposal.applicant'])
+                ->whereYear('created_at', $yearFilter)->get();
+            
+            $performance = [
+                'approval_rate' => $proposals->count() > 0 ? 
+                    round(($proposals->where('approvalstatus', 'APPROVED')->count() / $proposals->count()) * 100, 2) : 0,
+                'completion_rate' => $projects->count() > 0 ? 
+                    round(($projects->where('projectstatus', 'COMPLETED')->count() / $projects->count()) * 100, 2) : 0,
+                'avg_processing_time' => $this->calculateAvgProcessingTime($proposals),
+                'top_performers' => $this->getTopPerformers($yearFilter),
+                'grant_efficiency' => $this->getGrantEfficiency($yearFilter)
+            ];
 
-        return response()->json($performance);
+            return response()->json([
+                'success' => true,
+                'data' => $performance
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to load performance report',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     // Budget vs Actual Report
@@ -795,39 +891,48 @@ class ReportsController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $grantFilter = $request->input('grant');
-        $query = Proposal::with('expenditures', 'grantitem');
-        
-        if ($grantFilter && $grantFilter != 'all') {
-            $query->where('grantnofk', $grantFilter);
-        }
-
-        $proposals = $query->where('approvalstatus', 'APPROVED')->get();
-        
-        $budgetData = $proposals->map(function($proposal) {
-            $budgetAmount = $proposal->expenditures->sum('amount');
-            $actualFunding = ResearchFunding::whereHas('project.proposal', function($q) use ($proposal) {
-                $q->where('proposalid', $proposal->proposalid);
-            })->sum('amount');
+        try {
+            $grantFilter = $request->input('grant');
+            $query = Proposal::with(['expenditures', 'grantitem']);
             
-            return [
-                'proposal_id' => $proposal->proposalid,
-                'title' => $proposal->researchtitle ?? 'N/A',
-                'grant' => $proposal->grantitem->grantid ?? 'N/A',
-                'budget_amount' => $budgetAmount,
-                'actual_funding' => $actualFunding,
-                'variance' => $actualFunding - $budgetAmount,
-                'variance_percentage' => $budgetAmount > 0 ? 
-                    round((($actualFunding - $budgetAmount) / $budgetAmount) * 100, 2) : 0
-            ];
-        });
+            if ($grantFilter && $grantFilter != 'all') {
+                $query->where('grantnofk', $grantFilter);
+            }
 
-        return response()->json([
-            'budget_analysis' => $budgetData,
-            'total_budget' => $budgetData->sum('budget_amount'),
-            'total_actual' => $budgetData->sum('actual_funding'),
-            'overall_variance' => $budgetData->sum('variance')
-        ]);
+            $proposals = $query->where('approvalstatus', 'APPROVED')->get();
+            
+            $budgetData = $proposals->map(function($proposal) {
+                $budgetAmount = $proposal->expenditures->sum('total') ?? 0;
+                $actualFunding = ResearchFunding::whereHas('project.proposal', function($q) use ($proposal) {
+                    $q->where('proposalid', $proposal->proposalid);
+                })->sum('amount') ?? 0;
+                
+                return [
+                    'proposal_id' => $proposal->proposalid,
+                    'title' => $proposal->researchtitle ?? 'N/A',
+                    'grant' => $proposal->grantitem->grantid ?? 'N/A',
+                    'budget_amount' => $budgetAmount,
+                    'actual_funding' => $actualFunding,
+                    'variance' => $actualFunding - $budgetAmount,
+                    'variance_percentage' => $budgetAmount > 0 ? 
+                        round((($actualFunding - $budgetAmount) / $budgetAmount) * 100, 2) : 0
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'budget_analysis' => $budgetData,
+                'total_budget' => $budgetData->sum('budget_amount'),
+                'total_actual' => $budgetData->sum('actual_funding'),
+                'overall_variance' => $budgetData->sum('variance')
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to load budget analysis',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     private function calculateAvgProcessingTime($proposals)
@@ -884,29 +989,38 @@ class ReportsController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $totalProposals = Proposal::count();
-        $totalProjects = ResearchProject::count();
-        $totalFunding = ResearchFunding::sum('amount');
-        $totalPublications = Publication::count();
-        $activeUsers = User::where('isactive', true)->count();
+        try {
+            $totalProposals = Proposal::count();
+            $totalProjects = ResearchProject::count();
+            $totalFunding = ResearchFunding::sum('amount') ?? 0;
+            $totalPublications = Publication::count();
+            $activeUsers = User::where('isactive', true)->count();
 
-        $recentActivity = [
-            'proposals_this_month' => Proposal::whereMonth('created_at', date('m'))->count(),
-            'projects_this_month' => ResearchProject::whereMonth('created_at', date('m'))->count(),
-            'funding_this_month' => ResearchFunding::whereMonth('created_at', date('m'))->sum('amount'),
-            'publications_this_year' => Publication::where('year', date('Y'))->count()
-        ];
+            $recentActivity = [
+                'proposals_this_month' => Proposal::whereMonth('created_at', date('m'))->count(),
+                'projects_this_month' => ResearchProject::whereMonth('created_at', date('m'))->count(),
+                'funding_this_month' => ResearchFunding::whereMonth('created_at', date('m'))->sum('amount') ?? 0,
+                'publications_this_year' => Publication::where('year', date('Y'))->count()
+            ];
 
-        return response()->json([
-            'totals' => [
-                'proposals' => $totalProposals,
-                'projects' => $totalProjects,
-                'funding' => $totalFunding,
-                'publications' => $totalPublications,
-                'active_users' => $activeUsers
-            ],
-            'recent_activity' => $recentActivity
-        ]);
+            return response()->json([
+                'success' => true,
+                'totals' => [
+                    'proposals' => $totalProposals,
+                    'projects' => $totalProjects,
+                    'funding' => $totalFunding,
+                    'publications' => $totalPublications,
+                    'active_users' => $activeUsers
+                ],
+                'recent_activity' => $recentActivity
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to load reports summary',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
 }

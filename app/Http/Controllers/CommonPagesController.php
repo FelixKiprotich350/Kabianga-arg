@@ -33,7 +33,6 @@ class CommonPagesController extends Controller
 
         $user = User::findOrFail($request->user_id);
         $user->isadmin = true;
-        $user->role = 1;
         $user->save();
 
         return redirect()->back()->with('success', 'User has been set as Admin.');

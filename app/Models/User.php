@@ -56,7 +56,6 @@ class User extends Authenticatable
         'email',
         'pfno',
         'password',
-        'role',
         'isactive',
         'isadmin'
     ];
@@ -125,11 +124,7 @@ class User extends Authenticatable
             'departmentidfk' // Local key on proposals table
         )->latest();
     }
-    public function defaultpermissions()
-    {
-        $defaultp = Permission::where('targetrole', Auth::user()->role)->orderBy('priorityno');
-        return $defaultp;
-    }
+
 
     public function haspermission($shortname)
     {
@@ -273,31 +268,12 @@ class User extends Authenticatable
 
     public function getEffectivePermissions()
     {
-        $permissions = [];
-
-        // Base researcher permissions
-        $permissions = array_merge($permissions, $this->getResearcherPermissions());
-
-        // Committee member permissions
-        if ($this->isCommitteeMember()) {
-            $permissions = array_merge($permissions, $this->getCommitteePermissions());
+        if ($this->isadmin) {
+            return ['*']; // All permissions for admin
         }
 
-        // Additional assigned permissions
-        $userPermissions = $this->permissions()->pluck('shortname')->toArray();
-        $permissions = array_merge($permissions, $userPermissions);
-
-        return array_unique($permissions);
-    }
-
-    private function getResearcherPermissions()
-    {
-        return ['cansubmitproposal', 'canviewmyproposals', 'caneditmyproposal'];
-    }
-
-    private function getCommitteePermissions()
-    {
-        return ['canviewallproposals', 'canapproveproposal', 'canrejectproposal', 'canproposechanges'];
+        // Only user-assigned permissions
+        return $this->permissions()->pluck('shortname')->toArray();
     }
 
     public function hasPermissionDynamic($permission)
@@ -305,7 +281,7 @@ class User extends Authenticatable
         if ($this->isadmin)
             return true;
 
-        return in_array($permission, $this->getEffectivePermissions());
+        return $this->permissions()->where('shortname', $permission)->exists();
     }
 
     public function notifications()

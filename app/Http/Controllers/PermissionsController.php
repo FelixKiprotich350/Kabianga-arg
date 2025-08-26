@@ -17,13 +17,5 @@ class PermissionsController extends Controller
         return response()->json(['data' => $permissions]);
     }
 
-    public function fetchPermissionsByRole($role)
-    {
-        if (!auth()->user()->haspermission('canviewpermissions')) {
-            return response()->json(['data' => []]);
-        }
 
-        $permissions = Permission::where('targetrole', $role)->orderBy('priorityno')->get();
-        return response()->json(['data' => $permissions]);
-    }
 }

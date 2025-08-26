@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 
 class RoleMiddleware
 {
-    public function handle(Request $request, Closure $next, ...$roles)
+    public function handle(Request $request, Closure $next, ...$permissions)
     {
         if (!Auth::check()) {
             return redirect()->route('pages.login');
@@ -20,7 +20,16 @@ class RoleMiddleware
             return $next($request);
         }
 
-        if (!in_array($user->role, $roles)) {
+        // Check if user has any of the required permissions
+        $hasPermission = false;
+        foreach ($permissions as $permission) {
+            if ($user->haspermission($permission)) {
+                $hasPermission = true;
+                break;
+            }
+        }
+
+        if (!$hasPermission) {
             return $request->expectsJson()
                 ? response()->json(['message' => 'Access denied'], 403)
                 : redirect()->route('pages.unauthorized');

@@ -80,7 +80,9 @@ Route::prefix('v1')->middleware(['web', 'auth'])->group(function () {
         Route::get('/{id}', [UsersController::class, 'apiGetUser']);
         Route::put('/{id}', [UsersController::class, 'updatebasicdetails']);
         Route::patch('/{id}/role', [UsersController::class, 'updaterole']);
-        Route::patch('/{id}/permissions', [UsersController::class, 'updateuserpermissions']);
+        Route::patch('/{id}/permissions', [UsersController::class, 'updatePermissions']);
+        Route::patch('/{id}/status', [UsersController::class, 'updateStatus']);
+        Route::patch('/{id}/superadmin', [UsersController::class, 'updateSuperAdmin']);
         Route::patch('/{id}/enable', [UsersController::class, 'enableUser']);
         Route::patch('/{id}/disable', [UsersController::class, 'disableUser']);
         Route::post('/{id}/reset-password', [RegisterController::class, 'resetuserpassword']);
@@ -204,7 +206,7 @@ Route::prefix('v1')->middleware(['web', 'auth'])->group(function () {
         Route::post('/', [SchoolsController::class, 'postnewschool']);
         Route::get('/search', [SchoolsController::class, 'fetchsearchschools']);
         Route::get('/{id}', [SchoolsController::class, 'getviewschoolpage']);
-        Route::put('/{id}', [SchoolsController::class, 'updateschool']);
+        Route::put('/{id}', [SchoolsController::class, 'updateschool'])->name('api.schools.updateschool');
     });
     
     // Departments Management
