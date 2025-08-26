@@ -47,7 +47,7 @@
     <script src="{{ asset('js/notifications.js') }}"></script>
     <script src="{{ asset('js/auth-service.js') }}"></script>
     <script src="{{ asset('js/api-service.js') }}"></script>
-    <script src="{{ asset('js/page-loaders.js') }}"></script>
+
     <script src="{{ asset('js/data-renderers.js') }}"></script>
     @if(session('login_success'))
     <script>

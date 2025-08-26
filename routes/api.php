@@ -232,9 +232,7 @@ Route::prefix('v1')->middleware(['web', 'auth'])->group(function () {
         Route::post('/', [FinYearController::class, 'postnewfinyear']);
     });
     
-    // Legacy financial year routes
-    Route::get('/finyear/fetchallfinyears', [FinYearController::class, 'fetchallfinyears'])->name('api.finyear.fetchallfinyears');
-    Route::post('/finyear/post', [FinYearController::class, 'postnewfinyear'])->name('api.finyear.post');
+
     
     // Research Themes
     Route::prefix('themes')->group(function () {
@@ -285,7 +283,4 @@ Route::prefix('v1')->middleware(['web', 'auth'])->group(function () {
     });
 });
 
-// Legacy Sanctum Route
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+

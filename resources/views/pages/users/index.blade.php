@@ -220,27 +220,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Permissions Form
-    document.getElementById('permissionsForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const userId = document.getElementById('permissionsUserId').value;
-        const formData = new FormData(this);
-        const data = Object.fromEntries(formData);
-        
-        try {
-            const response = await API.updateUserRole(userId, data);
-            if (response.type === 'success') {
-                bootstrap.Modal.getInstance(document.getElementById('permissionsModal')).hide();
-                loadUsersData();
-                showAlert('Permissions updated successfully', 'success');
-            } else {
-                showAlert(response.message, 'error');
-            }
-        } catch (error) {
-            showAlert('Failed to update permissions', 'error');
-        }
-    });
-    
+ 
     // Reset Password Form
     document.getElementById('resetPasswordForm').addEventListener('submit', async function(e) {
         e.preventDefault();

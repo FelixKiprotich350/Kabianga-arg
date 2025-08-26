@@ -19,18 +19,11 @@ class ViewServiceProvider extends ServiceProvider
             // Fetch permissions for the current logged-in user
             $user = Auth::user();
             if ($user) {
-                $default = $user->defaultpermissions()->orderBy('priorityno')->get();
                 $allpermissions = $user->permissions()->orderBy('permissionlevel')->get();
-                // Ensure that default permissions are added to allpermissions if they don't exist
-                // foreach ($default as $per) {
-                //     if (!$allpermissions->contains('pid', $per->pid)) {
-                //         $allpermissions->push($per);
-                //     }
-                // }
                 $menupermissions = $allpermissions->where('permissionlevel', 1);
-
             } else {
-                $permissions = collect(); // or any default value
+                $allpermissions = collect();
+                $menupermissions = collect();
             }
 
             // Pass the data to the view

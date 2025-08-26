@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Register - Kabianga ARG Portal</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -237,8 +238,7 @@
                         </div>
                     @endif
 
-                    <form method="POST" action="{{ route('register.submit') }}" id="registerForm">
-                        @csrf
+                    <form id="registerForm">
                         <div class="form-floating">
                             <input type="text" class="form-control" id="fullname" name="fullname" placeholder="Full Name" required>
                             <label for="fullname"><i class="fas fa-user me-2"></i>Full Name</label>
@@ -354,6 +354,42 @@
                 this.setCustomValidity('Passwords do not match');
             } else {
                 this.setCustomValidity('');
+            }
+        });
+
+        // Handle form submission via API
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                fullname: document.getElementById('fullname').value,
+                email: document.getElementById('email').value,
+                pfno: document.getElementById('pfno').value,
+                phonenumber: document.getElementById('phonenumber').value,
+                password: document.getElementById('password').value
+            };
+            
+            try {
+                const response = await fetch('/api/v1/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Registration successful! Please login.');
+                    window.location.href = '/login';
+                } else {
+                    alert('Registration failed: ' + (result.message || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Registration failed: ' + error.message);
             }
         });
     </script>

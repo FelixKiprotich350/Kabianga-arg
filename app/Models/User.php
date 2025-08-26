@@ -13,6 +13,9 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\URL;
+use App\Models\Department;
+use App\Models\Notification;
+use App\Models\NotificationType;
 use App\Models\Permission;
 use App\Models\Proposal;
 use App\Services\SimpleMailService;
@@ -55,6 +58,7 @@ class User extends Authenticatable
         'name',
         'email',
         'pfno',
+        'phonenumber',
         'password',
         'isactive',
         'isadmin'
@@ -86,7 +90,7 @@ class User extends Authenticatable
     {
         $url = route('password.reset', ['token' => $token]) . '?email=' . urlencode($this->email);
         $content = "You are receiving this email because we received a password reset request for your account. This link will expire in 60 minutes.";
-        
+
         SimpleMailService::send($this->email, 'Reset Your Password', $content, $url, 'Reset Password');
     }
 
@@ -98,7 +102,7 @@ class User extends Authenticatable
             ['id' => $this->userid, 'hash' => sha1($this->email)]
         );
         $content = "Please click the button below to verify your email address.";
-        
+
         SimpleMailService::send($this->email, 'Verify Your Email Address', $content, $url, 'Verify Email');
     }
 
@@ -236,30 +240,7 @@ class User extends Authenticatable
 
     }
 
-    public function userRoles()
-    {
-        return $this->hasMany(UserRole::class, 'user_id', 'userid');
-    }
 
-    public function activeRoles()
-    {
-        return $this->userRoles()->active();
-    }
-
-    public function hasActiveRole($roleType)
-    {
-        return $this->activeRoles()->where('role_type', $roleType)->exists();
-    }
-
-    public function isCommitteeMember()
-    {
-        return $this->hasActiveRole('committee_member');
-    }
-
-    public function getCurrentRoles()
-    {
-        return $this->activeRoles()->pluck('role_type')->toArray();
-    }
 
     public function proposals()
     {

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\MailingController;
+
 use Illuminate\Http\Request;
 use Auth;
 use App\Models\User;
@@ -50,8 +50,7 @@ class LoginController extends Controller
             $request->session()->flash('login_success', true);
             $request->session()->flash('user_name', $user->name);
           
-            // Create an instance of MailingController and call the sendMail function
-            // $mailingController = new MailingController();
+            // Notification handled by modern notification service
             // $mailingController->sendMail($recipientEmail, $details);
             return redirect()->intended('/home');
         }

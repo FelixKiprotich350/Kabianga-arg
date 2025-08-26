@@ -16,8 +16,7 @@ class AuthController extends Controller
             'user' => Auth::user() ? [
                 'id' => Auth::user()->userid,
                 'name' => Auth::user()->name,
-                'email' => Auth::user()->email,
-                'role' => Auth::user()->role,
+                'email' => Auth::user()->email, 
                 'isadmin' => Auth::user()->isadmin,
                 'permissions' => Auth::user()->permissions()->pluck('shortname')
             ] : null

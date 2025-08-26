@@ -20,7 +20,6 @@ return new class extends Migration
             $table->string('pfno')->unique(); 
             $table->string('phonenumber')->unique();
             $table->string('gender')->nullable();
-            $table->unsignedBigInteger('role'); // Ensure it matches 'roleid' type
             $table->boolean('isadmin')->default(false);
             $table->boolean('isactive')->default(true);
             $table->timestamp('email_verified_at')->nullable();

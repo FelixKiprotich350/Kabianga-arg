@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Proposals;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\MailingController;
+use App\Services\DualNotificationService;
 use App\Models\Collaborator;
 use App\Models\Department;
 use App\Models\Expenditureitem;
@@ -293,9 +293,9 @@ class ProposalsController extends Controller
             $this->notifyProposalSubmitted($proposal);
             
             //notifiable users to be informed of new proposal
-            $mailingController = new MailingController();
+            $notificationService = new DualNotificationService();
             $url = route('pages.proposals.viewproposal', ['id' => $proposal->proposalid]);
-            $mailingController->notifyUsersOfProposalActivity('proposalsubmitted', 'New Proposal', 'success', ['You have a New Proposal Pending Receival and processing.'], 'View Proposal', $url);
+            $notificationService->notifyUsersOfProposalActivity('proposalsubmitted', 'New Proposal', 'success', ['You have a New Proposal Pending Receival and processing.'], 'View Proposal', $url);
 
             return response(['message' => 'Application Submitted Successfully!!', 'type' => 'success']);
         } else {
@@ -326,9 +326,9 @@ class ProposalsController extends Controller
         // Send dual notifications
         $this->notifyProposalReceived($proposal);
         
-        $mailingController = new MailingController();
+        $notificationService = new DualNotificationService();
         $Url = route('pages.proposals.viewproposal', ['id' => $proposal->proposalid]);
-        $mailingController->notifyUsersOfProposalActivity('proposalreceived', 'Proposal Received!', 'success', ['Your Proposal has been Received Successfully.'], 'View Proposal', $Url);
+        $notificationService->notifyUsersOfProposalActivity('proposalreceived', 'Proposal Received!', 'success', ['Your Proposal has been Received Successfully.'], 'View Proposal', $Url);
         return response(['message' => 'Proposal received Successfully!!', 'type' => 'success']);
 
 
@@ -346,8 +346,8 @@ class ProposalsController extends Controller
 
         $proposal->allowediting = false;
         $proposal->save();
-        $mailingController = new MailingController();
-        $mailingController->notifyUserReceivedProposal($proposal);
+        $notificationService = new DualNotificationService();
+        $notificationService->notifyUserReceivedProposal($proposal);
         return response(['message' => 'Proposal received Successfully!!', 'type' => 'success']);
 
 
@@ -417,14 +417,14 @@ class ProposalsController extends Controller
         });
         if ($request->input('status') == ApprovalStatus::APPROVED->value) {
             $project = ResearchProject::where('proposalidfk', $id)->firstOrFail();
-            $mailingController = new MailingController();
+            $notificationService = new DualNotificationService();
             $url = route('pages.projects.viewanyproject', ['id' => $project->researchid]);
-            $mailingController->notifyUsersOfProposalActivity('proposalapproved', 'Proposal Approved!', 'success', ['This Proposal has been Approved Successfully.', 'The project will kick off on the indicated Start Date.'], 'View Project', $url);
+            $notificationService->notifyUsersOfProposalActivity('proposalapproved', 'Proposal Approved!', 'success', ['This Proposal has been Approved Successfully.', 'The project will kick off on the indicated Start Date.'], 'View Project', $url);
             return response(['message' => 'Proposal Approved Successfully! Project Started!', 'type' => 'success']);
         } else if ($request->input('status') == ApprovalStatus::REJECTED->value) {
-            $mailingController = new MailingController();
+            $notificationService = new DualNotificationService();
             $url = route('pages.proposals.viewproposal', ['id' => $id]);
-            $mailingController->notifyUsersOfProposalActivity('proposalrejected', 'Proposal Rejected', 'success', ['The project didnt qualify for further steps.'], 'View Proposal', $url);
+            $notificationService->notifyUsersOfProposalActivity('proposalrejected', 'Proposal Rejected', 'success', ['The project didnt qualify for further steps.'], 'View Proposal', $url);
             return response(['message' => 'Proposal Rejected Successfully!!', 'type' => 'danger']);
         } else {
             return response(['message' => 'Unknown Action on Status!!', 'type' => 'danger']);
@@ -871,9 +871,9 @@ class ProposalsController extends Controller
         // Send dual notifications
         $this->notifyProposalRejected($proposal);
 
-        $mailingController = new MailingController();
+        $notificationService = new DualNotificationService();
         $url = route('pages.proposals.viewproposal', ['id' => $id]);
-        $mailingController->notifyUsersOfProposalActivity('proposalrejected', 'Proposal Rejected', 'danger', ['The project didnt qualify for further steps.'], 'View Proposal', $url);
+        $notificationService->notifyUsersOfProposalActivity('proposalrejected', 'Proposal Rejected', 'danger', ['The project didnt qualify for further steps.'], 'View Proposal', $url);
 
         return response()->json(['success' => true, 'message' => 'Proposal rejected']);
     }

@@ -389,7 +389,6 @@ class UsersController extends Controller
             'email' => 'required|email|unique:users,email',
             'pfno' => 'required|string|unique:users,pfno',
             'phonenumber' => 'required|string|unique:users,phonenumber',
-
             'password' => 'required|string|min:6'
         ];
 

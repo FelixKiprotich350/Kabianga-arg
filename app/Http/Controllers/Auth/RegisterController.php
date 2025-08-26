@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Hash;
-use App\Http\Controllers\MailingController;
+use App\Services\DualNotificationService;
 
 class RegisterController extends Controller
 {
@@ -16,47 +16,20 @@ class RegisterController extends Controller
         return view('pages.auth.register');
     }
 
-    public function register(Request $request)
-    {
-        // Validate the incoming request
-        $validatedData = $request->validate([
-            'fullname' => 'required|string|max:255',
-            'phonenumber' => 'required|string|max:255',
-            'pfno' => 'required|string|max:20',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-        ]);
-
-        // Create a new user instance
-        $user = new User();
-        $user->name = $validatedData['fullname'];
-        $user->email = $validatedData['email'];
-        $user->pfno = $validatedData['pfno'];
-        $user->phonenumber = $validatedData['phonenumber'];
-        $user->password = Hash::make($validatedData['password']);
-        $user->role = 3; //default user role guest
-        $user->isadmin = 0;
-        $user->isactive = 1;
-        $user->save();
-
-        // Redirect to login page with success message
-        return redirect()->route('pages.login')->with('success', 'Registration successful. Please login.');
-    }
-
     public function resetuserpassword(Request $request, $id)
     {
         if (!auth()->user()->haspermission('canresetuserpasswordordisablelogin')) {
             return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
         }
-        
+
         $request->validate([
             'password' => 'required|string|min:6'
         ]);
-        
+
         $user = User::findOrFail($id);
         $user->password = Hash::make($request->password);
         $user->save();
-        
+
         return response()->json(['message' => 'Password reset successfully!', 'type' => 'success']);
     }
 
@@ -77,17 +50,12 @@ class RegisterController extends Controller
         $user->pfno = $validatedData['pfno'];
         $user->phonenumber = $validatedData['phonenumber'];
         $user->password = Hash::make($validatedData['password']);
-        $user->role = 3;
         $user->isadmin = 0;
         $user->isactive = 1;
         $user->save();
 
-        $token = $user->createToken('auth-token')->plainTextToken;
-
         return response()->json([
             'success' => true,
-            'token' => $token,
-            'user' => $user,
             'message' => 'Registration successful'
         ], 201);
     }
@@ -95,7 +63,7 @@ class RegisterController extends Controller
     public function apiForgotPassword(Request $request)
     {
         $request->validate(['email' => 'required|email|exists:users']);
-        
+
         $user = User::where('email', $request->email)->first();
         $recipientEmail = [$user->email];
         $details = [
@@ -103,9 +71,9 @@ class RegisterController extends Controller
             'body' => 'Your password reset link is here.'
         ];
 
-        $mailingController = new MailingController();
+        $notificationService = new DualNotificationService();
         $mailresponse = $mailingController->sendMail($recipientEmail, $details);
-        
+
         if ($mailresponse['issuccess']) {
             return response()->json([
                 'success' => true,

@@ -71,7 +71,7 @@ class SupervisionController extends Controller
         $item->remark = $request->input('remark');
         $item->save();
         //notify
-        $mailingController = new MailingController();
+        $notificationService = new DualNotificationService();
         $url = route('pages.projects.viewanyproject', ['id' => $item->researchidfk]);
         $mailingController->notifyUsersOfProposalActivity('projectmonitoringreportsubmitted', 'Monitoring Report!', 'success', ['New Monitoring Report has been Submitted for this Project.', 'Project Refference : ' . $project->researchnumber], 'View Project', $url);
 

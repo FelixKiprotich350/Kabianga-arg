@@ -568,7 +568,7 @@ class ReportsController extends Controller
             $departmentFilter = $request->input('department');
             $roleFilter = $request->input('role');
 
-            $query = User::with(['department', 'userRoles']);
+            $query = User::with(['department']);
             
             if ($departmentFilter && $departmentFilter != 'all') {
                 $query->whereHas('department', function($q) use ($departmentFilter) {
@@ -577,9 +577,11 @@ class ReportsController extends Controller
             }
 
             if ($roleFilter && $roleFilter != 'all') {
-                $query->whereHas('userRoles', function($q) use ($roleFilter) {
-                    $q->where('role_type', $roleFilter);
-                });
+                if ($roleFilter === 'admin') {
+                    $query->where('isadmin', true);
+                } else {
+                    $query->where('isadmin', false);
+                }
             }
 
             $users = $query->get();
@@ -592,13 +594,8 @@ class ReportsController extends Controller
                     $q->where('useridfk', $user->userid);
                 })->where('projectstatus', 'ACTIVE')->count();
 
-                // Get user role - check if admin first, then user roles
-                $role = 'User';
-                if ($user->isadmin) {
-                    $role = 'Admin';
-                } elseif ($user->userRoles->isNotEmpty()) {
-                    $role = $user->userRoles->first()->role_type ?? 'User';
-                }
+                // Get user role - only check isadmin property
+                $role = $user->isadmin ? 'Admin' : 'User';
 
                 return [
                     'id' => $user->userid,
@@ -619,11 +616,6 @@ class ReportsController extends Controller
             foreach ($users as $user) {
                 if ($user->isadmin) {
                     $roleDistribution['Admin'] = ($roleDistribution['Admin'] ?? 0) + 1;
-                } elseif ($user->userRoles->isNotEmpty()) {
-                    foreach ($user->userRoles as $userRole) {
-                        $roleType = $userRole->role_type;
-                        $roleDistribution[$roleType] = ($roleDistribution[$roleType] ?? 0) + 1;
-                    }
                 } else {
                     $roleDistribution['User'] = ($roleDistribution['User'] ?? 0) + 1;
                 }

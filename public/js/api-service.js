@@ -84,12 +84,7 @@ class APIService {
         });
     }
 
-    async updateUserRole(id, roleData) {
-        return this.fetch(`/users/${id}/role`, {
-            method: 'PATCH',
-            body: JSON.stringify(roleData)
-        });
-    }
+  
 
     async resetUserPassword(id, password) {
         return this.fetch(`/users/${id}/reset-password`, {
@@ -357,6 +352,106 @@ class APIService {
 
     // Research Themes APIs
     async getAllThemes() {
+        return this.fetch('/themes');
+    }
+
+    async createTheme(data) {
+        return this.fetch('/themes', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async updateTheme(id, data) {
+        return this.fetch(`/themes/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async deleteTheme(id) {
+        return this.fetch(`/themes/${id}`, {
+            method: 'DELETE'
+        });
+    }
+
+    // Permissions APIs
+    async getAllPermissions() {
+        return this.fetch('/permissions');
+    }
+
+    async getPermissionsByRole(role) {
+        return this.fetch(`/permissions/role/${role}`);
+    }
+
+    // Settings APIs
+    async getAllSettings() {
+        return this.fetch('/settings');
+    }
+
+    async updateSettings(data) {
+        return this.fetch('/settings', {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+    }
+
+    // Reports APIs
+    async getReportsSummary() {
+        return this.fetch('/reports/summary');
+    }
+
+    async getProposalsReport() {
+        return this.fetch('/reports/proposals');
+    }
+
+    async getFinancialReport() {
+        return this.fetch('/reports/financial');
+    }
+
+    async getProjectsReport() {
+        return this.fetch('/reports/projects');
+    }
+
+    async exportReport(data) {
+        return this.fetch('/reports/export', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    // Notifications APIs
+    async getNotificationTypes() {
+        return this.fetch('/notifications/types');
+    }
+
+    async getNotificationTypeUsers(id) {
+        return this.fetch(`/notifications/types/${id}/users`);
+    }
+
+    async addNotifiableUsers(id, users) {
+        return this.fetch(`/notifications/types/${id}/users`, {
+            method: 'POST',
+            body: JSON.stringify({ users })
+        });
+    }
+
+    async removeNotifiableUser(id, userId) {
+        return this.fetch(`/notifications/types/${id}/users`, {
+            method: 'DELETE',
+            body: JSON.stringify({ userId })
+        });
+    }
+}
+
+// Export for global use
+window.APIService = APIService;
+window.api = new APIService();
+
+// Export for module use
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = APIService;
+}hemes() {
         return this.fetch('/themes');
     }
 

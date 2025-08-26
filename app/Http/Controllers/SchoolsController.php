@@ -117,20 +117,48 @@ class SchoolsController extends Controller
     public function fetchallschools()
     {
         try {
-            $data = School::all();
+            // Check permissions if user is authenticated
+            if (auth()->check() && !auth()->user()->isadmin && !auth()->user()->haspermission('canviewdepartmentsandschools')) {
+                return response()->json([
+                    'error' => 'Unauthorized',
+                    'message' => 'You are not authorized to view schools'
+                ], 403);
+            }
+            
+            $data = School::withCount('departments')->get();
+            
             return response()->json(['data' => $data]);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to fetch schools'], 500);
+            return response()->json([
+                'error' => 'Failed to fetch schools',
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
 
     public function fetchsearchschools(Request $request)
     {
-        $searchTerm = $request->input('search');
-        $data = School::where('schoolname', 'like', '%' . $searchTerm . '%') 
-            ->orWhere('description', 'like', '%' . $searchTerm . '%')
-            ->withCount('departments')
-            ->get();
-        return response()->json(['data' => $data]);
+        try {
+            // Check permissions if user is authenticated
+            if (auth()->check() && !auth()->user()->isadmin && !auth()->user()->haspermission('canviewdepartmentsandschools')) {
+                return response()->json([
+                    'error' => 'Unauthorized',
+                    'message' => 'You are not authorized to search schools'
+                ], 403);
+            }
+            
+            $searchTerm = $request->input('search');
+            $data = School::where('schoolname', 'like', '%' . $searchTerm . '%') 
+                ->orWhere('description', 'like', '%' . $searchTerm . '%')
+                ->withCount('departments')
+                ->get();
+                
+            return response()->json(['data' => $data]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to search schools',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }

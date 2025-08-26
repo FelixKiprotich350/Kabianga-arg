@@ -126,7 +126,7 @@ class DepartmentsController extends Controller
     {
         try {
             // Check permissions if user is authenticated
-            if (auth()->check() && !auth()->user()->haspermission('canviewdepartmentsandschools')) {
+            if (auth()->check() && !auth()->user()->isadmin && !auth()->user()->haspermission('canviewdepartmentsandschools')) {
                 return response()->json([
                     'error' => 'Unauthorized',
                     'message' => 'You are not authorized to view departments'

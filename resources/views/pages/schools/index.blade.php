@@ -140,27 +140,44 @@ $(document).ready(function() {
     
     loadData();
     
-    $('#searchInput').on('input', ARGPortal.debounce(filterData, 300));
+    $('#searchInput').on('input', debounce(filterData, 300));
     $('#clearSearch').on('click', () => { $('#searchInput').val(''); displayData(); });
     
     async function loadData() {
         $('#loadingState').show();
         
         try {
+            console.log('Loading schools and departments...');
+            
             const [schoolsRes, deptsRes] = await Promise.all([
-                $.get('/api/v1/schools'),
-                $.get('/api/v1/departments')
+                $.get('/api/v1/schools').fail(function(xhr) {
+                    console.error('Schools API error:', xhr.responseJSON || xhr.responseText);
+                }),
+                $.get('/api/v1/departments').fail(function(xhr) {
+                    console.error('Departments API error:', xhr.responseJSON || xhr.responseText);
+                })
             ]);
+            
+            console.log('Schools response:', schoolsRes);
+            console.log('Departments response:', deptsRes);
             
             schools = schoolsRes.data || schoolsRes || [];
             departments = deptsRes.data || deptsRes || [];
+            
+            console.log('Processed schools:', schools.length);
+            console.log('Processed departments:', departments.length);
             
             populateSchoolSelect();
             displayData();
             updateStats();
         } catch (error) {
             console.error('Load error:', error);
-            ARGPortal.showError('Failed to load schools and departments');
+            if (error.responseJSON) {
+                console.error('Error details:', error.responseJSON);
+                console.error('API Error:', error.responseJSON.message || 'Failed to load schools and departments');
+            } else {
+                console.error('Failed to load schools and departments');
+            }
         } finally {
             $('#loadingState').hide();
         }
@@ -310,25 +327,38 @@ $(document).ready(function() {
         e.preventDefault();
         $.post('/api/v1/schools', $(this).serialize())
             .done(() => {
-                ARGPortal.showSuccess('School added successfully');
+                console.log('School added successfully');
                 $('#addSchoolModal').modal('hide');
                 this.reset();
                 loadData();
             })
-            .fail(() => ARGPortal.showError('Failed to add school'));
+            .fail(() => console.error('Failed to add school'));
     });
     
     $('#addDepartmentForm').on('submit', function(e) {
         e.preventDefault();
         $.post('/api/v1/departments', $(this).serialize())
             .done(() => {
-                ARGPortal.showSuccess('Department added successfully');
+                console.log('Department added successfully');
                 $('#addDepartmentModal').modal('hide');
                 this.reset();
                 loadData();
             })
-            .fail(() => ARGPortal.showError('Failed to add department'));
+            .fail(() => console.error('Failed to add department'));
     });
+    
+    // Simple debounce function
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
 });
 </script>
 @endpush
