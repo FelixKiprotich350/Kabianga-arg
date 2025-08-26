@@ -39,9 +39,6 @@ return [
         'web' => [
             'driver' => 'session',
             'provider' => 'users',
-            'remember' => [
-                'expires' => 60 * 24 * 1, // 1 days in minutes
-            ],
         ],
     ],
 

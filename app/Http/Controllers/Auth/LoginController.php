@@ -29,35 +29,21 @@ class LoginController extends Controller
 
     public function login(Request $request)
     {
-        $credentials = $request->only('email', 'password');
+        $credentials = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required'
+        ]);
+        
         $rememberme = $request->has('rememberme');
-        if ($credentials['email'] == "admin@admin.com" && $credentials['password'] == "admin@123") {
-            $adminexist = User::where('role', 1)->exists();
-            if ($adminexist) {
-                return redirect()->route('setupadmin');
-            } else {
-                // $request->session()->put('user_name', 'Developer'); // Store user name in session
-                // $request->session()->put('user_id', 'admin@admin.com');// Store user email in session
-                // return redirect()->intended('/dashboard');
-            }
-        }
+        
         if (Auth::attempt($credentials, $rememberme)) {
-            // Authentication passed... 
-            $user = Auth::user();
-
-            $request->session()->put('user_name', $user->name); // Store user name in session
-            $request->session()->put('user_id', $user->email);// Store user email in session
+            $request->session()->regenerate();
             $request->session()->flash('login_success', true);
-            $request->session()->flash('user_name', $user->name);
-          
-            // Notification handled by modern notification service
-            // $mailingController->sendMail($recipientEmail, $details);
+            
             return redirect()->intended('/home');
         }
 
-
-        // Authentication failed...
-        return redirect()->route('pages.login')->withInput($request->only('email'))->withErrors([
+        return back()->withInput($request->only('email'))->withErrors([
             'email' => 'Invalid credentials. Please try again.',
         ]);
     }
@@ -72,13 +58,14 @@ class LoginController extends Controller
 
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
-            $token = $user->createToken('auth-token')->plainTextToken;
+            $user->tokens()->delete(); // Revoke existing tokens
+            $token = $user->createToken('auth-token', ['*'], now()->addHours(24))->plainTextToken;
 
             return response()->json([
                 'success' => true,
                 'token' => $token,
                 'user' => $user,
-                'message' => 'Login successful'
+                'expires_at' => now()->addHours(24)->toISOString()
             ]);
         }
 
@@ -110,12 +97,13 @@ class LoginController extends Controller
     {
         $user = $request->user();
         $user->currentAccessToken()->delete();
-        $token = $user->createToken('auth-token')->plainTextToken;
+        $token = $user->createToken('auth-token', ['*'], now()->addHours(24))->plainTextToken;
 
         return response()->json([
             'success' => true,
             'token' => $token,
-            'user' => $user
+            'user' => $user,
+            'expires_at' => now()->addHours(24)->toISOString()
         ]);
     }
 }
