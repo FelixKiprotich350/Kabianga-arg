@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Notification;
+use App\Models\NotificationType;
 use App\Models\User;
 use App\Notifications\GeneralProposalAction;
 use Illuminate\Support\Facades\Log;
@@ -64,5 +65,62 @@ class DualNotificationService
         );
 
         $user->notify($emailNotification);
+    }
+
+    public function notifyUsersOfProposalActivity($activityName, $subject, $level, $introLines, $actionText, $actionUrl)
+    {
+        try {
+            if (NotificationType::where('typename', $activityName)->exists()) {
+                $notType = NotificationType::where('typename', $activityName)->first();
+                $users = $this->getNotificationTypeUsers($notType->typeuuid);
+                
+                foreach ($users as $user) {
+                    $this->notify(
+                        $user,
+                        $activityName,
+                        $subject,
+                        implode(' ', $introLines),
+                        $actionUrl
+                    );
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to notify users of proposal activity', [
+                'activity' => $activityName,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    private function getNotificationTypeUsers($typeId)
+    {
+        return User::whereHas('notifiabletypes', function ($query) use ($typeId) {
+            $query->where('notificationfk', $typeId);
+        })->get();
+    }
+
+    public function notifyProposalChangeRequest($proposalId)
+    {
+        // Implementation for proposal change request notification
+        $this->notifyUsersOfProposalActivity(
+            'proposalchangerequest',
+            'Proposal Change Request',
+            'info',
+            ['A change request has been made for a proposal.'],
+            'View Proposal',
+            route('pages.proposals.viewproposal', ['id' => $proposalId])
+        );
+    }
+
+    public function notifyUserReceivedProposal($proposal)
+    {
+        $user = User::findOrFail($proposal->useridfk);
+        $this->notify(
+            $user,
+            'proposalreceived',
+            'Proposal Received',
+            'Your proposal has been received and is under review.',
+            route('pages.proposals.viewproposal', ['id' => $proposal->proposalid])
+        );
     }
 }

@@ -84,8 +84,6 @@ class APIService {
         });
     }
 
-  
-
     async resetUserPassword(id, password) {
         return this.fetch(`/users/${id}/reset-password`, {
             method: 'POST',
@@ -282,7 +280,7 @@ class APIService {
     }
 
     async getSchool(id) {
-        return this.fetch(`/schools/view/${id}`);
+        return this.fetch(`/schools/${id}`);
     }
 
     async updateSchool(id, data) {
@@ -451,111 +449,4 @@ window.api = new APIService();
 // Export for module use
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = APIService;
-}hemes() {
-        return this.fetch('/themes');
-    }
-
-    async createTheme(data) {
-        return this.fetch('/themes', {
-            method: 'POST',
-            body: JSON.stringify(data)
-        });
-    }
-
-    async updateTheme(id, data) {
-        return this.fetch(`/themes/${id}`, {
-            method: 'PUT',
-            body: JSON.stringify(data)
-        });
-    }
-
-    async deleteTheme(id) {
-        return this.fetch(`/themes/${id}`, {
-            method: 'DELETE'
-        });
-    }
-
-    // Monitoring APIs
-    async getMonitoringHome() {
-        return this.fetch('/monitoring');
-    }
-
-    async getMonitoringProject(id) {
-        return this.fetch(`/monitoring/${id}`);
-    }
-
-    async addMonitoringReport(id, reportData) {
-        return this.fetch(`/monitoring/${id}/report`, {
-            method: 'POST',
-            body: JSON.stringify(reportData)
-        });
-    }
-
-    async getMonitoringReports(id) {
-        return this.fetch(`/monitoring/${id}/reports`);
-    }
-
-    // Reports APIs
-    async getAllProposalsReport() {
-        return this.fetch('/reports/proposals');
-    }
-
-    async getProposalsBySchool() {
-        return this.fetch('/reports/proposals/by-school');
-    }
-
-    async getProposalsByTheme() {
-        return this.fetch('/reports/proposals/by-theme');
-    }
-
-    async getProposalsByGrant() {
-        return this.fetch('/reports/proposals/by-grant');
-    }
-
-    // Settings APIs
-    async getAllSettings() {
-        return this.fetch('/settings');
-    }
-
-    async updateSettings(data) {
-        return this.fetch('/settings', {
-            method: 'PUT',
-            body: JSON.stringify(data)
-        });
-    }
-
-    // Permissions APIs
-    async getAllPermissions() {
-        return this.fetch('/permissions');
-    }
-
-    async getPermissionsByRole(role) {
-        return this.fetch(`/permissions/role/${role}`);
-    }
-
-    // Notifications APIs
-    async getNotificationTypes() {
-        return this.fetch('/notifications/types');
-    }
-
-    async getNotificationUsers(typeId) {
-        return this.fetch(`/notifications/types/${typeId}/users`);
-    }
-
-    async addNotificationUsers(typeId, userIds) {
-        return this.fetch(`/notifications/types/${typeId}/users`, {
-            method: 'POST',
-            body: JSON.stringify({ user_ids: userIds })
-        });
-    }
-
-    async removeNotificationUser(typeId, userId) {
-        return this.fetch(`/notifications/types/${typeId}/users`, {
-            method: 'DELETE',
-            body: JSON.stringify({ user_id: userId })
-        });
-    }
 }
-
-// Create global instance
-window.API = new APIService();

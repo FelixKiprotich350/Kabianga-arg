@@ -7,6 +7,7 @@ use App\Models\SupervisionProgress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Validator;
+use App\Services\DualNotificationService;
 
 class SupervisionController extends Controller
 {
@@ -73,7 +74,7 @@ class SupervisionController extends Controller
         //notify
         $notificationService = new DualNotificationService();
         $url = route('pages.projects.viewanyproject', ['id' => $item->researchidfk]);
-        $mailingController->notifyUsersOfProposalActivity('projectmonitoringreportsubmitted', 'Monitoring Report!', 'success', ['New Monitoring Report has been Submitted for this Project.', 'Project Refference : ' . $project->researchnumber], 'View Project', $url);
+        $notificationService->notifyUsersOfProposalActivity('projectmonitoringreportsubmitted', 'Monitoring Report!', 'success', ['New Monitoring Report has been Submitted for this Project.', 'Project Reference : ' . $project->researchnumber], 'View Project', $url);
 
         // Optionally, return a response or redirect
         return response(['message' => 'Report Submitted Successfully!!', 'type' => 'success']);
