@@ -289,7 +289,7 @@ class DashboardController extends Controller
 
             $activities = $recentProposals->concat($recentProjects)
                 ->sortByDesc('date')
-                ->take(10)
+                ->take(limit: 5)
                 ->values();
 
             return response()->json(['success' => true, 'data' => $activities]);

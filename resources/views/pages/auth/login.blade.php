@@ -95,7 +95,7 @@
         <div class="auth-card">
             <div class="row g-0">
                 <div class="col-lg-5 auth-left">
-                    <div class="logo"><i class="fas fa-graduation-cap"></i></div>
+                    <div class="logo"><img src="{{ asset('images/logo.png') }}" alt="Kabianga University" style="height: 60px; width: auto;"></div>
                     <h2>Welcome Back!</h2>
                     <p class="mb-3">Access the Kabianga Annual Research Grants Portal.</p>
                     <div class="feature-item mb-2"><i class="fas fa-check-circle me-2"></i>Submit Proposals</div>

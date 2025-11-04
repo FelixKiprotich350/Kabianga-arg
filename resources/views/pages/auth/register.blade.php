@@ -93,7 +93,7 @@
         <div class="auth-card">
             <div class="row g-0">
                 <div class="col-lg-5 auth-left">
-                    <div class="logo"><i class="fas fa-user-graduate"></i></div>
+                    <div class="logo"><img src="{{ asset('images/logo.png') }}" alt="Kabianga University" style="height: 60px; width: auto;"></div>
                     <h2>Join Our Community!</h2>
                     <p class="mb-3">Create your account to access the Kabianga ARG Portal.</p>
                     <div class="feature-item mb-2"><i class="fas fa-rocket me-2"></i>Quick Registration</div>

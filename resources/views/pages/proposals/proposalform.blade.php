@@ -151,31 +151,38 @@
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Objectives</label>
-                                    <textarea name="objectives" class="form-control" rows="3" required>{{ isset($prop) ? $prop->objectives : '' }}</textarea>
+                                    <div id="objectives-editor" style="height: 150px;"></div>
+                                    <textarea name="objectives" class="d-none" required>{{ isset($prop) ? $prop->objectives : '' }}</textarea>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Hypothesis</label>
-                                    <textarea name="hypothesis" class="form-control" rows="3" required>{{ isset($prop) ? $prop->hypothesis : '' }}</textarea>
+                                    <div id="hypothesis-editor" style="height: 150px;"></div>
+                                    <textarea name="hypothesis" class="d-none" required>{{ isset($prop) ? $prop->hypothesis : '' }}</textarea>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Significance</label>
-                                    <textarea name="significance" class="form-control" rows="3" required>{{ isset($prop) ? $prop->significance : '' }}</textarea>
+                                    <div id="significance-editor" style="height: 150px;"></div>
+                                    <textarea name="significance" class="d-none" required>{{ isset($prop) ? $prop->significance : '' }}</textarea>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Ethical Considerations</label>
-                                    <textarea name="ethicals" class="form-control" rows="3" required>{{ isset($prop) ? $prop->ethicals : '' }}</textarea>
+                                    <div id="ethicals-editor" style="height: 150px;"></div>
+                                    <textarea name="ethicals" class="d-none" required>{{ isset($prop) ? $prop->ethicals : '' }}</textarea>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Expected Output</label>
-                                    <textarea name="outputs" class="form-control" rows="3" required>{{ isset($prop) ? $prop->expoutput : '' }}</textarea>
+                                    <div id="outputs-editor" style="height: 150px;"></div>
+                                    <textarea name="outputs" class="d-none" required>{{ isset($prop) ? $prop->expoutput : '' }}</textarea>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Economic Impact</label>
-                                    <textarea name="economicimpact" class="form-control" rows="3" required>{{ isset($prop) ? $prop->socio_impact : '' }}</textarea>
+                                    <div id="economicimpact-editor" style="height: 150px;"></div>
+                                    <textarea name="economicimpact" class="d-none" required>{{ isset($prop) ? $prop->socio_impact : '' }}</textarea>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Research Findings</label>
-                                    <textarea name="res_findings" class="form-control" rows="3" required>{{ isset($prop) ? $prop->res_findings : '' }}</textarea>
+                                    <div id="res_findings-editor" style="height: 150px;"></div>
+                                    <textarea name="res_findings" class="d-none" required>{{ isset($prop) ? $prop->res_findings : '' }}</textarea>
                                 </div>
                                 <div class="d-flex justify-content-between">
                                     <button type="button" class="btn btn-secondary"
@@ -688,13 +695,47 @@
         let designItems = [];
         let workplanItems = [];
         let proposalId = {{ isset($prop) ? $prop->proposalid : 'null' }};
+        let quillEditors = {};
 
         // Initialize data when editing
         document.addEventListener('DOMContentLoaded', function() {
+            initializeQuillEditors();
             if (proposalId) {
                 loadExistingData();
             }
         });
+
+        function initializeQuillEditors() {
+            const fields = ['objectives', 'hypothesis', 'significance', 'outputs', 'ethicals', 'economicimpact', 'res_findings'];
+            
+            fields.forEach(field => {
+                const editorElement = document.getElementById(`${field}-editor`);
+                const textarea = document.querySelector(`textarea[name="${field}"]`);
+                
+                if (editorElement && textarea) {
+                    quillEditors[field] = new Quill(`#${field}-editor`, {
+                        theme: 'snow',
+                        modules: {
+                            toolbar: [
+                                ['bold', 'italic', 'underline'],
+                                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                                ['clean']
+                            ]
+                        }
+                    });
+                    
+                    // Set initial content
+                    if (textarea.value) {
+                        quillEditors[field].root.innerHTML = textarea.value;
+                    }
+                    
+                    // Sync editor content to textarea
+                    quillEditors[field].on('text-change', function() {
+                        textarea.value = quillEditors[field].root.innerHTML;
+                    });
+                }
+            });
+        }
 
         // Function to show messages - using ARGPortal notifications
         function showMessage(message, type = 'success') {
@@ -1212,6 +1253,14 @@
                 showMessage('Proposal ID not found', 'error');
                 return;
             }
+
+            // Sync Quill editors to textareas before saving
+            Object.keys(quillEditors).forEach(field => {
+                const textarea = document.querySelector(`textarea[name="${field}"]`);
+                if (textarea && quillEditors[field]) {
+                    textarea.value = quillEditors[field].root.innerHTML;
+                }
+            });
 
             const form = document.getElementById('researchForm');
             const formData = new FormData(form);
