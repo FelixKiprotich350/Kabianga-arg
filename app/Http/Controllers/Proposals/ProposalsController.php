@@ -475,7 +475,7 @@ class ProposalsController extends Controller
             
             $finyears = FinancialYear::all();
             return view('pages.proposals.show', compact('prop', 'finyears'));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             \Log::error('Error loading proposal details: ' . $e->getMessage(), ['proposal_id' => $id]);
             return redirect()->route('pages.proposals.index')->with('error', 'Failed to load proposal details: ' . $e->getMessage());
         }
@@ -508,7 +508,7 @@ class ProposalsController extends Controller
                 'Expires' => '0'
             ]);
             
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             \Log::error('PDF Generation Error: ' . $e->getMessage(), [
                 'proposal_id' => $id,
                 'trace' => $e->getTraceAsString()
@@ -533,7 +533,7 @@ class ProposalsController extends Controller
                 'Content-Disposition' => 'inline; filename="test-snappy.pdf"'
             ]);
             
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'error' => 'Snappy test failed',
                 'message' => $e->getMessage()
