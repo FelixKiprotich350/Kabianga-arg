@@ -5,19 +5,16 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\ResearchFunding;
 use App\Models\ResearchProject;
+use App\Traits\ApiResponse;
 use App\Traits\NotifiesUsers;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class FinancesController extends Controller
 {
-    use NotifiesUsers;
+    use ApiResponse, NotifiesUsers;
     
-    public function home()
-    {
-        $history =[];
-        return view('pages.finances.index', compact('history'));
-    }
+
     
     public function addFunding(Request $request, $projectId)
     {
@@ -26,23 +23,24 @@ class FinancesController extends Controller
         ]);
         
         if ($validator->fails()) {
-            return response()->json(['success' => false, 'message' => 'Invalid amount'], 400);
+            return $this->errorResponse('Validation failed', $validator->errors(), 400);
         }
         
-        $project = ResearchProject::with(['proposal', 'applicant'])->findOrFail($projectId);
-        
-        $funding = ResearchFunding::create([
-            'createdby' => Auth::user()->userid,
-            'researchidfk' => $project->researchid,
-            'amount' => $request->amount
-        ]);
-        
-        // Send notification to project owner
-        $this->notifyFundingAdded($project, $request->amount);
-        
-        return response()->json([
-            'success' => true, 
-            'message' => 'Funding added successfully and user notified'
-        ]);
+        try {
+            $project = ResearchProject::with(['proposal', 'applicant'])->findOrFail($projectId);
+            
+            $funding = ResearchFunding::create([
+                'createdby' => Auth::user()->userid,
+                'researchidfk' => $project->researchid,
+                'amount' => $request->amount
+            ]);
+            
+            // Send notification to project owner
+            $this->notifyFundingAdded($project, $request->amount);
+            
+            return $this->successResponse($funding, 'Funding added successfully and user notified');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to add funding', $e->getMessage(), 500);
+        }
     }
 }

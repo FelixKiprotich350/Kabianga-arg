@@ -3,25 +3,31 @@
 namespace App\Http\Controllers;
 
 use App\Models\GlobalSetting;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class SettingsController extends Controller
 {
+    use ApiResponse;
     public function fetchAllSettings()
     {
         if (!auth()->user()->haspermission('canviewsettings')) {
-            return response()->json(['data' => []]);
+            return $this->errorResponse('Unauthorized', null, 403);
         }
 
-        $settings = GlobalSetting::all();
-        return response()->json(['data' => $settings]);
+        try {
+            $settings = GlobalSetting::all();
+            return $this->successResponse($settings, 'Settings retrieved successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to fetch settings', $e->getMessage(), 500);
+        }
     }
 
     public function updateSettings(Request $request)
     {
         if (!auth()->user()->haspermission('canupdatesettings')) {
-            return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
+            return $this->errorResponse('Unauthorized', null, 403);
         }
 
         $rules = [
@@ -32,17 +38,21 @@ class SettingsController extends Controller
 
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {
-            return response()->json(['message' => $validator->errors(), 'type' => 'danger'], 400);
+            return $this->errorResponse('Validation failed', $validator->errors(), 400);
         }
 
-        foreach ($request->input('settings') as $settingData) {
-            $setting = GlobalSetting::where('item', $settingData['item'])->first();
-            if ($setting) {
-                $setting->value1 = $settingData['value1'];
-                $setting->save();
+        try {
+            foreach ($request->input('settings') as $settingData) {
+                $setting = GlobalSetting::where('item', $settingData['item'])->first();
+                if ($setting) {
+                    $setting->value1 = $settingData['value1'];
+                    $setting->save();
+                }
             }
-        }
 
-        return response()->json(['message' => 'Settings updated successfully!', 'type' => 'success']);
+            return $this->successResponse(null, 'Settings updated successfully!');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to update settings', $e->getMessage(), 500);
+        }
     }
 }

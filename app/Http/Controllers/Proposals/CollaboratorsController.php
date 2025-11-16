@@ -93,12 +93,18 @@ class CollaboratorsController extends Controller
 
     public function geteditsinglecollaboratorpage($id)
     {
-        // Find the proposal by ID or fail with a 404 error
-        $prop = Collaborator::findOrFail($id);
+        $collaborator = Collaborator::findOrFail($id);
         $isreadonlypage = false;
-        $isadminmode = true; 
-        // Return the view with the proposal data
-        return view('pages.proposals.proposalform', compact('prop', 'isreadonlypage', 'isadminmode', 'departments', 'grants', 'themes'));
+        $isadminmode = true;
+        
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'collaborator' => $collaborator,
+                'isreadonlypage' => $isreadonlypage,
+                'isadminmode' => $isadminmode
+            ]
+        ]);
     }
 
     public function updateCollaborator(Request $request, $id)

@@ -7,6 +7,7 @@ use App\Models\NotifiableUser;
 use App\Models\NotificationType;
 use App\Models\Permission;
 use App\Models\User;
+use App\Traits\ApiResponse;
 use App\Traits\NotifiesUsers;
 use Faker\Core\Number;
 use Illuminate\Http\Request;
@@ -17,105 +18,14 @@ use Illuminate\Support\Str; // For generating UUIDs
 
 class UsersController extends Controller
 {
-    use NotifiesUsers;
+    use ApiResponse, NotifiesUsers;
     //
-    public function viewallusers()
-    {
-        if (!auth()->user()->haspermission('canviewallusers')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to View Users!");
-        }
-        $allusers = User::all();
-        return view('pages.users.index', compact('allusers'));
-    }
 
-    public function updateuserpermissions(Request $request, $id)
-    {
-        if (!auth()->user()->haspermission('canchangeuserroleorrights')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Change User Role or Right!");
-        }
-        // Find the user by ID or fail with a 404 error
-        $request->validate([
-            'permissions' => 'required|array',
-            'permissions.*' => 'string|exists:permissions,pid'
-        ]);
-        $newPermissions = $request->input('permissions');
-        $user = User::findOrFail($id);
-        if (!$user->issuperadmin()) {
-            DB::transaction(function () use ($user, $id, $newPermissions) {
-                $user->permissions()->detach();
-                DB::table('userpermissions')->where('useridfk', $id)->delete();
-                // Add new permissions for the user
-                foreach ($newPermissions as $permissioncode) {
-                    $permission = Permission::where('pid', $permissioncode)->firstOrFail();
-                    $user->permissions()->attach($permission->pid, ['id' => (string) Str::uuid()]);
-                }
-            });
-            
-            // Notify user of permission changes
-            $this->notifyUserPermissionsChanged($user);
-            
-            return response()->json(['message' => 'Permissions updated successfully.', 'type' => "success"]);
-        }
-        else {
-            return response()->json(['message' => 'Administrator has exclusively all rights!', 'type' => 'warning']);
-        }
-
-    }
-    public function updaterole(Request $request, $id)
-    {
-        if (!auth()->user()->haspermission('canchangeuserroleorrights')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not authorized to change user role or rights!");
-        }
-
-        // Find the user by ID or fail with a 404 error
-        $user = User::findOrFail($id);
-
-        if ($user->issuperadmin()) {
-            return response()->json(['message' => 'Super Administrator has exclusively all rights!', 'type' => 'warning']);
-        }
-
-        $oldActive = $user->isactive;
-        $oldAdmin = $user->isadmin;
-        
-        DB::transaction(function () use ($user, $request) {
-            // Update admin and active status
-            $user->isadmin = $request->has('isadmin');
-            $user->isactive = $request->input('isactive', 0);
-            $user->saveOrFail();
-        });
-        
-        // Send notifications for changes
-        if ($oldAdmin != $user->isadmin) {
-            if ($user->isadmin) {
-                $this->notifyUserRoleChanged($user, 'Administrator');
-            } else {
-                $this->notifyUserRoleChanged($user, 'User');
-            }
-        }
-        
-        if ($oldActive != $user->isactive) {
-            if ($user->isactive) {
-                $this->notifyUserEnabled($user);
-            } else {
-                $this->notifyUserDisabled($user);
-            }
-        }
-
-        return response()->json(['message' => 'Role updated successfully!', 'type' => 'success']);
-    }
-
-    public function getnonapplicantdefaultrights()
-    {
-        $names = ['canviewallapplications', 'canviewreports', 'canviewadmindashboard', 'canreadproposaldetails', 'canviewofficeuse', 'canproposechanges'];
-        $permissions = [];
-        $permissions = Permission::whereIn('shortname', $names)->get();
-        return $permissions;
-    }
     public function updatebasicdetails(Request $request, $id)
     {
 
         if (Auth::user()->userid != $id && !Auth::user()->haspermission('canedituserprofile')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Edit this User!");
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403); // message: "You are not Authorized to Edit this User!";
         }
         // Define validation rules
         $rules = [
@@ -123,6 +33,9 @@ class UsersController extends Controller
             'email' => 'required|string',
             'phonenumber' => 'required|string',
             'pfno' => 'required|string',
+            'highqualification' => 'nullable|string',
+            'officenumber' => 'nullable|string',
+            'faxnumber' => 'nullable|string',
         ];
         // Validate incoming request
         $validator = Validator::make($request->all(), $rules);
@@ -138,6 +51,9 @@ class UsersController extends Controller
         $user->email = $request->input('email');
         $user->pfno = $request->input('pfno');
         $user->phonenumber = $request->input('phonenumber');
+        $user->highqualification = $request->input('highqualification');
+        $user->officenumber = $request->input('officenumber');
+        $user->faxnumber = $request->input('faxnumber');
         $user->save();
         return response()->json(['message' => 'User Updated Successfully!', 'type' => 'success']);
 
@@ -145,44 +61,12 @@ class UsersController extends Controller
 
     }
 
-    public function viewsingleuser($id)
-    {
-        if (!auth()->user()->haspermission('canedituserprofile')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Edit this User!");
-        }
-        // Find the user by ID or fail with a 404 error
-        $user = User::findOrFail($id);
-        $userStats = [
-            'proposals' => 0,
-            'approved' => 0, 
-            'pending' => 0,
-            'projects' => 0
-        ];
-        $departments = [];
-        // Return the view with the proposal data
-        return view('pages.users.show', compact('user', 'userStats', 'departments'));
-    }
 
-    public function geteditsingleuserpage($id)
-    {
-        if (!auth()->user()->haspermission('canedituserprofile')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Edit this User!");
-        }
-        // Find the proposal by ID or fail with a 404 error
-        $prop = User::findOrFail($id);
-        $isreadonlypage = false;
-        $isadminmode = true;
-        $grants = [];
-        $departments = [];
-        $themes = [];
-        // Return the view with the proposal data
-        return view('pages.users.proposalform', compact('prop', 'isreadonlypage', 'isadminmode', 'departments', 'grants', 'themes'));
-    }
 
     public function fetchallusers()
     {
         if (!auth()->user()->haspermission('canviewallusers')) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized', 'data' => []], 403);
+            return $this->errorResponse('Unauthorized', null, 403);
         }
         
         try {
@@ -193,16 +77,18 @@ class UsersController extends Controller
                     'email' => $user->email ?? '',
                     'pfno' => $user->pfno ?? '',
                     'phonenumber' => $user->phonenumber ?? '',
-
+                    'highqualification' => $user->highqualification ?? '',
+                    'officenumber' => $user->officenumber ?? '',
+                    'faxnumber' => $user->faxnumber ?? '',
                     'isadmin' => $user->isadmin ?? false,
                     'isactive' => $user->isactive ?? true,
                     'created_at' => $user->created_at,
                     'updated_at' => $user->updated_at
                 ];
             });
-            return response()->json(['success' => true, 'data' => $data]);
+            return $this->successResponse($data, 'Users retrieved successfully');
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage(), 'data' => []], 500);
+            return $this->errorResponse($e->getMessage(), null, 500);
         }
     }
 
@@ -228,27 +114,11 @@ class UsersController extends Controller
     ////////
     //Notifications functions
     ////////
-    public function managenotificationtype($id)
-    {
-        if (!auth()->user()->haspermission('canviewnotificationtypestab')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Edit this User!");
-        }
-        // Find the user by ID or fail with a 404 error
-        $notificationtype = NotificationType::findOrFail($id);
-        $currentnotifiableusers = NotifiableUser::where('notificationfk', $id)->get();
-        $allusers = User::all();
-        // Get the IDs of all currently notifiable users
-        $currentNotifiableUserIds = $currentnotifiableusers->pluck('useridfk')->toArray();
 
-        // Filter out the currently notifiable users from all users
-        $nonNotifiableUsers = $allusers->whereNotIn('userid', $currentNotifiableUserIds);
-        // Return the view with the proposal data
-        return view('pages.users.usernotifications', compact('notificationtype', 'nonNotifiableUsers'));
-    }
     public function addnotifiableusers(Request $request, $id)
     {
         if (!auth()->user()->haspermission('canaddorremovenotifiableuser')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Add or Edit a Notifiable User!");
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403); // message: "You are not Authorized to Add or Edit a Notifiable User!";
         }
         // Validate incoming request data if needed
         // Define validation rules
@@ -300,7 +170,7 @@ class UsersController extends Controller
     public function removenotifiableuser(Request $request, $id)
     {
         if (!auth()->user()->haspermission('canaddorremovenotifiableuser')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Add or Remove a Notifiable User!");
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403); // message: "You are not Authorized to Add or Remove a Notifiable User!";
         }
         // Validate incoming request data if needed
         // Define validation rules
@@ -366,16 +236,10 @@ class UsersController extends Controller
             ->find($id);
         
         if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User not found'
-            ], 404);
+            return $this->errorResponse('User not found', null, 404);
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => $user
-        ]);
+        return $this->successResponse($user, 'User retrieved successfully');
     }
 
     public function createUser(Request $request)
@@ -389,7 +253,10 @@ class UsersController extends Controller
             'email' => 'required|email|unique:users,email',
             'pfno' => 'required|string|unique:users,pfno',
             'phonenumber' => 'required|string|unique:users,phonenumber',
-            'password' => 'required|string|min:6'
+            'password' => 'required|string|min:6',
+            'highqualification' => 'nullable|string',
+            'officenumber' => 'nullable|string',
+            'faxnumber' => 'nullable|string'
         ];
 
         $validator = Validator::make($request->all(), $rules);
@@ -405,6 +272,9 @@ class UsersController extends Controller
         $user->pfno = $request->input('pfno');
         $user->phonenumber = $request->input('phonenumber');
         $user->password = bcrypt($password);
+        $user->highqualification = $request->input('highqualification');
+        $user->officenumber = $request->input('officenumber');
+        $user->faxnumber = $request->input('faxnumber');
         $user->isactive = true;
         $user->save();
         
@@ -450,43 +320,7 @@ class UsersController extends Controller
         return response()->json(['message' => 'User enabled successfully!', 'type' => 'success']);
     }
 
-    public function showPermissions($id)
-    {
-        if (!auth()->user()->haspermission('canchangeuserroleorrights')) {
-            return redirect()->route('pages.unauthorized');
-        }
 
-        $user = User::findOrFail($id);
-        
-        // Get all available permissions
-        $availablePermissions = Permission::all();
-        
-        // Get user's current permissions
-        $userPermissions = $user->permissions;
-        
-        return view('pages.users.permissions', compact(
-            'user', 'availablePermissions', 'userPermissions'
-        ));
-    }
-
-    public function updateUserRole(Request $request, $id)
-    {
-        if (!auth()->user()->haspermission('canchangeuserroleorrights')) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
-
-        $user = User::findOrFail($id);
-        
-        if ($user->issuperadmin() && !auth()->user()->issuperadmin()) {
-            return response()->json(['success' => false, 'message' => 'Cannot modify super administrator']);
-        }
-
-        $user->isactive = $request->input('isactive', 0);
-        $user->isadmin = $request->has('isadmin');
-        $user->save();
-
-        return response()->json(['success' => true, 'message' => 'User updated successfully']);
-    }
 
     public function updatePermissions(Request $request, $id)
     {

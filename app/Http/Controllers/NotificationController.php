@@ -3,65 +3,91 @@
 namespace App\Http\Controllers;
 
 use App\Models\Notification;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
+    use ApiResponse;
     public function index()
     {
-        $notifications = Notification::forUser(Auth::user()->userid)
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
-            
-        return view('pages.notifications.index', compact('notifications'));
+        try {
+            $notifications = Notification::forUser(Auth::user()->userid)
+                ->orderBy('created_at', 'desc')
+                ->paginate(20);
+                
+            return $this->successResponse($notifications, 'Notifications retrieved successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to get notifications', $e->getMessage(), 500);
+        }
     }
     
     public function getUnreadCount()
     {
-        $count = Notification::forUser(Auth::user()->userid)
-            ->unread()
-            ->count();
-            
-        return response()->json(['count' => $count]);
+        try {
+            $count = Notification::forUser(Auth::user()->userid)
+                ->unread()
+                ->count();
+                
+            return $this->successResponse(['count' => $count], 'Unread count retrieved successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to get unread count', $e->getMessage(), 500);
+        }
     }
     
     public function getRecent()
     {
-        $notifications = Notification::forUser(Auth::user()->userid)
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get();
-            
-        return response()->json($notifications);
+        try {
+            $notifications = Notification::forUser(Auth::user()->userid)
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get();
+                
+            return $this->successResponse($notifications, 'Recent notifications retrieved successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to get recent notifications', $e->getMessage(), 500);
+        }
     }
     
     public function markAsRead($id)
     {
-        $notification = Notification::forUser(Auth::user()->userid)
-            ->findOrFail($id);
+        try {
+            $notification = Notification::forUser(Auth::user()->userid)
+                ->findOrFail($id);
+                
+            $notification->markAsRead();
             
-        $notification->markAsRead();
-        
-        return response()->json(['success' => true]);
+            return $this->successResponse(null, 'Notification marked as read');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to mark notification as read', $e->getMessage(), 500);
+        }
     }
     
     public function markAllAsRead()
     {
-        Notification::forUser(Auth::user()->userid)
-            ->unread()
-            ->update(['read_at' => now()]);
-            
-        return response()->json(['success' => true]);
+        try {
+            Notification::forUser(Auth::user()->userid)
+                ->unread()
+                ->update(['read_at' => now()]);
+                
+            return $this->successResponse(null, 'All notifications marked as read');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to mark all notifications as read', $e->getMessage(), 500);
+        }
     }
     
     public function destroy($id)
     {
-        $notification = Notification::forUser(Auth::user()->userid)
-            ->findOrFail($id);
+        try {
+            $notification = Notification::forUser(Auth::user()->userid)
+                ->findOrFail($id);
+                
+            $notification->delete();
             
-        $notification->delete();
-        
-        return response()->json(['success' => true]);
+            return $this->successResponse(null, 'Notification deleted successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to delete notification', $e->getMessage(), 500);
+        }
     }
 }

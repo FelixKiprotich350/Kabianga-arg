@@ -108,7 +108,7 @@ class DualNotificationService
             'info',
             ['A change request has been made for a proposal.'],
             'View Proposal',
-            route('pages.proposals.viewproposal', ['id' => $proposalId])
+            null
         );
     }
 
@@ -120,7 +120,7 @@ class DualNotificationService
             'proposalreceived',
             'Proposal Received',
             'Your proposal has been received and is under review.',
-            route('pages.proposals.viewproposal', ['id' => $proposal->proposalid])
+            null
         );
     }
 }

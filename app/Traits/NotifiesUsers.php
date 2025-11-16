@@ -47,8 +47,7 @@ trait NotifiesUsers
             $proposal->applicant,
             'proposal_submitted',
             'Proposal Submitted Successfully',
-            "Your research proposal '{$proposal->researchtitle}' has been submitted and is pending review.",
-            ['actionUrl' => route('pages.proposals.viewproposal', $proposal->proposalid)]
+            "Your research proposal '{$proposal->researchtitle}' has been submitted and is pending review."
         );
 
         // Notify reviewers
@@ -60,8 +59,7 @@ trait NotifiesUsers
             $reviewers,
             'proposal_submitted',
             'New Proposal Submitted',
-            "A new research proposal '{$proposal->researchtitle}' has been submitted by {$proposal->applicant->name}.",
-            ['actionUrl' => route('pages.proposals.viewproposal', $proposal->proposalid)]
+            "A new research proposal '{$proposal->researchtitle}' has been submitted by {$proposal->applicant->name}."
         );
     }
 
@@ -71,8 +69,7 @@ trait NotifiesUsers
             $proposal->applicant,
             'proposal_received',
             'Proposal Received',
-            "Your research proposal '{$proposal->researchtitle}' has been received and is now under review.",
-            ['actionUrl' => route('pages.proposals.viewproposal', $proposal->proposalid)]
+            "Your research proposal '{$proposal->researchtitle}' has been received and is now under review."
         );
     }
 
@@ -83,7 +80,7 @@ trait NotifiesUsers
             'proposal_approved',
             'Proposal Approved',
             "Congratulations! Your research proposal '{$proposal->researchtitle}' has been approved.",
-            ['actionUrl' => route('pages.proposals.viewproposal', $proposal->proposalid), 'level' => 'success']
+            ['level' => 'success']
         );
     }
 
@@ -94,7 +91,7 @@ trait NotifiesUsers
             'proposal_rejected',
             'Proposal Rejected',
             "Your research proposal '{$proposal->researchtitle}' has been rejected. Please review the comments.",
-            ['actionUrl' => route('pages.proposals.viewproposal', $proposal->proposalid), 'level' => 'error']
+            ['level' => 'error']
         );
     }
 
@@ -105,7 +102,7 @@ trait NotifiesUsers
             'changes_requested',
             'Changes Requested',
             "Changes have been requested for your proposal '{$proposal->researchtitle}'. Please review and update.",
-            ['actionUrl' => route('pages.proposals.editproposal', $proposal->proposalid), 'level' => 'warning']
+            ['level' => 'warning']
         );
     }
 
@@ -116,7 +113,7 @@ trait NotifiesUsers
             'funding_added',
             'Funding Added to Your Project',
             "Funding of KES " . number_format($amount, 2) . " has been added to your research project '{$project->proposal->researchtitle}'.",
-            ['actionUrl' => route('pages.projects.viewmyproject', $project->researchid), 'level' => 'success']
+            ['level' => 'success']
         );
     }
 
@@ -132,7 +129,7 @@ trait NotifiesUsers
             'user_created',
             'Welcome to ARG Portal',
             $message,
-            ['actionUrl' => route('pages.login'), 'actionText' => 'Login Now', 'level' => 'success']
+            ['level' => 'success']
         );
     }
 
@@ -143,7 +140,7 @@ trait NotifiesUsers
             'role_changed',
             'Your Role Has Been Updated',
             "Your role has been changed to {$newRole}. This may affect your access permissions.",
-            ['actionUrl' => route('pages.home'), 'level' => 'info']
+            ['level' => 'info']
         );
     }
 
@@ -154,7 +151,7 @@ trait NotifiesUsers
             'permissions_changed',
             'Your Permissions Have Been Updated',
             "Your account permissions have been modified. Please review your new access levels.",
-            ['actionUrl' => route('pages.home'), 'level' => 'info']
+            ['level' => 'info']
         );
     }
 
@@ -176,7 +173,7 @@ trait NotifiesUsers
             'account_enabled',
             'Account Reactivated',
             "Your account has been reactivated. You can now access the ARG Portal.",
-            ['actionUrl' => route('pages.login'), 'actionText' => 'Login Now', 'level' => 'success']
+            ['level' => 'success']
         );
     }
 
@@ -195,7 +192,7 @@ trait NotifiesUsers
             'project_status_changed',
             'Project Status Updated',
             $statusMessages[$newStatus] ?? "Your project status has been changed to {$newStatus}.",
-            ['actionUrl' => route('pages.projects.viewmyproject', $project->researchid), 'level' => $newStatus === 'COMPLETED' ? 'success' : 'info']
+            ['level' => $newStatus === 'COMPLETED' ? 'success' : 'info']
         );
     }
 
@@ -207,7 +204,7 @@ trait NotifiesUsers
             'project_assigned',
             'Supervisor Assigned to Your Project',
             "A supervisor ({$supervisor->name}) has been assigned to monitor your research project '{$project->proposal->researchtitle}'.",
-            ['actionUrl' => route('pages.projects.viewmyproject', $project->researchid), 'level' => 'info']
+            ['level' => 'info']
         );
 
         // Notify supervisor
@@ -216,7 +213,7 @@ trait NotifiesUsers
             'supervision_assigned',
             'New Project Supervision Assignment',
             "You have been assigned to supervise the research project '{$project->proposal->researchtitle}' by {$project->applicant->name}.",
-            ['actionUrl' => route('pages.projects.viewanyproject', $project->researchid), 'level' => 'info']
+            ['level' => 'info']
         );
     }
 
@@ -232,7 +229,7 @@ trait NotifiesUsers
             'progress_submitted',
             'New Progress Report Submitted',
             "A progress report has been submitted for project '{$project->proposal->researchtitle}' by {$project->applicant->name}.",
-            ['actionUrl' => route('pages.projects.viewanyproject', $project->researchid), 'level' => 'info']
+            ['level' => 'info']
         );
     }
 
@@ -271,7 +268,7 @@ trait NotifiesUsers
             'new_grant',
             'New Research Grant Available',
             "A new research grant '{$grant->grantname}' is now available for applications. Deadline: {$grant->deadline}.",
-            ['actionUrl' => route('pages.grants.view', $grant->grantid), 'actionText' => 'View Grant', 'level' => 'success']
+            ['level' => 'success']
         );
     }
 

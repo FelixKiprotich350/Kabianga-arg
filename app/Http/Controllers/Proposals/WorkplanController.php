@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Proposals;
 
 use App\Http\Controllers\Controller;
 use App\Models\Workplan;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class WorkplanController extends Controller
 {
+    use ApiResponse;
     //
     public function postworkplanitem(Request $request)
     {
@@ -75,43 +77,35 @@ class WorkplanController extends Controller
     
     public function fetchall(Request $request)
     {
-        $proposalId = $request->input('proposalid');
-        if ($proposalId) {
-            $data = Workplan::where('proposalidfk', $proposalId)->get();
-        } else {
-            $data = Workplan::all();
+        try {
+            $proposalId = $request->input('proposalid');
+            if ($proposalId) {
+                $data = Workplan::where('proposalidfk', $proposalId)->get();
+            } else {
+                $data = Workplan::all();
+            }
+            return $this->successResponse($data, 'Workplan items retrieved successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to fetch workplan items', $e->getMessage(), 500);
         }
-        return response()->json($data);
     }
 
     public function fetchsearch(Request $request)
     {
-        $searchTerm = $request->input('search');
-        $data = Workplan::with('department', 'grantitem', 'themeitem', 'applicant')
-            ->where('approvalstatus', 'like', '%' . $searchTerm . '%')
-            ->orWhere('highqualification', 'like', '%' . $searchTerm . '%')
-            ->orWhereHas('themeitem', function ($query) use ($searchTerm) {
-                $query->where('themename', 'like', '%' . $searchTerm . '%');
-            })
-            ->orWhereHas('applicant', function ($query1) use ($searchTerm) {
-                $query1->where('name', 'like', '%' . $searchTerm . '%');
-            })
-            ->orWhereHas('department', function ($query) use ($searchTerm) {
-                $query->where('shortname', 'like', '%' . $searchTerm . '%');
-            })
-            ->get();
-        return response()->json($data); // Return filtered data as JSON
+        try {
+            $searchTerm = $request->input('search');
+            $data = Workplan::where('activity', 'like', '%' . $searchTerm . '%')
+                ->orWhere('time', 'like', '%' . $searchTerm . '%')
+                ->orWhere('input', 'like', '%' . $searchTerm . '%')
+                ->orWhere('outcome', 'like', '%' . $searchTerm . '%')
+                ->get();
+            return $this->successResponse($data, 'Workplan search completed successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to search workplan items', $e->getMessage(), 500);
+        }
     }
 
-    public function geteditsingleexpenditurepage($id)
-    {
-        // Find the proposal by ID or fail with a 404 error
-        $prop = Workplan::findOrFail($id);
-        $isreadonlypage = false;
-        $isadminmode = true; 
-        // Return the view with the proposal data
-        return view('pages.proposals.proposalform', compact('prop', 'isreadonlypage', 'isadminmode', 'departments', 'grants', 'themes'));
-    }
+
 
     public function updateWorkplan(Request $request, $id)
     {

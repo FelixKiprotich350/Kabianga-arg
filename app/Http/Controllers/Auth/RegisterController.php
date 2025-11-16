@@ -3,27 +3,20 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\User;
 use Hash;
-use App\Services\DualNotificationService;
+use Illuminate\Http\Request;
 
 class RegisterController extends Controller
 {
-    //
-    public function showRegistrationForm()
-    {
-        return view('pages.auth.register');
-    }
-
     public function resetuserpassword(Request $request, $id)
     {
-        if (!auth()->user()->haspermission('canresetuserpasswordordisablelogin')) {
+        if (! auth()->user()->haspermission('canresetuserpasswordordisablelogin')) {
             return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
         }
 
         $request->validate([
-            'password' => 'required|string|min:6'
+            'password' => 'required|string|min:6',
         ]);
 
         $user = User::findOrFail($id);
@@ -44,7 +37,7 @@ class RegisterController extends Controller
             'password' => 'required|string|min:8',
         ]);
 
-        $user = new User();
+        $user = new User;
         $user->name = $validatedData['fullname'];
         $user->email = $validatedData['email'];
         $user->pfno = $validatedData['pfno'];
@@ -56,34 +49,7 @@ class RegisterController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Registration successful'
+            'message' => 'Registration successful',
         ], 201);
-    }
-
-    public function apiForgotPassword(Request $request)
-    {
-        $request->validate(['email' => 'required|email|exists:users']);
-
-        $user = User::where('email', $request->email)->first();
-        $recipientEmail = [$user->email];
-        $details = [
-            'title' => 'Password Reset Request',
-            'body' => 'Your password reset link is here.'
-        ];
-
-        $notificationService = new DualNotificationService();
-        $mailresponse = $mailingController->sendMail($recipientEmail, $details);
-
-        if ($mailresponse['issuccess']) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Password reset email sent successfully'
-            ]);
-        } else {
-            return response()->json([
-                'success' => false,
-                'message' => $mailresponse['message']
-            ], 500);
-        }
     }
 }

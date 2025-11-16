@@ -11,6 +11,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\URL;
 use App\Models\Department;
@@ -22,7 +23,7 @@ use App\Services\SimpleMailService;
 use App\Traits\HasPermissions;
 
 
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable implements MustVerifyEmail, JWTSubject
 {
     use HasApiTokens, HasFactory, Notifiable, HasPermissions;
     // Table name (optional, if not following Laravel naming conventions)
@@ -61,7 +62,10 @@ class User extends Authenticatable implements MustVerifyEmail
         'phonenumber',
         'password',
         'isactive',
-        'isadmin'
+        'isadmin',
+        'highqualification',
+        'officenumber',
+        'faxnumber'
     ];
 
     /**
@@ -88,7 +92,8 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function sendPasswordResetNotification($token)
     {
-        $url = route('password.reset', ['token' => $token]) . '?email=' . urlencode($this->email);
+        $frontendUrl = config('app.frontend_url', config('app.url'));
+        $url = $frontendUrl . '/reset-password?token=' . $token . '&email=' . urlencode($this->email);
         $content = "You are receiving this email because we received a password reset request for your account. This link will expire in 60 minutes.";
 
         SimpleMailService::send($this->email, 'Reset Your Password', $content, $url, 'Reset Password');
@@ -96,11 +101,8 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function sendEmailVerificationNotification()
     {
-        $url = \Illuminate\Support\Facades\URL::temporarySignedRoute(
-            'verification.verify',
-            now()->addMinutes(60),
-            ['id' => $this->userid, 'hash' => sha1($this->email)]
-        );
+        $frontendUrl = config('app.frontend_url', config('app.url'));
+        $url = $frontendUrl . '/verify-email?id=' . $this->userid . '&hash=' . sha1($this->email);
         $content = "Please click the button below to verify your email address.";
 
         SimpleMailService::send($this->email, 'Verify Your Email Address', $content, $url, 'Verify Email');
@@ -273,5 +275,16 @@ class User extends Authenticatable implements MustVerifyEmail
     public function unreadNotifications()
     {
         return $this->notifications()->unread();
+    }
+
+    // JWT Methods
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    public function getJWTCustomClaims()
+    {
+        return [];
     }
 }

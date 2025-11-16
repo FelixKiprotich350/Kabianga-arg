@@ -3,21 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Models\ResearchTheme;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class ResearchThemeController extends Controller
 {
+    use ApiResponse;
     public function fetchAllThemes()
     {
-        $themes = ResearchTheme::all();
-        return response()->json(['data' => $themes]);
+        try {
+            $themes = ResearchTheme::all();
+            return $this->successResponse($themes, 'Research themes retrieved successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to fetch themes', $e->getMessage(), 500);
+        }
     }
 
-    public function index()
-    {
-        return view('pages.themes.index');
-    }
+
 
     public function createTheme(Request $request)
     {
@@ -29,25 +32,24 @@ class ResearchThemeController extends Controller
 
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {
-            return response()->json(['message' => $validator->errors()->first(), 'type' => 'error'], 400);
+            return $this->errorResponse('Validation failed', $validator->errors(), 400);
         }
 
-        // Get next available ID
-        $nextId = ResearchTheme::max('themeid') + 1;
-        
-        $theme = ResearchTheme::create([
-            'themeid' => $nextId,
-            'themename' => $request->themename,
-            'themedescription' => $request->themedescription,
-            'applicablestatus' => $request->applicablestatus
-        ]);
+        try {
+            // Get next available ID
+            $nextId = ResearchTheme::max('themeid') + 1;
+            
+            $theme = ResearchTheme::create([
+                'themeid' => $nextId,
+                'themename' => $request->themename,
+                'themedescription' => $request->themedescription,
+                'applicablestatus' => $request->applicablestatus
+            ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Theme created successfully!', 
-            'type' => 'success',
-            'id' => $theme->themeid
-        ]);
+            return $this->successResponse($theme, 'Theme created successfully!');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to create theme', $e->getMessage(), 500);
+        }
     }
 
     public function updateTheme(Request $request, $id)
@@ -60,32 +62,32 @@ class ResearchThemeController extends Controller
 
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {
-            return response()->json(['message' => $validator->errors()->first(), 'type' => 'error'], 400);
+            return $this->errorResponse('Validation failed', $validator->errors(), 400);
         }
 
-        $theme = ResearchTheme::findOrFail($id);
-        $theme->update([
-            'themename' => $request->themename,
-            'themedescription' => $request->themedescription,
-            'applicablestatus' => $request->applicablestatus
-        ]);
+        try {
+            $theme = ResearchTheme::findOrFail($id);
+            $theme->update([
+                'themename' => $request->themename,
+                'themedescription' => $request->themedescription,
+                'applicablestatus' => $request->applicablestatus
+            ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Theme updated successfully!', 
-            'type' => 'success'
-        ]);
+            return $this->successResponse($theme, 'Theme updated successfully!');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to update theme', $e->getMessage(), 500);
+        }
     }
 
     public function deleteTheme($id)
     {
-        $theme = ResearchTheme::findOrFail($id);
-        $theme->delete();
+        try {
+            $theme = ResearchTheme::findOrFail($id);
+            $theme->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Theme deleted successfully!', 
-            'type' => 'success'
-        ]);
+            return $this->successResponse(null, 'Theme deleted successfully!');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to delete theme', $e->getMessage(), 500);
+        }
     }
 }

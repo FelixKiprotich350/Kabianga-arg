@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Proposals;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Publication;
+use App\Traits\ApiResponse;
 use Exception; 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 class PublicationsController extends Controller
 {
+    use ApiResponse;
     //
     public function postpublication(Request $request)
     {
@@ -62,23 +64,31 @@ class PublicationsController extends Controller
 
     public function fetchall(Request $request)
     {
-        $proposalId = $request->input('proposalid');
-        if ($proposalId) {
-            $data = Publication::where('proposalidfk', $proposalId)->get();
-        } else {
-            $data = Publication::all();
+        try {
+            $proposalId = $request->input('proposalid');
+            if ($proposalId) {
+                $data = Publication::where('proposalidfk', $proposalId)->get();
+            } else {
+                $data = Publication::all();
+            }
+            return $this->successResponse($data, 'Publications retrieved successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse('Failed to fetch publications', $e->getMessage(), 500);
         }
-        return response()->json($data);
     }
 
     public function fetchsearch(Request $request)
     {
-        $searchTerm = $request->input('search');
-        $data = Publication::where('title', 'like', '%' . $searchTerm . '%')
-            ->orWhere('authors', 'like', '%' . $searchTerm . '%')
-            ->orWhere('publisher', 'like', '%' . $searchTerm . '%')
-            ->get();
-        return response()->json(['data' => $data]);
+        try {
+            $searchTerm = $request->input('search');
+            $data = Publication::where('title', 'like', '%' . $searchTerm . '%')
+                ->orWhere('authors', 'like', '%' . $searchTerm . '%')
+                ->orWhere('publisher', 'like', '%' . $searchTerm . '%')
+                ->get();
+            return $this->successResponse($data, 'Publications search completed successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse('Failed to search publications', $e->getMessage(), 500);
+        }
     }
 
     public function updatePublication(Request $request, $id)

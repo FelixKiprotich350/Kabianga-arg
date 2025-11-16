@@ -17,7 +17,7 @@ class ProposalChangesController extends Controller
     public function postproposalchanges(Request $request)
     {
         if(!auth()->user()->haspermission('canproposechanges')){
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Make Proposal Changes!");
+            return response()->json(['success' => false, 'message' => 'You are not Authorized to Make Proposal Changes!'], 403);
         }
         // Validate incoming request data if needed
         // Define validation rules

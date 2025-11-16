@@ -3,18 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Models\Permission;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
 class PermissionsController extends Controller
 {
+    use ApiResponse;
     public function fetchAllPermissions()
     {
         if (!auth()->user()->haspermission('canviewpermissions')) {
-            return response()->json(['data' => []]);
+            return $this->errorResponse('Unauthorized', null, 403);
         }
 
-        $permissions = Permission::orderBy('priorityno')->get();
-        return response()->json(['data' => $permissions]);
+        try {
+            $permissions = Permission::orderBy('priorityno')->get();
+            return $this->successResponse($permissions, 'Permissions retrieved successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to fetch permissions', $e->getMessage(), 500);
+        }
     }
 
 

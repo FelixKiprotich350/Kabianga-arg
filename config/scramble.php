@@ -24,12 +24,14 @@ return [
         /*
          * API version.
          */
-        'version' => env('API_VERSION', '0.0.1'),
+        'version' => env('API_VERSION', '1.0.0'),
 
         /*
          * Description rendered on the home page of the API documentation (`/docs/api`).
          */
-        'description' => '',
+        'description' => 'Comprehensive REST API for managing research grants, proposals, and projects at the University of Kabianga. Built with Laravel and Sanctum for secure token-based authentication.',
+        
+        'title' => 'Kabianga ARG Portal API',
     ],
 
     /*
@@ -39,7 +41,7 @@ return [
         /*
          * Define the title of the documentation's website. App name is used when this config is `null`.
          */
-        'title' => null,
+        'title' => 'Kabianga ARG Portal API Documentation',
 
         /*
          * Define the theme of the documentation. Available options are `light`, `dark`, and `system`.
@@ -89,7 +91,10 @@ return [
      * ],
      * ```
      */
-    'servers' => null,
+    'servers' => [
+        'Local' => env('APP_URL', 'http://localhost:8000') . '/api',
+        'Production' => env('PRODUCTION_URL', 'https://api.kabianga.ac.ke') . '/api',
+    ],
 
     /**
      * Determines how Scramble stores the descriptions of enum cases.

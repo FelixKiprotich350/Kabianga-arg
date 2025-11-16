@@ -17,11 +17,8 @@ class Authenticate extends Middleware
      */
     protected function redirectTo($request)
     {
-        if (!$request->expectsJson()) {
-            return route('pages.login');
-        }
+        return null;
     }
-
 
     /**
      * Handle an incoming request.
@@ -31,11 +28,14 @@ class Authenticate extends Middleware
      * @param  string|null  ...$guards
      * @return mixed
      */
-
     public function handle($request, Closure $next, ...$guards)
     {
         if (!Auth::check()) {
-            return redirect()->route('pages.login');
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated',
+                'error' => 'authentication_required'
+            ], 401);
         }
         return $next($request);
     }

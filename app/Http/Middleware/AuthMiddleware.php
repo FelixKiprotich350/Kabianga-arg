@@ -5,51 +5,35 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Tymon\JWTAuth\Facades\JWTAuth;
+use Tymon\JWTAuth\Exceptions\JWTException;
 
 class AuthMiddleware
 {
     public function handle(Request $request, Closure $next, ...$permissions)
     {
-        // Check authentication
-        if (!Auth::check()) {
-            return $request->expectsJson() 
-                ? response()->json(['message' => 'Unauthenticated'], 401)
-                : redirect()->route('pages.login');
+        try {
+            // Try to authenticate user via JWT
+            $user = JWTAuth::parseToken()->authenticate();
+        } catch (JWTException $e) {
+            return response()->json(['message' => 'Token invalid or expired'], 401);
         }
-
-        $user = Auth::user();
         
         // Ensure user exists and has required properties
         if (!$user) {
-            Auth::logout();
-            return redirect()->route('pages.login');
+            return response()->json(['message' => 'User not found'], 401);
         }
 
-        // Skip email verification for verification routes
-        if (!$request->routeIs('pages.account.verifyemail', 'verification.verify', 'verification.resend')) {
-            // Check email verification
-            if (method_exists($user, 'hasVerifiedEmail') && !$user->hasVerifiedEmail()) {
-                return $request->expectsJson()
-                    ? response()->json(['message' => 'Email not verified'], 403)
-                    : redirect()->route('pages.account.verifyemail');
-            }
-        }
-
-        // Check if user is active (skip if property doesn't exist)
+        // Check if user is active
         if (property_exists($user, 'isactive') && isset($user->isactive) && !$user->isactive) {
-            Auth::logout();
-            return $request->expectsJson()
-                ? response()->json(['message' => 'Account disabled'], 403)
-                : redirect()->route('pages.login')->with('error', 'Account disabled');
+            return response()->json(['message' => 'Account disabled'], 403);
         }
 
         // Check permissions if specified
         if (!empty($permissions)) {
             foreach ($permissions as $permission) {
                 if (method_exists($user, 'haspermission') && !$user->haspermission($permission)) {
-                    return $request->expectsJson()
-                        ? response()->json(['message' => 'Insufficient permissions'], 403)
-                        : redirect()->route('pages.unauthorized');
+                    return response()->json(['message' => 'Insufficient permissions'], 403);
                 }
             }
         }

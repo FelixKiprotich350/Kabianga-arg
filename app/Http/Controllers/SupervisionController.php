@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ResearchProject;
 use App\Models\SupervisionProgress;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Validator;
@@ -11,41 +12,39 @@ use App\Services\DualNotificationService;
 
 class SupervisionController extends Controller
 {
+    use ApiResponse;
     //
-    public function home()
-    {
-        if (!auth()->user()->hasPermission('cansupervise')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Monitor Projects!");
-        }
-        return view('pages.monitoring.index');
-    }
+
 
     public function viewmonitoringpage($id)
     {
         $project = ResearchProject::with(['proposal.applicant', 'proposal.department', 'applicant'])->findOrFail($id);
 
         if (!auth()->user()->hasPermission('canviewmonitoringpage')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Monitor this Project!");
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
-        return view('pages.monitoring.show', compact('project'));
+        return response()->json(['success' => true, 'data' => ['project' => $project]]);
     }
     public function fetchmonitoringreport($id)
     {
-
         if (!auth()->user()->hasPermission('canviewmonitoringpage')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to view this Project Funding!");
+            return $this->errorResponse('Unauthorized', null, 403);
         }
 
-        // Fetch projects where the related proposals' useridfk matches the current user
-        $reports = SupervisionProgress::where('researchidfk', $id)->get();
+        try {
+            // Fetch projects where the related proposals' useridfk matches the current user
+            $reports = SupervisionProgress::where('researchidfk', $id)->get();
 
-        return response()->json($reports);
+            return $this->successResponse($reports, 'Monitoring reports retrieved successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to fetch monitoring reports', $e->getMessage(), 500);
+        }
     }
     public function addreport(Request $request, $id)
     {
         if (!auth()->user()->hasPermission('canviewmonitoringpage')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Add funds to this Project!");
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403); // message: "You are not Authorized to Add funds to this Project!";
         }
 
         // Validate incoming request data if needed
@@ -73,8 +72,7 @@ class SupervisionController extends Controller
         $item->save();
         //notify
         $notificationService = new DualNotificationService();
-        $url = route('pages.projects.viewanyproject', ['id' => $item->researchidfk]);
-        $notificationService->notifyUsersOfProposalActivity('projectmonitoringreportsubmitted', 'Monitoring Report!', 'success', ['New Monitoring Report has been Submitted for this Project.', 'Project Reference : ' . $project->researchnumber], 'View Project', $url);
+        $notificationService->notifyUsersOfProposalActivity('projectmonitoringreportsubmitted', 'Monitoring Report!', 'success', ['New Monitoring Report has been Submitted for this Project.', 'Project Reference : ' . $project->researchnumber], 'View Project', null);
 
         // Optionally, return a response or redirect
         return response(['message' => 'Report Submitted Successfully!!', 'type' => 'success']);

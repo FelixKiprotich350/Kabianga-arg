@@ -5,17 +5,19 @@ namespace App\Http\Controllers;
 use App\Models\Department;
 use App\Models\School;
 use App\Models\Grant;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class DepartmentsController extends Controller
 {
+    use ApiResponse;
     //
     public function postnewdepartment(Request $request)
     {
         if(!auth()->user()->haspermission('canaddoreditdepartment')){
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Add or Edit a Department!");
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403); // message: "You are not Authorized to Add or Edit a Department!";
         }
         // Validate incoming request data if needed
         // Define validation rules
@@ -54,7 +56,7 @@ class DepartmentsController extends Controller
     public function updatedepartment(Request $request, $id)
     {
         if(!auth()->user()->haspermission('canaddoreditdepartment')){
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Add or Edit a Department!");
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403); // message: "You are not Authorized to Add or Edit a Department!";
         }
         // Validate incoming request data if needed
         // Define validation rules
@@ -90,65 +92,21 @@ class DepartmentsController extends Controller
 
 
     }
-    public function viewalldepartments()
-    {
-        if(!auth()->user()->haspermission('canviewdepartmentsandschools')){
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to View Departments!");
-        }
-        $alldepartments = Department::all();
-        $schools=School::all();
-        return view('pages.departments.index', compact('alldepartments','schools'));
-    }
-    public function getviewdepartmentpage($id)
-    {
-        if(!auth()->user()->haspermission('canaddoreditdepartment')){
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Add or Edit a Department!");
-        }
-        // Find the department by ID or fail with a 404 error
-        $department = Department::with('school')->findOrFail($id);
-        return view('pages.departments.show', compact('department'));
-    }
-    public function geteditdepartmentpage($id)
-    {
-        if(!auth()->user()->haspermission('canaddoreditdepartment')){
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Add or Edit a Department!");
-        }
-        // Find the department by ID or fail with a 404 error
-        $department = Department::with('school')->findOrFail($id);
-        $schools = School::all();
-        $isreadonlypage = false;
-        $isadminmode = true; 
-        // Return the view with the department data
-        return view('pages.departments.edit', compact('isreadonlypage', 'isadminmode', 'department', 'schools'));
-    }
+
 
     public function fetchalldepartments()
     {
         try {
             // Check permissions if user is authenticated
             if (auth()->check() && !auth()->user()->isadmin && !auth()->user()->haspermission('canviewdepartmentsandschools')) {
-                return response()->json([
-                    'error' => 'Unauthorized',
-                    'message' => 'You are not authorized to view departments'
-                ], 403);
+                return $this->errorResponse('Unauthorized', null, 403);
             }
             
             $data = Department::with('school')->withCount('users as staff_count')->get();
             
-            // Log for debugging
-            \Log::info('Departments fetched successfully', ['count' => $data->count()]);
-            
-            return response()->json(['data' => $data]);
+            return $this->successResponse($data, 'Departments retrieved successfully');
         } catch (\Exception $e) {
-            \Log::error('Error fetching departments', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            return response()->json([
-                'error' => 'Failed to fetch departments',
-                'message' => $e->getMessage()
-            ], 500);
+            return $this->errorResponse('Failed to fetch departments', $e->getMessage(), 500);
         }
     }
 
@@ -160,23 +118,24 @@ class DepartmentsController extends Controller
                 ->with('school:schoolid,shortname')
                 ->get();
             
-            return response()->json(['data' => $data]);
+            return $this->successResponse($data, 'Departments for proposals retrieved successfully');
         } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Failed to fetch departments',
-                'message' => $e->getMessage()
-            ], 500);
+            return $this->errorResponse('Failed to fetch departments', $e->getMessage(), 500);
         }
     }
 
     public function fetchsearchdepartments(Request $request)
     {
-        $searchTerm = $request->input('search');
-        $data = Department::where('shortname', 'like', '%' . $searchTerm . '%') 
-            ->orWhere('description', 'like', '%' . $searchTerm . '%')
-            ->with('school')
-            ->withCount('users as staff_count')
-            ->get();
-        return response()->json(['data' => $data]);
+        try {
+            $searchTerm = $request->input('search');
+            $data = Department::where('shortname', 'like', '%' . $searchTerm . '%') 
+                ->orWhere('description', 'like', '%' . $searchTerm . '%')
+                ->with('school')
+                ->withCount('users as staff_count')
+                ->get();
+            return $this->successResponse($data, 'Departments search completed successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to search departments', $e->getMessage(), 500);
+        }
     }
 }

@@ -22,8 +22,8 @@ class CustomVerificationController extends Controller
     public function show(Request $request)
     {
         return Auth::user()->hasVerifiedEmail()
-            ? redirect()->route('pages.home')
-            : view('pages.auth.verifyemail');
+            ? response()->json(['success' => true, 'message' => 'Email already verified'])
+            : response()->json(['success' => false, 'message' => 'Email verification required']);
     }
 
     public function verify(Request $request)
@@ -31,24 +31,24 @@ class CustomVerificationController extends Controller
         $user = User::find($request->route('id'));
 
         if (!$user || !hash_equals((string) $request->route('hash'), sha1($user->email))) {
-            return redirect()->route('pages.login')->with('error', 'Invalid verification link.');
+            return response()->json(['success' => false, 'message' => 'Invalid verification link'], 400);
         }
 
         if ($user->hasVerifiedEmail()) {
-            return redirect()->route('pages.home')->with('message', 'Email already verified.');
+            return response()->json(['success' => true, 'message' => 'Email already verified']);
         }
 
         if ($user->markEmailAsVerified()) {
             event(new Verified($user));
         }
 
-        return redirect()->route('pages.home')->with('verified', 'Email verified successfully!');
+        return response()->json(['success' => true, 'message' => 'Email verified successfully']);
     }
 
     public function resend(Request $request)
     {
         if ($request->user()->hasVerifiedEmail()) {
-            return redirect()->route('pages.home');
+            return response()->json(['success' => true, 'message' => 'Email already verified']);
         }
 
         $user = $request->user();
@@ -60,6 +60,6 @@ class CustomVerificationController extends Controller
 
         Mail::to($user->email)->send(new VerifyAccountMail($user, $verificationUrl));
 
-        return back()->with('resent', 'Verification link sent!');
+        return response()->json(['success' => true, 'message' => 'Verification link sent']);
     }
 }

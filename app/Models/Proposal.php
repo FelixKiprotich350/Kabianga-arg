@@ -59,12 +59,9 @@ class Proposal extends Model
         'useridfk',
         'pfnofk',
         'themefk',
-        'highqualification',
         'departmentidfk',
         'approvalstatus',
-        'faxnumber',
         'cellphone',
-        'officephone',
         'submittedstatus',
         'receivedstatus',
         'allowediting'

@@ -11,7 +11,7 @@ class RoleMiddleware
     public function handle(Request $request, Closure $next, ...$permissions)
     {
         if (!Auth::check()) {
-            return redirect()->route('pages.login');
+            return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
         $user = Auth::user();
@@ -30,9 +30,7 @@ class RoleMiddleware
         }
 
         if (!$hasPermission) {
-            return $request->expectsJson()
-                ? response()->json(['message' => 'Access denied'], 403)
-                : redirect()->route('pages.unauthorized');
+            return response()->json(['message' => 'Access denied'], 403);
         }
 
         return $next($request);

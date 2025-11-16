@@ -16,14 +16,18 @@ class EmailAccountVerification
      */
     public function handle(Request $request, Closure $next)
     {
-        // Skip verification check for verification routes
-        if ($request->routeIs('pages.account.verifyemail', 'verification.verify', 'verification.resend')) {
+        // Skip verification check for API verification routes
+        if ($request->is('api/*/auth/verify*') || $request->is('api/*/auth/resend*')) {
             return $next($request);
         }
 
         // Check if the user is authenticated but not email verified
         if (Auth::check() && !Auth::user()->hasVerifiedEmail()) {
-            return redirect()->route('pages.account.verifyemail');
+            return response()->json([
+                'success' => false,
+                'message' => 'Email verification required',
+                'error' => 'email_not_verified'
+            ], 403);
         }
 
         return $next($request);

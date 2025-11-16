@@ -17,7 +17,7 @@ class CustomPasswordResetController extends Controller
     // Show the form to request a password reset link
     public function showLinkRequestForm()
     {
-        return view('pages.auth.passwords.requestreset');
+        return response()->json(['success' => false, 'message' => 'Please use API password reset endpoint']);
     }
 
     // Handle sending the reset link email
@@ -30,14 +30,14 @@ class CustomPasswordResetController extends Controller
         );
 
         return $status === Password::RESET_LINK_SENT
-                    ? back()->with(['status' => 'We have emailed your password reset link!'])
-                    : back()->withErrors(['email' => 'Unable to send reset email. Please try again.']);
+                    ? response()->json(['success' => true, 'message' => 'We have emailed your password reset link!'])
+                    : response()->json(['success' => false, 'message' => 'Unable to send reset email. Please try again.'], 400);
     }
 
     // Show the form to reset the password
     public function showResetForm($token)
     {
-        return view('pages.auth.passwords.reset', ['token' => $token]);
+        return response()->json(['success' => true, 'data' => ['token' => $token], 'message' => 'Use this token to reset password via API']);
     }
 
     // Handle resetting the password
@@ -62,7 +62,7 @@ class CustomPasswordResetController extends Controller
         );
 
         return $status === Password::PASSWORD_RESET
-                    ? redirect()->route('pages.login')->with('status', __($status))
-                    : back()->withErrors(['email' => [__($status)]]);
+                    ? response()->json(['success' => true, 'message' => 'Password reset successfully'])
+                    : response()->json(['success' => false, 'message' => 'Password reset failed'], 400);
     }
 }

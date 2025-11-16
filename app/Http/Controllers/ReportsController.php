@@ -15,12 +15,15 @@ use App\Models\User;
 use App\Models\Expenditureitem;
 use App\Models\FinancialYear;
 use App\Services\PdfGenerationService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class ReportsController extends Controller
 {
+    use ApiResponse;
+    
     protected $pdfService;
 
     public function __construct(PdfGenerationService $pdfService)
@@ -28,23 +31,12 @@ class ReportsController extends Controller
         $this->pdfService = $pdfService;
     }
 
-    //return reports main view
-    public function home()
-    {
-        if (!auth()->user()->haspermission('canviewreports')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to View Reports!");
-        }
-        $allgrants = Grant::all();
-        $allthemes = ResearchTheme::all();
-        $alldepartments = Department::all();
-        $allfinyears = FinancialYear::all();
-        return view('pages.reports.index', compact('allgrants', 'allthemes', 'alldepartments', 'allfinyears'));
-    }
+
 
     public function getallproposals(Request $request)
     {
         if (!auth()->user()->haspermission('canviewallapplications')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to view all Proposals!");
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403); // message: "You are not Authorized to view all Proposals!";
         }
         $searchTerm = $request->input('search');
         if ($searchTerm != null) {
@@ -69,7 +61,7 @@ class ReportsController extends Controller
     public function c(Request $request)
     {
         if (!auth()->user()->haspermission('canviewallapplications')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to view all Proposals!");
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403); // message: "You are not Authorized to view all Proposals!";
         }
         $grantfilter = $request->input('filtergrant');
         $themefilter = $request->input('filtertheme');
@@ -115,8 +107,8 @@ class ReportsController extends Controller
     public function getProposalsBySchool(Request $request)
     {
         if (!auth()->user()->hasPermission('canViewAllApplications')) {
-            return redirect()->route('pages.unauthorized')
-                ->with('unauthorizationmessage', "You are not Authorized to view all Proposals!");
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403)
+                ; // message: "You are not Authorized to view all Proposals!";
         }
 
         $grantFilter = $request->input('filtergrant');
@@ -213,8 +205,8 @@ class ReportsController extends Controller
     public function getProposalsByTheme(Request $request)
     {
         if (!auth()->user()->hasPermission('canViewAllApplications')) {
-            return redirect()->route('pages.unauthorized')
-                ->with('unauthorizationmessage', "You are not Authorized to view all Proposals!");
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403)
+                ; // message: "You are not Authorized to view all Proposals!";
         }
 
         $grantFilter = $request->input('filtergrant');
@@ -311,8 +303,8 @@ class ReportsController extends Controller
     public function getProposalsByGrant(Request $request)
     {
         if (!auth()->user()->hasPermission('canViewAllApplications')) {
-            return redirect()->route('pages.unauthorized')
-                ->with('unauthorizationmessage', "You are not Authorized to view all Proposals!");
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403)
+                ; // message: "You are not Authorized to view all Proposals!";
         }
 
         $themeFilter = $request->input('filtertheme');
@@ -410,7 +402,7 @@ class ReportsController extends Controller
     public function getFinancialSummary(Request $request)
     {
         if (!auth()->user()->haspermission('canviewreports')) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+            return $this->errorResponse('Unauthorized', null, 403);
         }
 
         try {
@@ -440,21 +432,16 @@ class ReportsController extends Controller
                 DB::raw('COUNT(*) as proposal_count')
             )->first();
 
-            return response()->json([
-                'success' => true,
+            return $this->successResponse([
                 'total_funding' => $totalFunding,
                 'average_funding' => round($avgFunding, 2),
                 'funding_count' => $fundingCount,
                 'total_budget' => $budgetData->total_budget ?? 0,
                 'budget_utilization' => $budgetData->total_budget > 0 ? round(($totalFunding / $budgetData->total_budget) * 100, 2) : 0,
                 'funding_by_month' => $this->getFundingByMonth($yearFilter)
-            ]);
+            ], 'Financial summary retrieved successfully');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Failed to load financial data',
-                'message' => $e->getMessage()
-            ], 500);
+            return $this->errorResponse('Failed to load financial data', $e->getMessage(), 500);
         }
     }
 
@@ -731,25 +718,15 @@ class ReportsController extends Controller
                 return response()->json(['error' => 'Invalid report type'], 400);
         }
 
-        $html = view('pages.reports.pdf-template', compact('data', 'title', 'filters'))->render();
-        
-        try {
-            $pdf = $this->pdfService->generatePdf($html, [
-                'page-size' => 'A4',
-                'orientation' => 'Portrait',
-                'margin-top' => '0.75in',
-                'margin-right' => '0.75in',
-                'margin-bottom' => '0.75in',
-                'margin-left' => '0.75in'
-            ]);
-
-            return response($pdf, 200, [
-                'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'attachment; filename="' . strtolower(str_replace(' ', '_', $title)) . '_' . date('Y-m-d') . '.pdf"'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to generate PDF: ' . $e->getMessage()], 500);
-        }
+        // Return report data as JSON since this is an API application
+        return response()->json([
+            'success' => true,
+            'report_type' => $reportType,
+            'title' => $title,
+            'generated_at' => now()->toISOString(),
+            'filters' => $filters,
+            'data' => $data
+        ]);
     }
 
     // Progress Tracking Report

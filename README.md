@@ -1,38 +1,39 @@
-# Kabianga Annual Research Grants Portal
+# Kabianga Annual Research Grants Portal - API
 
-A comprehensive web-based portal for managing research grants, proposals, and projects at the University of Kabianga.
+A comprehensive REST API for managing research grants, proposals, and projects at the University of Kabianga.
 
 ## Overview
 
-The Kabianga ARG Portal streamlines the entire research lifecycle from proposal submission to project completion and reporting. Built with Laravel, it provides a robust platform for researchers, administrators, and supervisors to collaborate effectively.
+The Kabianga ARG API provides complete backend functionality for research lifecycle management from proposal submission to project completion and reporting. Built with Laravel and Sanctum for secure token-based authentication.
 
 ## Key Features
 
+- **Token-based Authentication** - Secure API access with Laravel Sanctum
 - **User Management** - Role-based access control with permissions
 - **Research Proposals** - Complete proposal lifecycle management
 - **Project Tracking** - Monitor active research projects and progress
 - **Grant Management** - Manage funding opportunities and allocations
 - **Reporting System** - Comprehensive analytics and reports
-- **Notification System** - Real-time in-app and email notifications
+- **Notification System** - Real-time notifications via API
 - **PDF Generation** - Automated document generation for proposals and reports
 
-## System Architecture
+## API Architecture
 
-### Core Modules
-- **Authentication & Authorization** - Secure login with role-based permissions
-- **Dashboard** - Real-time statistics and activity monitoring
-- **Proposals Management** - Submit, review, approve/reject research proposals
-- **Projects Management** - Track active projects, progress, and funding
-- **User Management** - Manage researchers, supervisors, and administrators
-- **Reports & Analytics** - Generate comprehensive reports and insights
+### Core Endpoints
+- **Authentication** - `/api/v1/auth/*` - Login, register, token management
+- **Proposals** - `/api/v1/proposals/*` - Submit, review, approve/reject proposals
+- **Projects** - `/api/v1/projects/*` - Track active projects, progress, and funding
+- **Users** - `/api/v1/users/*` - Manage researchers, supervisors, and administrators
+- **Reports** - `/api/v1/reports/*` - Generate comprehensive reports and insights
+- **Dashboard** - `/api/v1/dashboard/*` - Real-time statistics and activity
 
 ### Technology Stack
 - **Backend**: Laravel 10.x (PHP 8.1+)
 - **Database**: MySQL 8.0+
-- **Frontend**: Blade templates with Bootstrap
+- **Authentication**: Laravel Sanctum (Token-based)
 - **PDF Generation**: Snappy/wkhtmltopdf
 - **Queue System**: Laravel Queues for background jobs
-- **Notifications**: Laravel Notifications (Email + In-app)
+- **API Documentation**: Scramble
 
 ## Quick Start
 
@@ -40,7 +41,6 @@ The Kabianga ARG Portal streamlines the entire research lifecycle from proposal 
 - PHP 8.1 or higher
 - Composer
 - MySQL 8.0+
-- Node.js & NPM
 - wkhtmltopdf
 
 ### Installation
@@ -48,13 +48,12 @@ The Kabianga ARG Portal streamlines the entire research lifecycle from proposal 
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd Kabianga-arg
+   cd Kabianga-arg-final
    ```
 
 2. **Install dependencies**
    ```bash
    composer install
-   npm install
    ```
 
 3. **Environment setup**
@@ -80,44 +79,111 @@ The Kabianga ARG Portal streamlines the entire research lifecycle from proposal 
    php artisan db:seed
    ```
 
-6. **Build assets**
-   ```bash
-   npm run build
-   ```
-
-7. **Start the application**
+6. **Start the API server**
    ```bash
    php artisan serve
    ```
+
+## API Documentation
+
+Access the interactive API documentation at `/docs/api` when the server is running.
+
+### Authentication
+
+The API uses Laravel Sanctum for token-based authentication:
+
+1. **Login** to get access token:
+   ```
+   POST /api/v1/auth/login
+   {
+     "email": "user@example.com",
+     "password": "password"
+   }
+   ```
+
+2. **Include token** in subsequent requests:
+   ```
+   Authorization: Bearer {your-token}
+   ```
+
+### Key Endpoints
+
+#### Authentication
+- `POST /api/v1/auth/login` - User login
+- `POST /api/v1/auth/register` - User registration
+- `POST /api/v1/auth/logout` - User logout
+- `GET /api/v1/auth/me` - Get current user
+
+#### Proposals
+- `GET /api/v1/proposals` - List all proposals
+- `POST /api/v1/proposals` - Create new proposal
+- `GET /api/v1/proposals/{id}` - Get specific proposal
+- `POST /api/v1/proposals/{id}/submit` - Submit proposal
+- `POST /api/v1/proposals/{id}/approve` - Approve proposal
+
+#### Projects
+- `GET /api/v1/projects` - List all projects
+- `GET /api/v1/projects/my` - Get user's projects
+- `POST /api/v1/projects/{id}/progress` - Submit progress report
+- `PATCH /api/v1/projects/{id}/complete` - Mark project complete
+
+#### Reports
+- `GET /api/v1/reports/summary` - Get reports summary
+- `GET /api/v1/reports/financial` - Financial reports
+- `POST /api/v1/reports/export` - Export reports
 
 ## Project Structure
 
 ```
 ├── app/
-│   ├── Http/Controllers/     # Application controllers
+│   ├── Http/Controllers/     # API controllers
 │   ├── Models/              # Eloquent models
 │   ├── Services/            # Business logic services
-│   ├── Notifications/       # Email notification classes
-│   └── Traits/             # Reusable traits
+│   └── Notifications/       # Notification classes
 ├── database/
 │   ├── migrations/         # Database migrations
 │   └── seeders/           # Database seeders
-├── resources/
-│   ├── views/             # Blade templates
-│   └── js/               # Frontend JavaScript
 ├── routes/
-│   ├── web.php           # Web routes
-│   └── api.php           # API routes
-└── public/               # Public assets
+│   ├── api.php           # API routes
+│   └── web.php           # Minimal web routes
+└── config/               # Configuration files
 ```
 
-## API Documentation
+## Authentication Flow
 
-The system provides a comprehensive REST API. See [API_README.md](API_README.md) for detailed documentation.
+1. Client sends credentials to `/api/v1/auth/login`
+2. Server validates and returns access token
+3. Client includes token in `Authorization: Bearer {token}` header
+4. Server validates token for protected endpoints
+5. Tokens expire after 7 days (configurable)
 
-## Notification System
+## Error Handling
 
-Advanced notification system with dual delivery (email + in-app). See [NOTIFICATIONS_README.md](NOTIFICATIONS_README.md) for configuration and usage.
+The API returns consistent JSON error responses:
+
+```json
+{
+  "message": "Error description",
+  "errors": {
+    "field": ["Validation error message"]
+  },
+  "status": 422
+}
+```
+
+## Rate Limiting
+
+API endpoints are rate-limited to prevent abuse. Default limits:
+- Authentication endpoints: 5 requests per minute
+- General API endpoints: 60 requests per minute
+
+## Security
+
+- Token-based authentication with Laravel Sanctum
+- Role-based access control (RBAC)
+- Input validation and sanitization
+- SQL injection prevention through Eloquent ORM
+- Rate limiting on all endpoints
 
 ## Contributing
 
@@ -126,14 +192,6 @@ Advanced notification system with dual delivery (email + in-app). See [NOTIFICAT
 3. Make your changes
 4. Run tests: `php artisan test`
 5. Submit a pull request
-
-## Security
-
-- All routes are protected with authentication middleware
-- Role-based access control (RBAC) implementation
-- Input validation and sanitization
-- CSRF protection enabled
-- SQL injection prevention through Eloquent ORM
 
 ## License
 

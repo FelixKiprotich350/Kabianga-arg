@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\FinancialYear;
 use App\Models\GlobalSetting;
 use App\Models\Grant;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -15,7 +16,7 @@ class GrantsController extends Controller
     public function postnewgrant(Request $request)
     {
         if (!auth()->user()->haspermission('canaddoreditgrant')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Add or Edit a Grant!");
+            return response()->json(['success' => false, 'message' => 'You are not Authorized to Add or Edit a Grant!'], 403);
         }
         // Validate incoming request data if needed
         // Define validation rules
@@ -33,9 +34,7 @@ class GrantsController extends Controller
 
         // Check if validation fails
         if ($validator->fails()) {
-            // return response()->json(['error' => $validator->errors()], 400);
-            return response(['message' => 'Fill all the required Fields!', 'type' => 'danger'], 400);
-
+            return response()->json(['success' => false, 'message' => 'Fill all the required Fields!'], 400);
         }
 
         // Assuming you're retrieving grantno, departmentid, and userid from the request
@@ -46,9 +45,7 @@ class GrantsController extends Controller
         $grant->status = $request->input('status');
         $grant->save();
 
-        // Optionally, return a response or redirect
-        // return response()->json(['message' => 'Proposal created successfully'], 201);
-        return response(['message' => 'Grant Saved Successfully!!', 'type' => 'success']);
+        return response()->json(['success' => true, 'message' => 'Grant Saved Successfully!!', 'data' => $grant], 201);
 
 
     }
@@ -56,7 +53,7 @@ class GrantsController extends Controller
     public function updategrant(Request $request, $id)
     {
         if (!auth()->user()->haspermission('canaddoreditgrant')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Add or Edit a Grant!");
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403); // message: "You are not Authorized to Add or Edit a Grant!";
         }
         // Validate incoming request data if needed
         // Define validation rules
@@ -100,37 +97,60 @@ class GrantsController extends Controller
             'current_grant'=>GlobalSetting::where('item','current_open_grant')->first()->value1 ?? null,
             'current_year'=>GlobalSetting::where('item','current_fin_year')->first()->value1 ?? null
         ];
-        return view('pages.grants.index', compact('allgrants', 'finyears','currentsettings'));
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'grants' => $allgrants,
+                'financial_years' => $finyears,
+                'current_settings' => $currentsettings
+            ]
+        ]);
     }
+    
     public function getviewsinglegrantpage($id)
     {
         if (!auth()->user()->haspermission('canaddoreditgrant')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Add or Edit a Grant!");
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
-        // Find the grant by ID or fail with a 404 error
+        
         $grant = Grant::findOrFail($id);
-        $isreadonlypage = true;
-        $isadminmode = true;
-        // Return the view with the grant data
-        return view('pages.grants.grantform', compact('grant', 'isreadonlypage', 'isadminmode'));
+        
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'grant' => $grant,
+                'isreadonlypage' => true,
+                'isadminmode' => true
+            ]
+        ]);
     }
+    
     public function geteditsinglegrantpage($id)
     {
         if (!auth()->user()->haspermission('canaddoreditgrant')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Add or Edit a Grant!");
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
-        // Find the grant by ID or fail with a 404 error
+        
         $grant = Grant::findOrFail($id);
-        $isreadonlypage = true;
-        $isadminmode = true;
-        // Return the view with the grant data
-        return view('pages.proposals.proposalform', compact('isreadonlypage', 'isadminmode', 'grant'));
+        
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'grant' => $grant,
+                'isreadonlypage' => true,
+                'isadminmode' => true
+            ]
+        ]);
     }
 
     public function fetchallgrants()
     {
-        $data = Grant::with('financialyear')->get();
-        return response()->json($data); // Return  data as JSON
+        try {
+            $data = Grant::with('financialyear')->get();
+            return response()->json(['success' => true, 'data' => $data]);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage(), 'data' => []], 500);
+        }
     }
 
     public function fetchsearchgrants(Request $request)
@@ -148,7 +168,7 @@ class GrantsController extends Controller
     public function postcurrentgrant(Request $request)
     {
         if (!auth()->user()->haspermission('canupdatecurrentgrantandyear')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Update Current Settings!");
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403); // message: "You are not Authorized to Update Current Settings!";
         }
         // Validate incoming request data if needed
         // Define validation rules
@@ -182,7 +202,7 @@ class GrantsController extends Controller
     public function postcurrentfinyear(Request $request)
     {
         if (!auth()->user()->haspermission('canupdatecurrentgrantandyear')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Update Current Settings!");
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403); // message: "You are not Authorized to Update Current Settings!";
         }
         // Validate incoming request data if needed
         // Define validation rules

@@ -5,17 +5,19 @@ namespace App\Http\Controllers;
 use App\Models\Department;
 use App\Models\Grant;
 use App\Models\School;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class SchoolsController extends Controller
 {
+    use ApiResponse;
     //
     public function postnewschool(Request $request)
     {
         if(!auth()->user()->haspermission('canaddoreditschool')){
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Add or Edit a Department!");
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403); // message: "You are not Authorized to Add or Edit a Department!";
         }
         // Validate incoming request data if needed
         // Define validation rules
@@ -50,7 +52,7 @@ class SchoolsController extends Controller
     public function updateschool(Request $request, $id)
     {
         if(!auth()->user()->haspermission('canaddoreditschool')){
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Add or Edit a Department!");
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403); // message: "You are not Authorized to Add or Edit a Department!";
         }
         // Validate incoming request data if needed
         // Define validation rules
@@ -84,55 +86,21 @@ class SchoolsController extends Controller
 
 
     }
-    public function modernViewAllSchools()
-    {
-        if(!auth()->user()->haspermission('canviewdepartmentsandschools')){
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to View Schools!");
-        }
-        return view('pages.schools.index');
-    }
-    public function getviewschoolpage($id)
-    {
-        if(!auth()->user()->haspermission('canaddoreditdepartment')){
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Add or Edit a Department!");
-        }
-        // Find the department by ID or fail with a 404 error
-        $school = School::findOrFail($id);
-        $isreadonlypage = true; 
-        return view('pages.departments.schoolform', compact('school', 'isreadonlypage'));
-    }
-    public function geteditschoolpage($id)
-    {
-        if(!auth()->user()->haspermission('canaddoreditschool')){
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to Add or Edit a School!");
-        }
-        // Find the school by ID or fail with a 404 error
-        $school = School::findOrFail($id);
-        $isreadonlypage = false;
-        $isadminmode = true; 
-        // Return the view with the school data
-        return view('pages.departments.schoolform', compact('isreadonlypage', 'isadminmode', 'school'));
-    }
+
 
     public function fetchallschools()
     {
         try {
             // Check permissions if user is authenticated
             if (auth()->check() && !auth()->user()->isadmin && !auth()->user()->haspermission('canviewdepartmentsandschools')) {
-                return response()->json([
-                    'error' => 'Unauthorized',
-                    'message' => 'You are not authorized to view schools'
-                ], 403);
+                return $this->errorResponse('Unauthorized', null, 403);
             }
             
             $data = School::withCount('departments')->get();
             
-            return response()->json(['data' => $data]);
+            return $this->successResponse($data, 'Schools retrieved successfully');
         } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Failed to fetch schools',
-                'message' => $e->getMessage()
-            ], 500);
+            return $this->errorResponse('Failed to fetch schools', $e->getMessage(), 500);
         }
     }
 
@@ -141,10 +109,7 @@ class SchoolsController extends Controller
         try {
             // Check permissions if user is authenticated
             if (auth()->check() && !auth()->user()->isadmin && !auth()->user()->haspermission('canviewdepartmentsandschools')) {
-                return response()->json([
-                    'error' => 'Unauthorized',
-                    'message' => 'You are not authorized to search schools'
-                ], 403);
+                return $this->errorResponse('Unauthorized', null, 403);
             }
             
             $searchTerm = $request->input('search');
@@ -153,12 +118,9 @@ class SchoolsController extends Controller
                 ->withCount('departments')
                 ->get();
                 
-            return response()->json(['data' => $data]);
+            return $this->successResponse($data, 'Schools search completed successfully');
         } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Failed to search schools',
-                'message' => $e->getMessage()
-            ], 500);
+            return $this->errorResponse('Failed to search schools', $e->getMessage(), 500);
         }
     }
 }

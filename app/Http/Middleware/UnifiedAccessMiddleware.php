@@ -12,24 +12,20 @@ class UnifiedAccessMiddleware
     public function handle(Request $request, Closure $next, ...$requirements)
     {
         if (!Auth::check()) {
-            return $request->expectsJson() 
-                ? response()->json(['message' => 'Unauthenticated'], 401)
-                : redirect()->route('pages.login');
+            return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
         $user = Auth::user();
         
         if (!$user || (isset($user->isactive) && !$user->isactive)) {
             Auth::logout();
-            return redirect()->route('pages.login');
+            return response()->json(['message' => 'Account inactive'], 401);
         }
 
         // Check access requirements
         if (!empty($requirements)) {
             if (!AccessControlService::hasAccess($requirements)) {
-                return $request->expectsJson()
-                    ? response()->json(['message' => 'Access denied'], 403)
-                    : redirect()->route('pages.unauthorized');
+                return response()->json(['message' => 'Access denied'], 403);
             }
         }
 

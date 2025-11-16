@@ -17,38 +17,7 @@ class PdfGenerationService
         'enable_font_subsetting' => true,
         'chroot' => null
     ];
-
-    public function generateProposalPdf($proposal, array $options = []): array
-    {
-        try {
-            $pdfOptions = array_merge($this->defaultOptions, $options);
-            
-            $pdf = Pdf::loadView('pages.proposals.printproposal', compact('proposal'))
-                ->setPaper($options['paper'] ?? 'A4', $options['orientation'] ?? 'portrait')
-                ->setOptions($pdfOptions);
-            
-            $filename = $this->generateFilename($proposal->proposalcode, 'Research-Proposal');
-            
-            return [
-                'success' => true,
-                'pdf' => $pdf,
-                'filename' => $filename,
-                'content' => $pdf->output()
-            ];
-            
-        } catch (\Exception $e) {
-            Log::error('PDF Generation Service Error', [
-                'proposal_code' => $proposal->proposalcode ?? 'unknown',
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            return [
-                'success' => false,
-                'error' => $e->getMessage()
-            ];
-        }
-    }
+ 
 
     public function streamPdf($pdfContent, string $filename): \Illuminate\Http\Response
     {

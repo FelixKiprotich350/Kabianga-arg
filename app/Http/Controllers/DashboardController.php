@@ -6,224 +6,105 @@ use App\Models\Proposal;
 use App\Models\ResearchFunding;
 use App\Models\ResearchProject;
 use App\Models\ResearchTheme;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    public function modernDashboard()
-    {
-        if (!auth()->user()->haspermission('canviewadmindashboard')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to View Admin Dashboard!");
-        }
+    use ApiResponse;
 
-        // Get  proposals count
-        $allProposalscount = Proposal::count();
-        $approvedProposalsCount = Proposal::where('approvalstatus', 'APPROVED')->count();
-        $rejectedProposalsCount = Proposal::where('approvalstatus', 'REJECTED')->count();
-        $pendingProposalsCount = Proposal::where('approvalstatus', 'PENDING')->count();
-        
-        $dashboardmetrics = [
-            'allProposalscount' => $allProposalscount,
-            'approvedProposalsCount' => $approvedProposalsCount,
-            'pendingProposalsCount' => $pendingProposalsCount,
-            'rejectedProposalsCount' => $rejectedProposalsCount,
-        ];
-
-        return view('pages.dashboard', $dashboardmetrics);
-    }
-
-    public function modernHome()
-    {
-        // Get the current user's personal stats - accessible to all users
-        $userid = auth()->user()->userid;
-        $proposals = Proposal::where('useridfk', $userid)->get();
-        $proposalsids = $proposals->pluck('proposalid');
-        $projects = ResearchProject::whereIn('proposalidfk', $proposalsids)->get();
-        $projectsids = $projects->pluck('researchid');
-        $fundings = ResearchFunding::whereIn('researchidfk', $projectsids)->get();
-
-        // Personal stats
-        $personalStats = [
-            'totalProposals' => $proposals->count(),
-            'approvedProposals' => $proposals->where('approvalstatus', 'APPROVED')->count(),
-            'pendingProposals' => $proposals->where('approvalstatus', 'PENDING')->count(),
-            'rejectedProposals' => $proposals->where('approvalstatus', 'REJECTED')->count(),
-            'activeProjects' => $projects->where('projectstatus', ResearchProject::STATUS_ACTIVE)->count(),
-            'completedProjects' => $projects->where('projectstatus', ResearchProject::STATUS_COMPLETED)->count(),
-            'cancelledProjects' => $projects->where('projectstatus', ResearchProject::STATUS_CANCELLED)->count(),
-            'totalFunding' => $fundings->sum('amount'),
-            'recentProposals' => $proposals->sortByDesc('created_at')->take(5),
-            'recentProjects' => $projects->sortByDesc('created_at')->take(5)
-        ];
-
-        return view('pages.home', $personalStats);
-    }
-
-    public function dashboard()
-    {
-        if (!auth()->user()->haspermission('canviewadmindashboard')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to View Admin Dashboard!");
-        }
-
-
-        // Get  proposals count
-        $allProposalscount = Proposal::count();
-        $approvedProposalsCount = Proposal::where('approvalstatus', 'APPROVED')->count();
-        $rejectedProposalsCount = Proposal::where('approvalstatus', 'REJECTED')->count();
-        $pendingProposalsCount = Proposal::where('approvalstatus', 'PENDING')->count();
-        // $requirechangeProposalsCount = Proposal::where('approvalstatus', 'requirechange')->count();
-        $dashboardmetrics = [
-            'allProposalscount' => $allProposalscount,
-            'approvedProposalsCount' => $approvedProposalsCount,
-            'pendingProposalsCount' => $pendingProposalsCount,
-            // 'requirechangeProposalsCount' => $requirechangeProposalsCount,
-            'rejectedProposalsCount' => $rejectedProposalsCount,
-        ];
-
-        return view('pages.dashboard', $dashboardmetrics);
-    }
-    public function chartdata1()
-    {
-        if (!auth()->user()->haspermission('canviewadmindashboard')) {
-            return redirect()->route('pages.unauthorized')->with('unauthorizationmessage', "You are not Authorized to View Admin Dashboard!");
-        }
-        $themes = ResearchTheme::all();
-        // Count proposals grouped by theme
-        $themeCounts = Proposal::join('researchthemes', 'proposals.themefk', '=', 'researchthemes.themeid')
-            ->select('researchthemes.themename as themename', DB::raw('count(proposals.proposalid) as total'))
-            ->groupBy('themename')
-            ->get()
-            ->toArray();
-
-        // Prepare the data array
-        $data = [
-            ['Research Theme', 'Applications Count'], // Header row
-        ];
-
-        foreach ($themes as $theme) {
-            $count = 0;
-            foreach ($themeCounts as $tc) {
-                if ($tc['themename'] === $theme->themename) {
-                    $count = $tc['total'];
-                    break;
-                }
-            }
-            $data[] = [
-                $theme->themename,
-                $count,
-            ];
-        }
-        // Get  proposals count
-        $allProposalscount = Proposal::count();
-        $approvedProposalsCount = Proposal::where('approvalstatus', 'APPROVED')->count();
-        $rejectedProposalsCount = Proposal::where('approvalstatus', 'REJECTED')->count();
-        $pendingProposalsCount = Proposal::where('approvalstatus', 'PENDING')->count();
-        $requirechangeProposalsCount = Proposal::where('approvalstatus', 'requirechange')->count();
-        $dashboardmetrics = [
-            'allProposalscount' => $allProposalscount,
-            'approvedProposalsCount' => $approvedProposalsCount,
-            'pendingProposalsCount' => $pendingProposalsCount,
-            'requirechangeProposalsCount' => $requirechangeProposalsCount,
-            'rejectedProposalsCount' => $rejectedProposalsCount,
-            'themeCounts' => $data
-        ];
-
-        return view('pages.dashboard', $dashboardmetrics);
-    }
     public function chartdata(Request $request)
     {
         if (!auth()->user()->haspermission('canviewadmindashboard')) {
-            return [];
+            return $this->errorResponse('Unauthorized', null, 403);
         }
 
-        $proposalsQuery = Proposal::with('department', 'grantitem', 'themeitem', 'applicant')->where('submittedstatus', 'SUBMITTED');
-
-
-        $themes = ResearchTheme::all();
-        $chartData = [
-            'labels' => [],
-            'datasets' => [
-                [
-                    'label' => 'Total Proposals',
-                    'backgroundColor' => 'rgba(17, 126, 73, 1)',
+        try {
+            $themes = ResearchTheme::all();
+            
+            // Bar Chart Data 1 - Proposals per Theme
+            $barChartData = [
+                'labels' => [],
+                'datasets' => [[
+                    'label' => 'Proposals per Theme',
+                    'backgroundColor' => 'rgba(54, 162, 235, 0.8)',
                     'borderColor' => 'rgba(54, 162, 235, 1)',
                     'borderWidth' => 1,
                     'data' => []
-                ],
-                [
-                    'label' => 'Male Applicants',
-                    'backgroundColor' => 'rgba(236, 141, 87, 1)',
-                    'borderColor' => 'rgba(75, 192, 192, 1)',
-                    'borderWidth' => 1,
-                    'data' => []
-                ],
-                [
-                    'label' => 'Female Applicants',
-                    'backgroundColor' => 'rgba(236, 87, 182, 1)',
+                ]]
+            ];
+
+            foreach ($themes as $theme) {
+                $count = Proposal::where('themefk', $theme->themeid)->count();
+                $barChartData['labels'][] = $theme->themename;
+                $barChartData['datasets'][0]['data'][] = $count;
+            }
+
+            // Pie Chart Data - Proposal Status Counts
+            $approvedCount = Proposal::where('approvalstatus', 'APPROVED')->count();
+            $rejectedCount = Proposal::where('approvalstatus', 'REJECTED')->count();
+            $pendingCount = Proposal::where('approvalstatus', 'PENDING')->count();
+            $draftCount = Proposal::where('approvalstatus', 'DRAFT')->count();
+
+            $pieChartData = [
+                'labels' => ['Approved', 'Rejected', 'Pending', 'Draft'],
+                'datasets' => [[
+                    'data' => [$approvedCount, $rejectedCount, $pendingCount, $draftCount],
+                    'backgroundColor' => [
+                        'rgba(40, 167, 69, 0.8)',
+                        'rgba(220, 53, 69, 0.8)', 
+                        'rgba(255, 193, 7, 0.8)',
+                        'rgba(108, 117, 125, 0.8)'
+                    ],
+                    'borderColor' => [
+                        'rgba(40, 167, 69, 1)',
+                        'rgba(220, 53, 69, 1)',
+                        'rgba(255, 193, 7, 1)',
+                        'rgba(108, 117, 125, 1)'
+                    ],
+                    'borderWidth' => 1
+                ]]
+            ];
+
+            // Bar Chart Data 2 - Projects per Theme
+            $barChart2Data = [
+                'labels' => [],
+                'datasets' => [[
+                    'label' => 'Projects per Theme',
+                    'backgroundColor' => 'rgba(255, 99, 132, 0.8)',
                     'borderColor' => 'rgba(255, 99, 132, 1)',
                     'borderWidth' => 1,
                     'data' => []
-                ],
-                [
-                    'label' => 'Approved Proposals',
-                    'backgroundColor' => 'rgba(87, 148, 236, 1)',
-                    'borderColor' => 'rgba(75, 192, 192, 1)',
-                    'borderWidth' => 1,
-                    'data' => []
-                ],
-                [
-                    'label' => 'Rejected Proposals',
-                    'backgroundColor' => 'rgba(207, 210, 101, 1)',
-                    'borderColor' => 'rgba(255, 99, 132, 1)',
-                    'borderWidth' => 1,
-                    'data' => []
-                ],
-                [
-                    'label' => 'Pending Proposals',
-                    'backgroundColor' => 'rgba(101, 173, 45, 0.47)',
-                    'borderColor' => 'rgba(255, 99, 132, 1)',
-                    'borderWidth' => 1,
-                    'data' => []
-                ]
-            ]
-        ];
+                ]]
+            ];
 
-        foreach ($themes as $theme) {
-            $filteredProposals = (clone $proposalsQuery)->where('themefk', $theme->themeid)->get();
+            foreach ($themes as $theme) {
+                $count = ResearchProject::whereHas('proposal', function($query) use ($theme) {
+                    $query->where('themefk', $theme->themeid);
+                })->count();
+                $barChart2Data['labels'][] = $theme->themename;
+                $barChart2Data['datasets'][0]['data'][] = $count;
+            }
 
-            $approvedCount = $filteredProposals->where('approvalstatus', 'APPROVED')->count();
-            $rejectedCount = $filteredProposals->where('approvalstatus', 'REJECTED')->count();
-            $pendingCount = $filteredProposals->where('approvalstatus', 'PENDING')->count();
+            $chartData = [
+                'barChart_data1' => $barChartData,
+                'barchart_data2' => $barChart2Data,
+                'pieChart' => $pieChartData
+            ];
 
-            $maleCount = $filteredProposals->filter(fn($proposal) => $proposal->applicant->gender == 'Male')->count();
-            $femaleCount = $filteredProposals->filter(fn($proposal) => $proposal->applicant->gender == 'Female')->count();
-
-            $chartData['labels'][] = $theme->themename;
-
-            $chartData['datasets'][0]['data'][] = $filteredProposals->count();
-            $chartData['datasets'][1]['data'][] = $maleCount;
-            $chartData['datasets'][2]['data'][] = $femaleCount;
-            $chartData['datasets'][3]['data'][] = $approvedCount;
-            $chartData['datasets'][4]['data'][] = $rejectedCount;
-            $chartData['datasets'][5]['data'][] = $pendingCount;
+            return $this->successResponse($chartData, 'Chart data retrieved successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to fetch chart data', null, 500);
         }
-
-        return response()->json($chartData);
     }
 
-    public function unauthorized()
-    {
-        $message = session('unauthorizationmessage');
 
-        return view('pages.unauthorized', ['message' => $message]);
-
-    }
 
     public function getStats()
     {
         if (!auth()->user()->haspermission('canviewadmindashboard')) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized', 'data' => []], 403);
+            return $this->errorResponse('Unauthorized', null, 403);
         }
 
         try {
@@ -246,16 +127,16 @@ class DashboardController extends Controller
                 ]
             ];
 
-            return response()->json(['success' => true, 'data' => $stats]);
+            return $this->successResponse($stats, 'Dashboard statistics retrieved successfully');
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Failed to fetch stats', 'data' => []], 500);
+            return $this->errorResponse('Failed to fetch stats', null, 500);
         }
     }
 
     public function getRecentActivity()
     {
         if (!auth()->user()->haspermission('canviewadmindashboard')) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized', 'data' => []], 403);
+            return $this->errorResponse('Unauthorized', null, 403);
         }
 
         try {
@@ -289,12 +170,12 @@ class DashboardController extends Controller
 
             $activities = $recentProposals->concat($recentProjects)
                 ->sortByDesc('date')
-                ->take(limit: 5)
+                ->take(5)
                 ->values();
 
-            return response()->json(['success' => true, 'data' => $activities]);
+            return $this->successResponse($activities, 'Recent activity retrieved successfully');
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Failed to fetch recent activity', 'data' => []], 500);
+            return $this->errorResponse('Failed to fetch recent activity', null, 500);
         }
     }
 

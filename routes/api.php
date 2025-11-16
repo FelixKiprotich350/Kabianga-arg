@@ -55,7 +55,7 @@ Route::prefix('v1')->group(function () {
 });
 
 // Protected API Routes (Authentication Required)
-Route::prefix('v1')->middleware(['web', 'auth'])->group(function () {
+Route::prefix('v1')->middleware(['auth:api'])->group(function () {
     
     // Test endpoints (authenticated)
     Route::get('/test/users', [\App\Http\Controllers\ApiTestController::class, 'testUsers']);
@@ -92,7 +92,6 @@ Route::prefix('v1')->middleware(['web', 'auth'])->group(function () {
     Route::prefix('proposals')->group(function () {
         Route::get('/', [ProposalsController::class, 'fetchallproposals']);
         Route::post('/', [ProposalsController::class, 'postnewproposal']);
-        Route::get('/my', [ProposalsController::class, 'fetchmyapplications']);
         Route::get('/search', [ProposalsController::class, 'fetchsearchproposals']);
         Route::get('/{id}', [ProposalsController::class, 'fetchsingleproposal']);
         Route::get('/{id}/view', [ProposalsController::class, 'getsingleproposalpage']);
@@ -176,9 +175,7 @@ Route::prefix('v1')->middleware(['web', 'auth'])->group(function () {
     // Projects Management
     Route::prefix('projects')->group(function () {
         Route::get('/', [ProjectsController::class, 'fetchallprojects']);
-        Route::get('/my', [ProjectsController::class, 'fetchmyallprojects']);
         Route::get('/active', [ProjectsController::class, 'fetchallactiveprojects']);
-        Route::get('/my-active', [ProjectsController::class, 'fetchmyactiveprojects']);
         Route::get('/search', [ProjectsController::class, 'fetchsearchallprojects']);
         Route::get('/{id}', [ProjectsController::class, 'viewanyproject']);
         Route::post('/{id}/progress', [ProjectsController::class, 'submitmyprogress'])->name('api.projects.submitmyprogress');

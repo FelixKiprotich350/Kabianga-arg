@@ -8,22 +8,11 @@ use App\Models\User;
 
 class CommonPagesController extends Controller
 {
-    //default/index/root page for the portal
-    public function index()
-    {
-        if (Auth::check()) {
-            return redirect()->route('pages.dashboard');
-        }
-        return view('pages.common.index');
-    }
-
-    //
     public function setupadmin()
     {
         $allusers = User::all();
-        return view('pages.common.setupadmin', compact('allusers'));
+        return response()->json(['success' => true, 'data' => ['users' => $allusers]]);
     }
-
 
     public function makeInitialAdmin(Request $request)
     {
@@ -35,25 +24,6 @@ class CommonPagesController extends Controller
         $user->isadmin = true;
         $user->save();
 
-        return redirect()->back()->with('success', 'User has been set as Admin.');
-    }
-
-    //About ARG portal page
-    public function about()
-    {
-        return view('pages.common.about');
-    }
-
-
-    //login page
-    public function login()
-    {
-        return view('pages.auth.login');
-    }
-
-    //Register new account page
-    public function register()
-    {
-        return view('pages.auth.register');
+        return response()->json(['success' => true, 'message' => 'User has been set as Admin']);
     }
 }

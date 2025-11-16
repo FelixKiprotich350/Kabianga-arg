@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Proposals;
 
 use App\Http\Controllers\Controller;
 use App\Models\Expenditureitem;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class ExpendituresController extends Controller
 {
+    use ApiResponse;
     //
     public function postexpenditure(Request $request)
     {
@@ -80,58 +82,58 @@ class ExpendituresController extends Controller
 
     public function fetchall(Request $request)
     {
-        $proposalId = $request->input('proposalid');
-        if ($proposalId) {
-            $data = Expenditureitem::where('proposalidfk', $proposalId)->get();
-            
-            $totalBudget = $data->sum('total');
-            $rule_40 = $data->whereIn('itemtype', ['Travel/Other', 'Travels', 'Personnel/Subsistence'])->sum('total');
-            $rule_60 = $data->whereIn('itemtype', ['Facilities/Equipment', 'Consumables'])->sum('total');
-            $isCompliant = $totalBudget > 0 ? ($rule_60 >= (0.6 * $totalBudget)) : true;
-            
-            return response()->json([
-                'items' => $data,
-                'is_compliant' => $isCompliant,
-                'total_budget' => $totalBudget
-            ]);
-        } else {
-            $data = Expenditureitem::all();
-            return response()->json($data);
+        try {
+            $proposalId = $request->input('proposalid');
+            if ($proposalId) {
+                $data = Expenditureitem::where('proposalidfk', $proposalId)->get();
+                
+                $totalBudget = $data->sum('total');
+                $rule_40 = $data->whereIn('itemtype', ['Travel/Other', 'Travels', 'Personnel/Subsistence'])->sum('total');
+                $rule_60 = $data->whereIn('itemtype', ['Facilities/Equipment', 'Consumables'])->sum('total');
+                $isCompliant = $totalBudget > 0 ? ($rule_60 >= (0.6 * $totalBudget)) : true;
+                
+                return $this->successResponse([
+                    'items' => $data,
+                    'is_compliant' => $isCompliant,
+                    'total_budget' => $totalBudget
+                ], 'Expenditures retrieved successfully');
+            } else {
+                $data = Expenditureitem::all();
+                return $this->successResponse($data, 'All expenditures retrieved successfully');
+            }
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to fetch expenditures', $e->getMessage(), 500);
         }
     }
 
     public function fetchsearch(Request $request)
     {
-        $searchTerm = $request->input('search');
-        $proposalId = $request->input('proposalid');
-        
-        $query = Expenditureitem::query();
-        
-        // Filter by proposal if provided
-        if ($proposalId) {
-            $query->where('proposalidfk', $proposalId);
-        }
-        
-        // Apply search filters
-        $data = $query->where(function($q) use ($searchTerm) {
-                $q->where('itemtype', 'like', '%' . $searchTerm . '%')
-                  ->orWhere('item', 'like', '%' . $searchTerm . '%')
-                  ->orWhere('total', 'like', '%' . $searchTerm . '%');
-            })
-            ->get();
+        try {
+            $searchTerm = $request->input('search');
+            $proposalId = $request->input('proposalid');
             
-        return response()->json($data);
+            $query = Expenditureitem::query();
+            
+            // Filter by proposal if provided
+            if ($proposalId) {
+                $query->where('proposalidfk', $proposalId);
+            }
+            
+            // Apply search filters
+            $data = $query->where(function($q) use ($searchTerm) {
+                    $q->where('itemtype', 'like', '%' . $searchTerm . '%')
+                      ->orWhere('item', 'like', '%' . $searchTerm . '%')
+                      ->orWhere('total', 'like', '%' . $searchTerm . '%');
+                })
+                ->get();
+                
+            return $this->successResponse($data, 'Expenditures search completed successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to search expenditures', $e->getMessage(), 500);
+        }
     }
 
-    public function geteditsingleexpenditurepage($id)
-    {
-        // Find the proposal by ID or fail with a 404 error
-        $prop = Expenditureitem::findOrFail($id);
-        $isreadonlypage = false;
-        $isadminmode = true;
-        // Return the view with the proposal data
-        return view('pages.proposals.proposalform', compact('prop', 'isreadonlypage', 'isadminmode', 'departments', 'grants', 'themes'));
-    }
+
     public function isvalidbudget($id, $newexpenditure, $newexpendituretype)
     {
         $data = Expenditureitem::where('proposalidfk', $id)

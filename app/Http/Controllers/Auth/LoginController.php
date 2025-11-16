@@ -3,102 +3,70 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\User;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
+/**
+ * @OA\Info(
+ *     title="Kabianga ARG Portal API",
+ *     version="1.0.0",
+ *     description="Research grants management API"
+ * )
+ *
+ * @OA\SecurityScheme(
+ *     securityScheme="bearerAuth",
+ *     type="http",
+ *     scheme="bearer"
+ * )
+ */
 class LoginController extends Controller
 {
+    use ApiResponse;
     //
 
-    public function showLoginForm()
-    {
-        if (Auth::check()) {
-            // return response("authorised");
-            return redirect()->route('pages.dashboard');
-        } else {
-            return view('pages.auth.login');
-
-        }
-    }
-
-    public function login(Request $request)
-    {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required'
-        ]);
-        
-        $rememberme = $request->has('rememberme');
-        
-        if (Auth::attempt($credentials, $rememberme)) {
-            $request->session()->regenerate();
-            $request->session()->flash('login_success', true);
-            
-            return redirect()->intended('/home');
-        }
-
-        return back()->withInput($request->only('email'))->withErrors([
-            'email' => 'Invalid credentials. Please try again.',
-        ]);
-    }
-
-    // API Methods
     public function apiLogin(Request $request)
     {
         $credentials = $request->validate([
             'email' => 'required|email',
-            'password' => 'required'
+            'password' => 'required',
         ]);
 
-        if (Auth::attempt($credentials)) {
+        if ($token = JWTAuth::attempt($credentials)) {
             $user = Auth::user();
-            $token = $user->createToken('auth-token')->plainTextToken;
 
-            return response()->json([
-                'success' => true,
-                'token' => $token,
+            return $this->successResponse([
+                'access_token' => $token,
+                'token_type' => 'bearer',
+                'expires_in' => JWTAuth::factory()->getTTL() * 60,
                 'user' => $user,
-                'expires_at' => now()->addHours(24)->toISOString()
-            ]);
+            ], 'Login successful');
         }
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Invalid credentials'
-        ], 401);
+        return $this->errorResponse('Invalid credentials', null, 401);
     }
 
     public function apiLogout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Logged out successfully'
-        ]);
+        JWTAuth::invalidate(JWTAuth::getToken());
+
+        return $this->successResponse(null, 'Logged out successfully');
     }
 
     public function apiMe(Request $request)
     {
-        return response()->json([
-            'success' => true,
-            'user' => $request->user()
-        ]);
+        return $this->successResponse($request->user(), 'User information retrieved successfully');
     }
 
     public function apiRefresh(Request $request)
     {
-        $user = $request->user();
-        $user->currentAccessToken()->delete();
-        $token = $user->createToken('auth-token')->plainTextToken;
+        $token = JWTAuth::refresh(JWTAuth::getToken());
 
-        return response()->json([
-            'success' => true,
-            'token' => $token,
-            'user' => $user,
-            'expires_at' => now()->addHours(24)->toISOString()
-        ]);
+        return $this->successResponse([
+            'access_token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => JWTAuth::factory()->getTTL() * 60,
+        ], 'Token refreshed successfully');
     }
 }

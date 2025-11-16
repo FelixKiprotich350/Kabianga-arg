@@ -1,0 +1,1874 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Kabianga ARG Portal API",
+        "version": "1.0.0",
+        "description": "Research grants management API"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000"
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "paths": {
+        "/api/v1/auth/login": {
+            "post": {
+                "tags": ["Authentication"],
+                "summary": "User login",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": ["email", "password"],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "password123"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "token": {
+                                            "type": "string"
+                                        },
+                                        "user": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/logout": {
+            "post": {
+                "tags": ["Authentication"],
+                "summary": "User logout",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "Logout successful"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/me": {
+            "get": {
+                "tags": ["Authentication"],
+                "summary": "Get current user",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "User information"
+                    }
+                }
+            }
+        },
+        "/api/v1/proposals": {
+            "get": {
+                "tags": ["Proposals"],
+                "summary": "List all proposals",
+                "security": [{"bearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "scope",
+                        "in": "query",
+                        "schema": {"type": "string", "enum": ["all", "my"]},
+                        "description": "Filter scope: 'all' for all proposals, 'my' for user's proposals"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of proposals"
+                    }
+                }
+            },
+            "post": {
+                "tags": ["Proposals"],
+                "summary": "Create new proposal",
+                "security": [{"bearerAuth": []}],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {"type": "string"},
+                                    "description": {"type": "string"},
+                                    "budget": {"type": "number"}
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Proposal created"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects": {
+            "get": {
+                "tags": ["Projects"],
+                "summary": "List all projects",
+                "security": [{"bearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "scope",
+                        "in": "query",
+                        "schema": {"type": "string", "enum": ["all", "my"]},
+                        "description": "Filter scope: 'all' for all projects, 'my' for user's projects"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of projects"
+                    }
+                }
+            }
+        },
+        "/api/v1/users": {
+            "get": {
+                "tags": ["Users"],
+                "summary": "List all users",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "List of users"
+                    }
+                }
+            }
+        },
+        "/api/v1/reports/summary": {
+            "get": {
+                "tags": ["Reports"],
+                "summary": "Get reports summary",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "Reports summary"
+                    }
+                }
+            }
+        },
+        "/api/v1/dashboard/stats": {
+            "get": {
+                "tags": ["Dashboard"],
+                "summary": "Get dashboard statistics",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "Dashboard statistics"
+                    }
+                }
+            }
+        },
+        "/api/v1/dashboard/activity": {
+            "get": {
+                "tags": ["Dashboard"],
+                "summary": "Get recent activity",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "Recent activity"
+                    }
+                }
+            }
+        },
+        "/api/v1/dashboard/charts": {
+            "get": {
+                "tags": ["Dashboard"],
+                "summary": "Get chart data",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "Chart data"
+                    }
+                }
+            }
+        },
+        "/api/v1/proposals/{id}": {
+            "get": {
+                "tags": ["Proposals"],
+                "summary": "Get specific proposal",
+                "security": [{"bearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {"type": "string"}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Proposal details"
+                    }
+                }
+            },
+            "put": {
+                "tags": ["Proposals"],
+                "summary": "Update proposal",
+                "security": [{"bearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {"type": "string"}
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {"type": "string"},
+                                    "description": {"type": "string"}
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Proposal updated"
+                    }
+                }
+            }
+        },
+        "/api/v1/proposals/{id}/submit": {
+            "post": {
+                "tags": ["Proposals"],
+                "summary": "Submit proposal",
+                "security": [{"bearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {"type": "string"}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Proposal submitted"
+                    }
+                }
+            }
+        },
+        "/api/v1/proposals/{id}/approve": {
+            "post": {
+                "tags": ["Proposals"],
+                "summary": "Approve proposal",
+                "security": [{"bearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {"type": "string"}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Proposal approved"
+                    }
+                }
+            }
+        },
+        "/api/v1/proposals/{id}/reject": {
+            "post": {
+                "tags": ["Proposals"],
+                "summary": "Reject proposal",
+                "security": [{"bearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {"type": "string"}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Proposal rejected"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{id}": {
+            "get": {
+                "tags": ["Projects"],
+                "summary": "Get specific project",
+                "security": [{"bearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {"type": "string"}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Project details"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{id}/progress": {
+            "post": {
+                "tags": ["Projects"],
+                "summary": "Submit progress report",
+                "security": [{"bearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {"type": "string"}
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "progress": {"type": "string"},
+                                    "percentage": {"type": "number"}
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Progress submitted"
+                    }
+                }
+            },
+            "get": {
+                "tags": ["Projects"],
+                "summary": "Get project progress",
+                "security": [{"bearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {"type": "string"}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Project progress"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{id}/complete": {
+            "patch": {
+                "tags": ["Projects"],
+                "summary": "Mark project as complete",
+                "security": [{"bearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {"type": "string"}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Project completed"
+                    }
+                }
+            }
+        },
+        "/api/v1/users/{id}": {
+            "get": {
+                "tags": ["Users"],
+                "summary": "Get specific user",
+                "security": [{"bearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {"type": "string"}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User details"
+                    }
+                }
+            },
+            "put": {
+                "tags": ["Users"],
+                "summary": "Update user",
+                "security": [{"bearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {"type": "string"}
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {"type": "string"},
+                                    "email": {"type": "string"}
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "User updated"
+                    }
+                }
+            }
+        },
+        "/api/v1/schools": {
+            "get": {
+                "tags": ["Schools"],
+                "summary": "List all schools",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "List of schools"
+                    }
+                }
+            },
+            "post": {
+                "tags": ["Schools"],
+                "summary": "Create new school",
+                "security": [{"bearerAuth": []}],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {"type": "string"}
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "School created"
+                    }
+                }
+            }
+        },
+        "/api/v1/departments": {
+            "get": {
+                "tags": ["Departments"],
+                "summary": "List all departments",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "List of departments"
+                    }
+                }
+            },
+            "post": {
+                "tags": ["Departments"],
+                "summary": "Create new department",
+                "security": [{"bearerAuth": []}],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {"type": "string"}
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Department created"
+                    }
+                }
+            }
+        },
+        "/api/v1/grants": {
+            "get": {
+                "tags": ["Grants"],
+                "summary": "List all grants",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "List of grants"
+                    }
+                }
+            },
+            "post": {
+                "tags": ["Grants"],
+                "summary": "Create new grant",
+                "security": [{"bearerAuth": []}],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {"type": "string"},
+                                    "amount": {"type": "number"}
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Grant created"
+                    }
+                }
+            }
+        },
+        "/api/v1/themes": {
+            "get": {
+                "tags": ["Themes"],
+                "summary": "List all research themes",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "List of themes"
+                    }
+                }
+            },
+            "post": {
+                "tags": ["Themes"],
+                "summary": "Create new theme",
+                "security": [{"bearerAuth": []}],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {"type": "string"}
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Theme created"
+                    }
+                }
+            }
+        },
+        "/api/v1/collaborators": {
+            "get": {
+                "tags": ["Collaborators"],
+                "summary": "List all collaborators",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "List of collaborators"
+                    }
+                }
+            },
+            "post": {
+                "tags": ["Collaborators"],
+                "summary": "Add new collaborator",
+                "security": [{"bearerAuth": []}],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {"type": "string"},
+                                    "email": {"type": "string"}
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Collaborator added"
+                    }
+                }
+            }
+        },
+        "/api/v1/publications": {
+            "get": {
+                "tags": ["Publications"],
+                "summary": "List all publications",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "List of publications"
+                    }
+                }
+            },
+            "post": {
+                "tags": ["Publications"],
+                "summary": "Add new publication",
+                "security": [{"bearerAuth": []}],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {"type": "string"},
+                                    "journal": {"type": "string"}
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Publication added"
+                    }
+                }
+            }
+        },
+        "/api/v1/expenditures": {
+            "get": {
+                "tags": ["Expenditures"],
+                "summary": "List all expenditures",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "List of expenditures"
+                    }
+                }
+            },
+            "post": {
+                "tags": ["Expenditures"],
+                "summary": "Add new expenditure",
+                "security": [{"bearerAuth": []}],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "description": {"type": "string"},
+                                    "amount": {"type": "number"}
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Expenditure added"
+                    }
+                }
+            }
+        },
+        "/api/v1/monitoring": {
+            "get": {
+                "tags": ["Monitoring"],
+                "summary": "List monitoring data",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "Monitoring data"
+                    }
+                }
+            }
+        },
+        "/api/v1/permissions": {
+            "get": {
+                "tags": ["Permissions"],
+                "summary": "List all permissions",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "List of permissions"
+                    }
+                }
+            }
+        },
+        "/api/v1/settings": {
+            "get": {
+                "tags": ["Settings"],
+                "summary": "Get application settings",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "Application settings"
+                    }
+                }
+            },
+            "put": {
+                "tags": ["Settings"],
+                "summary": "Update application settings",
+                "security": [{"bearerAuth": []}],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "setting_key": {"type": "string"},
+                                    "setting_value": {"type": "string"}
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Settings updated"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/refresh": {
+            "post": {
+                "tags": ["Authentication"],
+                "summary": "Refresh JWT token",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "Token refreshed"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/register": {
+            "post": {
+                "tags": ["Authentication"],
+                "summary": "Register new user",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {"type": "string"},
+                                    "email": {"type": "string"},
+                                    "password": {"type": "string"}
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User registered"
+                    }
+                }
+            }
+        },
+
+        "/api/v1/proposals/search": {
+            "get": {
+                "tags": ["Proposals"],
+                "summary": "Search proposals",
+                "security": [{"bearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {"type": "string"}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Search results"
+                    }
+                }
+            }
+        },
+        "/api/v1/proposals/{id}/receive": {
+            "post": {
+                "tags": ["Proposals"],
+                "summary": "Receive proposal",
+                "security": [{"bearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {"type": "string"}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Proposal received"
+                    }
+                }
+            }
+        },
+        "/api/v1/proposals/{id}/request-changes": {
+            "post": {
+                "tags": ["Proposals"],
+                "summary": "Request changes to proposal",
+                "security": [{"bearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {"type": "string"}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Changes requested"
+                    }
+                }
+            }
+        },
+
+        "/api/v1/projects/active": {
+            "get": {
+                "tags": ["Projects"],
+                "summary": "Get active projects",
+                "security": [{"bearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "scope",
+                        "in": "query",
+                        "schema": {"type": "string", "enum": ["all", "my"]},
+                        "description": "Filter scope: 'all' for all active projects, 'my' for user's active projects"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Active projects"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{id}/funding": {
+            "post": {
+                "tags": ["Projects"],
+                "summary": "Add project funding",
+                "security": [{"bearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {"type": "string"}
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "amount": {"type": "number"},
+                                    "source": {"type": "string"}
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Funding added"
+                    }
+                }
+            },
+            "get": {
+                "tags": ["Projects"],
+                "summary": "Get project funding",
+                "security": [{"bearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {"type": "string"}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Project funding"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{id}/pause": {
+            "patch": {
+                "tags": ["Projects"],
+                "summary": "Pause project",
+                "security": [{"bearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {"type": "string"}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Project paused"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{id}/resume": {
+            "patch": {
+                "tags": ["Projects"],
+                "summary": "Resume project",
+                "security": [{"bearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {"type": "string"}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Project resumed"
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{id}/cancel": {
+            "patch": {
+                "tags": ["Projects"],
+                "summary": "Cancel project",
+                "security": [{"bearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {"type": "string"}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Project cancelled"
+                    }
+                }
+            }
+        },
+        "/api/v1/users/search": {
+            "get": {
+                "tags": ["Users"],
+                "summary": "Search users",
+                "security": [{"bearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {"type": "string"}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Search results"
+                    }
+                }
+            }
+        },
+        "/api/v1/users/{id}/permissions": {
+            "patch": {
+                "tags": ["Users"],
+                "summary": "Update user permissions",
+                "security": [{"bearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {"type": "string"}
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "permissions": {
+                                        "type": "array",
+                                        "items": {"type": "string"}
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Permissions updated"
+                    }
+                }
+            }
+        },
+        "/api/v1/users/{id}/role": {
+            "patch": {
+                "tags": ["Users"],
+                "summary": "Update user role",
+                "security": [{"bearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {"type": "string"}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Role updated"
+                    }
+                }
+            }
+        },
+        "/api/v1/financial-years": {
+            "get": {
+                "tags": ["Financial Years"],
+                "summary": "List financial years",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "List of financial years"
+                    }
+                }
+            },
+            "post": {
+                "tags": ["Financial Years"],
+                "summary": "Create financial year",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "201": {
+                        "description": "Financial year created"
+                    }
+                }
+            }
+        },
+        "/api/v1/workplans": {
+            "get": {
+                "tags": ["Workplans"],
+                "summary": "List workplans",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "List of workplans"
+                    }
+                }
+            },
+            "post": {
+                "tags": ["Workplans"],
+                "summary": "Create workplan",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "201": {
+                        "description": "Workplan created"
+                    }
+                }
+            }
+        },
+        "/api/v1/research-design": {
+            "get": {
+                "tags": ["Research Design"],
+                "summary": "List research designs",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "List of research designs"
+                    }
+                }
+            },
+            "post": {
+                "tags": ["Research Design"],
+                "summary": "Create research design",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "201": {
+                        "description": "Research design created"
+                    }
+                }
+            }
+        },
+        "/api/v1/reports/financial": {
+            "get": {
+                "tags": ["Reports"],
+                "summary": "Get financial reports",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "Financial reports"
+                    }
+                }
+            }
+        },
+        "/api/v1/reports/projects": {
+            "get": {
+                "tags": ["Reports"],
+                "summary": "Get projects report",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "Projects report"
+                    }
+                }
+            }
+        },
+        "/api/v1/reports/proposals": {
+            "get": {
+                "tags": ["Reports"],
+                "summary": "Get proposals report",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "Proposals report"
+                    }
+                }
+            }
+        },
+        "/api/v1/reports/export": {
+            "post": {
+                "tags": ["Reports"],
+                "summary": "Export reports",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "Report exported"
+                    }
+                }
+            }
+        },
+        "/api/v1/collaborators/{id}": {
+            "put": {
+                "tags": ["Collaborators"],
+                "summary": "Update collaborator",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Collaborator updated"}}
+            },
+            "delete": {
+                "tags": ["Collaborators"],
+                "summary": "Delete collaborator",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Collaborator deleted"}}
+            }
+        },
+        "/api/v1/collaborators/search": {
+            "get": {
+                "tags": ["Collaborators"],
+                "summary": "Search collaborators",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "Search results"}}
+            }
+        },
+        "/api/v1/departments/{id}": {
+            "get": {
+                "tags": ["Departments"],
+                "summary": "Get department",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Department details"}}
+            },
+            "put": {
+                "tags": ["Departments"],
+                "summary": "Update department",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Department updated"}}
+            }
+        },
+        "/api/v1/departments/for-proposals": {
+            "get": {
+                "tags": ["Departments"],
+                "summary": "Get departments for proposals",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "Departments list"}}
+            }
+        },
+        "/api/v1/expenditures/{id}": {
+            "put": {
+                "tags": ["Expenditures"],
+                "summary": "Update expenditure",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Expenditure updated"}}
+            },
+            "delete": {
+                "tags": ["Expenditures"],
+                "summary": "Delete expenditure",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Expenditure deleted"}}
+            }
+        },
+        "/api/v1/expenditures/search": {
+            "get": {
+                "tags": ["Expenditures"],
+                "summary": "Search expenditures",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "Search results"}}
+            }
+        },
+        "/api/v1/expenditures/budget-validation": {
+            "get": {
+                "tags": ["Expenditures"],
+                "summary": "Get budget validation",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "Budget validation"}}
+            }
+        },
+        "/api/v1/grants/{id}": {
+            "get": {
+                "tags": ["Grants"],
+                "summary": "Get grant",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Grant details"}}
+            },
+            "put": {
+                "tags": ["Grants"],
+                "summary": "Update grant",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Grant updated"}}
+            }
+        },
+        "/api/v1/grants/search": {
+            "get": {
+                "tags": ["Grants"],
+                "summary": "Search grants",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "Search results"}}
+            }
+        },
+        "/api/v1/monitoring/{id}": {
+            "get": {
+                "tags": ["Monitoring"],
+                "summary": "Get monitoring details",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Monitoring details"}}
+            }
+        },
+        "/api/v1/monitoring/{id}/report": {
+            "post": {
+                "tags": ["Monitoring"],
+                "summary": "Add monitoring report",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Report added"}}
+            }
+        },
+        "/api/v1/monitoring/{id}/reports": {
+            "get": {
+                "tags": ["Monitoring"],
+                "summary": "Get monitoring reports",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Monitoring reports"}}
+            }
+        },
+        "/api/v1/notifications/types": {
+            "get": {
+                "tags": ["Notifications"],
+                "summary": "Get notification types",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "Notification types"}}
+            }
+        },
+        "/api/v1/notifications/types/{id}/users": {
+            "get": {
+                "tags": ["Notifications"],
+                "summary": "Get users for notification type",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Users list"}}
+            },
+            "post": {
+                "tags": ["Notifications"],
+                "summary": "Add notifiable users",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Users added"}}
+            },
+            "delete": {
+                "tags": ["Notifications"],
+                "summary": "Remove notifiable users",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Users removed"}}
+            }
+        },
+        "/api/v1/permissions/role/{role}": {
+            "get": {
+                "tags": ["Permissions"],
+                "summary": "Get permissions by role",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "role", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Role permissions"}}
+            }
+        },
+        "/api/v1/projects/search": {
+            "get": {
+                "tags": ["Projects"],
+                "summary": "Search projects",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "Search results"}}
+            }
+        },
+        "/api/v1/projects/my-active": {
+            "get": {
+                "tags": ["Projects"],
+                "summary": "Get my active projects",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "My active projects"}}
+            }
+        },
+        "/api/v1/projects/{id}/assign": {
+            "patch": {
+                "tags": ["Projects"],
+                "summary": "Assign project to me",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Project assigned"}}
+            }
+        },
+        "/api/v1/proposal-changes": {
+            "post": {
+                "tags": ["Proposal Changes"],
+                "summary": "Create proposal change",
+                "security": [{"bearerAuth": []}],
+                "responses": {"201": {"description": "Change created"}}
+            }
+        },
+        "/api/v1/proposal-changes/search": {
+            "get": {
+                "tags": ["Proposal Changes"],
+                "summary": "Search proposal changes",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "Search results"}}
+            }
+        },
+        "/api/v1/proposal-changes/{id}": {
+            "get": {
+                "tags": ["Proposal Changes"],
+                "summary": "Get proposal changes",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Proposal changes"}}
+            }
+        },
+        "/api/v1/proposals/test-snappy": {
+            "get": {
+                "tags": ["Proposals"],
+                "summary": "Test Snappy PDF",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "Test result"}}
+            }
+        },
+        "/api/v1/proposals/{id}/approve-reject": {
+            "post": {
+                "tags": ["Proposals"],
+                "summary": "Approve or reject proposal",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Proposal processed"}}
+            }
+        },
+        "/api/v1/proposals/{id}/basic": {
+            "put": {
+                "tags": ["Proposals"],
+                "summary": "Update proposal basic details",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Basic details updated"}}
+            }
+        },
+        "/api/v1/proposals/{id}/research": {
+            "put": {
+                "tags": ["Proposals"],
+                "summary": "Update proposal research details",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Research details updated"}}
+            }
+        },
+        "/api/v1/proposals/{id}/budget-validation": {
+            "get": {
+                "tags": ["Proposals"],
+                "summary": "Get proposal budget validation",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Budget validation"}}
+            }
+        },
+        "/api/v1/proposals/{id}/changes": {
+            "get": {
+                "tags": ["Proposals"],
+                "summary": "Get proposal changes",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Proposal changes"}}
+            }
+        },
+        "/api/v1/proposals/{id}/collaborators": {
+            "get": {
+                "tags": ["Proposals"],
+                "summary": "Get proposal collaborators",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Proposal collaborators"}}
+            }
+        },
+        "/api/v1/proposals/{id}/edit-status": {
+            "patch": {
+                "tags": ["Proposals"],
+                "summary": "Change proposal edit status",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Edit status changed"}}
+            }
+        },
+        "/api/v1/proposals/{id}/expenditures": {
+            "get": {
+                "tags": ["Proposals"],
+                "summary": "Get proposal expenditures",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Proposal expenditures"}}
+            }
+        },
+        "/api/v1/proposals/{id}/mark-draft": {
+            "post": {
+                "tags": ["Proposals"],
+                "summary": "Mark proposal as draft",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Marked as draft"}}
+            }
+        },
+        "/api/v1/proposals/{id}/pdf": {
+            "get": {
+                "tags": ["Proposals"],
+                "summary": "Generate proposal PDF",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "PDF generated"}}
+            }
+        },
+        "/api/v1/proposals/{id}/publications": {
+            "get": {
+                "tags": ["Proposals"],
+                "summary": "Get proposal publications",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Proposal publications"}}
+            }
+        },
+        "/api/v1/proposals/{id}/research-design": {
+            "get": {
+                "tags": ["Proposals"],
+                "summary": "Get proposal research design",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Research design"}}
+            }
+        },
+        "/api/v1/proposals/{id}/status": {
+            "get": {
+                "tags": ["Proposals"],
+                "summary": "Get proposal status",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Proposal status"}}
+            }
+        },
+        "/api/v1/proposals/{id}/view": {
+            "get": {
+                "tags": ["Proposals"],
+                "summary": "View proposal page",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Proposal page"}}
+            }
+        },
+        "/api/v1/proposals/{id}/workplans": {
+            "get": {
+                "tags": ["Proposals"],
+                "summary": "Get proposal workplans",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Proposal workplans"}}
+            }
+        },
+        "/api/v1/publications/{id}": {
+            "put": {
+                "tags": ["Publications"],
+                "summary": "Update publication",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Publication updated"}}
+            },
+            "delete": {
+                "tags": ["Publications"],
+                "summary": "Delete publication",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Publication deleted"}}
+            }
+        },
+        "/api/v1/publications/search": {
+            "get": {
+                "tags": ["Publications"],
+                "summary": "Search publications",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "Search results"}}
+            }
+        },
+        "/api/v1/reports/budget-actual": {
+            "get": {
+                "tags": ["Reports"],
+                "summary": "Get budget vs actual report",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "Budget actual report"}}
+            }
+        },
+        "/api/v1/reports/compliance": {
+            "get": {
+                "tags": ["Reports"],
+                "summary": "Get compliance report",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "Compliance report"}}
+            }
+        },
+        "/api/v1/reports/performance": {
+            "get": {
+                "tags": ["Reports"],
+                "summary": "Get performance report",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "Performance report"}}
+            }
+        },
+        "/api/v1/reports/progress": {
+            "get": {
+                "tags": ["Reports"],
+                "summary": "Get progress report",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "Progress report"}}
+            }
+        },
+        "/api/v1/reports/proposals/by-grant": {
+            "get": {
+                "tags": ["Reports"],
+                "summary": "Get proposals by grant",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "Proposals by grant"}}
+            }
+        },
+        "/api/v1/reports/proposals/by-school": {
+            "get": {
+                "tags": ["Reports"],
+                "summary": "Get proposals by school",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "Proposals by school"}}
+            }
+        },
+        "/api/v1/reports/proposals/by-theme": {
+            "get": {
+                "tags": ["Reports"],
+                "summary": "Get proposals by theme",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "Proposals by theme"}}
+            }
+        },
+        "/api/v1/reports/publications": {
+            "get": {
+                "tags": ["Reports"],
+                "summary": "Get publications report",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "Publications report"}}
+            }
+        },
+        "/api/v1/reports/users": {
+            "get": {
+                "tags": ["Reports"],
+                "summary": "Get user activity report",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "User activity report"}}
+            }
+        },
+        "/api/v1/research-design/search": {
+            "get": {
+                "tags": ["Research Design"],
+                "summary": "Search research designs",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "Search results"}}
+            }
+        },
+        "/api/v1/research-design/{id}": {
+            "put": {
+                "tags": ["Research Design"],
+                "summary": "Update research design",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Research design updated"}}
+            },
+            "delete": {
+                "tags": ["Research Design"],
+                "summary": "Delete research design",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Research design deleted"}}
+            }
+        },
+        "/api/v1/schools/search": {
+            "get": {
+                "tags": ["Schools"],
+                "summary": "Search schools",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "Search results"}}
+            }
+        },
+        "/api/v1/schools/{id}": {
+            "get": {
+                "tags": ["Schools"],
+                "summary": "Get school",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "School details"}}
+            },
+            "put": {
+                "tags": ["Schools"],
+                "summary": "Update school",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "School updated"}}
+            }
+        },
+        "/api/v1/settings/current-grant": {
+            "post": {
+                "tags": ["Settings"],
+                "summary": "Set current grant",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "Current grant set"}}
+            }
+        },
+        "/api/v1/settings/current-year": {
+            "post": {
+                "tags": ["Settings"],
+                "summary": "Set current financial year",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "Current year set"}}
+            }
+        },
+        "/api/v1/themes/{id}": {
+            "put": {
+                "tags": ["Themes"],
+                "summary": "Update theme",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Theme updated"}}
+            },
+            "delete": {
+                "tags": ["Themes"],
+                "summary": "Delete theme",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Theme deleted"}}
+            }
+        },
+        "/api/v1/users/{id}/disable": {
+            "patch": {
+                "tags": ["Users"],
+                "summary": "Disable user",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "User disabled"}}
+            }
+        },
+        "/api/v1/users/{id}/enable": {
+            "patch": {
+                "tags": ["Users"],
+                "summary": "Enable user",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "User enabled"}}
+            }
+        },
+        "/api/v1/users/{id}/reset-password": {
+            "post": {
+                "tags": ["Users"],
+                "summary": "Reset user password",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Password reset"}}
+            }
+        },
+        "/api/v1/users/{id}/status": {
+            "patch": {
+                "tags": ["Users"],
+                "summary": "Update user status",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Status updated"}}
+            }
+        },
+        "/api/v1/users/{id}/superadmin": {
+            "patch": {
+                "tags": ["Users"],
+                "summary": "Update super admin status",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Super admin status updated"}}
+            }
+        },
+        "/api/v1/workplans/search": {
+            "get": {
+                "tags": ["Workplans"],
+                "summary": "Search workplans",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "Search results"}}
+            }
+        },
+        "/api/v1/workplans/{id}": {
+            "put": {
+                "tags": ["Workplans"],
+                "summary": "Update workplan",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Workplan updated"}}
+            },
+            "delete": {
+                "tags": ["Workplans"],
+                "summary": "Delete workplan",
+                "security": [{"bearerAuth": []}],
+                "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Workplan deleted"}}
+            }
+        },
+        "/api/v1/auth/check": {
+            "get": {
+                "tags": ["Authentication"],
+                "summary": "Check authentication status",
+                "responses": {"200": {"description": "Auth status"}}
+            }
+        },
+        "/api/v1/auth/forgot-password": {
+            "post": {
+                "tags": ["Authentication"],
+                "summary": "Forgot password",
+                "responses": {"200": {"description": "Password reset email sent"}}
+            }
+        },
+        "/api/v1/auth/permission": {
+            "get": {
+                "tags": ["Authentication"],
+                "summary": "Get user permissions",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "User permissions"}}
+            }
+        },
+        "/api/v1/auth/permissions": {
+            "get": {
+                "tags": ["Authentication"],
+                "summary": "Get all permissions",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "All permissions"}}
+            }
+        },
+        "/api/v1/test/connection": {
+            "get": {
+                "tags": ["Testing"],
+                "summary": "Test API connection",
+                "responses": {"200": {"description": "Connection test"}}
+            }
+        },
+        "/api/v1/test/proposals": {
+            "get": {
+                "tags": ["Testing"],
+                "summary": "Test proposals endpoint",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "Proposals test"}}
+            }
+        },
+        "/api/v1/test/users": {
+            "get": {
+                "tags": ["Testing"],
+                "summary": "Test users endpoint",
+                "security": [{"bearerAuth": []}],
+                "responses": {"200": {"description": "Users test"}}
+            }
+        }
+    }
+}
