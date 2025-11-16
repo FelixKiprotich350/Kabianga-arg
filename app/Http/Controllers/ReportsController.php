@@ -15,6 +15,7 @@ use App\Models\School;
 use App\Models\User;
 use App\Services\PdfGenerationService;
 use App\Traits\ApiResponse;
+use Barryvdh\Snappy\Facades\SnappyPdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -34,7 +35,10 @@ class ReportsController extends Controller
         if (! auth()->user()->haspermission('canviewallapplications')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
+
         $searchTerm = $request->input('search');
+        $exportType = $request->input('exporttype');
+
         if ($searchTerm != null) {
             $data = Proposal::with('department', 'grantitem', 'themeitem', 'applicant')
                 ->select(['proposalid', 'researchtitle', 'useridfk', 'departmentidfk', 'grantnofk', 'themefk', 'approvalstatus', 'created_at', 'updated_at'])
@@ -55,10 +59,17 @@ class ReportsController extends Controller
                 ->get();
         }
 
+        // Handle export types
+        if ($exportType === 'csv') {
+            return $this->exportProposalsCSV($data);
+        } elseif ($exportType === 'pdf') {
+            return $this->exportProposalsPDF($data);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Proposals retrieved successfully',
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
@@ -159,7 +170,7 @@ class ReportsController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Proposals by school retrieved successfully',
-            'data' => $chartData
+            'data' => $chartData,
         ]);
     }
 
@@ -226,7 +237,7 @@ class ReportsController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Proposals by theme retrieved successfully',
-            'data' => $chartData
+            'data' => $chartData,
         ]);
     }
 
@@ -236,31 +247,20 @@ class ReportsController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
+        $exportType = $request->input('exporttype');
         $projects = ResearchProject::with('proposal.applicant', 'proposal.department', 'proposal.grantitem')->get();
 
-        $chartData = [
-            'labels' => ['Active', 'Completed', 'Suspended', 'Cancelled'],
-            'datasets' => [[
-                'label' => 'Projects by Status',
-                'backgroundColor' => ['rgba(17, 126, 73, 1)', 'rgba(87, 148, 236, 1)', 'rgba(207, 210, 101, 1)', 'rgba(236, 87, 182, 1)'],
-                'data' => [
-                    $projects->where('projectstatus', 'ACTIVE')->count(),
-                    $projects->where('projectstatus', 'COMPLETED')->count(),
-                    $projects->where('projectstatus', 'SUSPENDED')->count(),
-                    $projects->where('projectstatus', 'CANCELLED')->count(),
-                ],
-            ]],
-        ];
+        // Handle export types
+        if ($exportType === 'csv') {
+            return $this->exportProjectsCSV($projects);
+        } elseif ($exportType === 'pdf') {
+            return $this->exportProjectsPDF($projects);
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Projects report retrieved successfully',
-            'data' => [
-                'chartData' => $chartData,
-                'totalProjects' => $projects->count(),
-                'totalFunding' => $projects->sum('totalfunding'),
-                'projects' => $projects,
-            ]
+            'data' => $projects,
         ]);
     }
 
@@ -305,7 +305,7 @@ class ReportsController extends Controller
                 'departmentData' => $departmentData,
                 'totalUsers' => $users->count(),
                 'verifiedUsers' => $users->where('email_verified_at', '!=', null)->count(),
-            ]
+            ],
         ]);
     }
 
@@ -333,7 +333,7 @@ class ReportsController extends Controller
                 'chartData' => $chartData,
                 'themes' => $themes,
                 'totalThemes' => $themes->count(),
-            ]
+            ],
         ]);
     }
 
@@ -366,7 +366,7 @@ class ReportsController extends Controller
                 'totalGrants' => $grants->count(),
                 'activeGrants' => $activeGrants,
                 'totalFunding' => $totalFunding,
-            ]
+            ],
         ]);
     }
 
@@ -425,7 +425,7 @@ class ReportsController extends Controller
                 'chartData' => $chartData,
                 'schoolData' => $schoolData,
                 'totalSchools' => $schools->count(),
-            ]
+            ],
         ]);
     }
 
@@ -456,7 +456,7 @@ class ReportsController extends Controller
             'data' => [
                 'departmentData' => $departmentData,
                 'totalDepartments' => $departments->count(),
-            ]
+            ],
         ]);
     }
 
@@ -496,7 +496,7 @@ class ReportsController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Summary report retrieved successfully',
-            'data' => $summary
+            'data' => $summary,
         ]);
     }
 
@@ -633,7 +633,7 @@ class ReportsController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Proposals by grant retrieved successfully',
-            'data' => $chartData
+            'data' => $chartData,
         ]);
     }
 
@@ -1121,6 +1121,164 @@ class ReportsController extends Controller
                 'error' => 'Failed to load reports summary',
                 'message' => $e->getMessage(),
             ], 500);
+        }
+    }
+
+    private function exportProposalsCSV($data)
+    {
+        $filename = 'proposals_report_'.date('Y-m-d_H-i-s').'.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ];
+
+        $callback = function () use ($data) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['ID', 'Title', 'Applicant', 'Department', 'Grant', 'Theme', 'Status', 'Created At']);
+
+            foreach ($data as $proposal) {
+                fputcsv($file, [
+                    $proposal->proposalid,
+                    $proposal->researchtitle,
+                    $proposal->applicant->name ?? 'N/A',
+                    $proposal->department->shortname ?? 'N/A',
+                    $proposal->grantitem->grantid ?? 'N/A',
+                    $proposal->themeitem->themename ?? 'N/A',
+                    $proposal->approvalstatus->value ?? 'N/A',
+                    $proposal->created_at->format('Y-m-d H:i:s'),
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    private function exportProposalsPDF($data)
+    {
+        $html = '<html><head><title>Proposals Report</title><style>
+            body { font-family: Arial, sans-serif; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+            h1 { color: #333; text-align: center; }
+        </style></head><body>';
+
+        $html .= '<h1>Proposals Report</h1>';
+        $html .= '<p>Generated on: '.date('Y-m-d H:i:s').'</p>';
+        $html .= '<table><thead><tr>';
+        $html .= '<th>ID</th><th>Title</th><th>Applicant</th><th>Department</th><th>Grant</th><th>Theme</th><th>Status</th><th>Created At</th>';
+        $html .= '</tr></thead><tbody>';
+
+        foreach ($data as $proposal) {
+            $html .= '<tr>';
+            $html .= '<td>'.$proposal->proposalid.'</td>';
+            $html .= '<td>'.htmlspecialchars($proposal->researchtitle).'</td>';
+            $html .= '<td>'.htmlspecialchars($proposal->applicant->name ?? 'N/A').'</td>';
+            $html .= '<td>'.htmlspecialchars($proposal->department->shortname ?? 'N/A').'</td>';
+            $html .= '<td>'.htmlspecialchars($proposal->grantitem->grantid ?? 'N/A').'</td>';
+            $html .= '<td>'.htmlspecialchars($proposal->themeitem->themename ?? 'N/A').'</td>';
+            $html .= '<td>'.($proposal->approvalstatus->value ?? 'N/A').'</td>';
+            $html .= '<td>'.$proposal->created_at->format('Y-m-d H:i:s').'</td>';
+            $html .= '</tr>';
+        }
+
+        $html .= '</tbody></table></body></html>';
+
+        $filename = 'proposals_report_'.date('Y-m-d_H-i-s').'.pdf';
+
+        try {
+            $pdfContent = SnappyPdf::loadHTML($html)->output();
+
+            return response($pdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+            ]);
+        } catch (\Exception $e) {
+            // Fallback to HTML if PDF generation fails
+            return response($html, 200, [
+                'Content-Type' => 'text/html',
+                'Content-Disposition' => 'attachment; filename="proposals_report_'.date('Y-m-d_H-i-s').'.html"',
+            ]);
+        }
+    }
+
+    private function exportProjectsCSV($data)
+    {
+        $filename = 'projects_report_'.date('Y-m-d_H-i-s').'.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ];
+
+        $callback = function () use ($data) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['ID', 'Title', 'Applicant', 'Department', 'Grant', 'Status', 'Total Funding', 'Created At']);
+
+            foreach ($data as $project) {
+                fputcsv($file, [
+                    $project->researchid,
+                    $project->proposal->researchtitle ?? 'N/A',
+                    $project->proposal->applicant->name ?? 'N/A',
+                    $project->proposal->department->shortname ?? 'N/A',
+                    $project->proposal->grantitem->grantid ?? 'N/A',
+                    $project->projectstatus,
+                    $project->totalfunding ?? 0,
+                    $project->created_at->format('Y-m-d H:i:s'),
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    private function exportProjectsPDF($data)
+    {
+        $html = '<html><head><title>Projects Report</title><style>
+            body { font-family: Arial, sans-serif; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+            h1 { color: #333; text-align: center; }
+        </style></head><body>';
+
+        $html .= '<h1>Projects Report</h1>';
+        $html .= '<p>Generated on: '.date('Y-m-d H:i:s').'</p>';
+        $html .= '<table><thead><tr>';
+        $html .= '<th>ID</th><th>Title</th><th>Applicant</th><th>Department</th><th>Grant</th><th>Status</th><th>Total Funding</th><th>Created At</th>';
+        $html .= '</tr></thead><tbody>';
+
+        foreach ($data as $project) {
+            $html .= '<tr>';
+            $html .= '<td>'.$project->researchid.'</td>';
+            $html .= '<td>'.htmlspecialchars($project->proposal->researchtitle ?? 'N/A').'</td>';
+            $html .= '<td>'.htmlspecialchars($project->proposal->applicant->name ?? 'N/A').'</td>';
+            $html .= '<td>'.htmlspecialchars($project->proposal->department->shortname ?? 'N/A').'</td>';
+            $html .= '<td>'.htmlspecialchars($project->proposal->grantitem->grantid ?? 'N/A').'</td>';
+            $html .= '<td>'.$project->projectstatus.'</td>';
+            $html .= '<td>'.number_format($project->totalfunding ?? 0, 2).'</td>';
+            $html .= '<td>'.$project->created_at->format('Y-m-d H:i:s').'</td>';
+            $html .= '</tr>';
+        }
+
+        $html .= '</tbody></table></body></html>';
+
+        $filename = 'projects_report_'.date('Y-m-d_H-i-s').'.pdf';
+
+        try {
+            $pdfContent = SnappyPdf::loadHTML($html)->output();
+
+            return response($pdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+            ]);
+        } catch (\Exception $e) {
+            // Fallback to HTML if PDF generation fails
+            return response($html, 200, [
+                'Content-Type' => 'text/html',
+                'Content-Disposition' => 'attachment; filename="projects_report_'.date('Y-m-d_H-i-s').'.html"',
+            ]);
         }
     }
 }
