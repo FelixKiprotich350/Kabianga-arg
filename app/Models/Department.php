@@ -54,13 +54,11 @@ class Department extends Model
     
     public function users()
     {
-        return $this->hasManyThrough(
-            User::class,
-            Proposal::class,
-            'departmentidfk',
-            'userid',
-            'depid',
-            'useridfk'
-        )->distinct();
+        return $this->hasMany(User::class, 'departmentidfk', 'depid');
+    }
+
+    public function proposals()
+    {
+        return $this->hasMany(Proposal::class, 'departmentidfk', 'depid');
     }
 }

@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kabianga ARG - Reports Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .report-card { margin-bottom: 20px; }
+        .chart-container { height: 400px; margin: 20px 0; }
+        .stats-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .loading { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-center my-4">Kabianga ARG - Comprehensive Reports Dashboard</h1>
+                
+                <!-- Authentication -->
+                <div id="auth-section" class="card mb-4">
+                    <div class="card-body">
+                        <h5>Authentication</h5>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <input type="email" id="email" class="form-control" placeholder="Email" value="admin@example.com">
+                            </div>
+                            <div class="col-md-4">
+                                <input type="password" id="password" class="form-control" placeholder="Password" value="password">
+                            </div>
+                            <div class="col-md-4">
+                                <button onclick="login()" class="btn btn-primary">Login</button>
+                                <button onclick="logout()" class="btn btn-secondary">Logout</button>
+                            </div>
+                        </div>
+                        <div id="auth-status" class="mt-2"></div>
+                    </div>
+                </div>
+
+                <!-- Summary Report -->
+                <div class="card report-card">
+                    <div class="card-header">
+                        <h5>Summary Report</h5>
+                        <button onclick="loadSummaryReport()" class="btn btn-sm btn-primary">Load Summary</button>
+                    </div>
+                    <div class="card-body">
+                        <div id="summary-loading" class="loading">Loading...</div>
+                        <div id="summary-content"></div>
+                    </div>
+                </div>
+
+                <!-- Proposals Reports -->
+                <div class="card report-card">
+                    <div class="card-header">
+                        <h5>Proposals Reports</h5>
+                        <div class="btn-group">
+                            <button onclick="loadProposalsReport()" class="btn btn-sm btn-primary">All Proposals</button>
+                            <button onclick="loadProposalsBySchool()" class="btn btn-sm btn-info">By School</button>
+                            <button onclick="loadProposalsByTheme()" class="btn btn-sm btn-success">By Theme</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="proposals-loading" class="loading">Loading...</div>
+                        <div id="proposals-content"></div>
+                        <canvas id="proposalsChart" class="chart-container"></canvas>
+                    </div>
+                </div>
+
+                <!-- Projects Report -->
+                <div class="card report-card">
+                    <div class="card-header">
+                        <h5>Projects Report</h5>
+                        <button onclick="loadProjectsReport()" class="btn btn-sm btn-primary">Load Projects</button>
+                    </div>
+                    <div class="card-body">
+                        <div id="projects-loading" class="loading">Loading...</div>
+                        <div id="projects-content"></div>
+                        <canvas id="projectsChart" class="chart-container"></canvas>
+                    </div>
+                </div>
+
+                <!-- Users Report -->
+                <div class="card report-card">
+                    <div class="card-header">
+                        <h5>Users Report</h5>
+                        <button onclick="loadUsersReport()" class="btn btn-sm btn-primary">Load Users</button>
+                    </div>
+                    <div class="card-body">
+                        <div id="users-loading" class="loading">Loading...</div>
+                        <div id="users-content"></div>
+                        <canvas id="usersChart" class="chart-container"></canvas>
+                    </div>
+                </div>
+
+                <!-- Themes Report -->
+                <div class="card report-card">
+                    <div class="card-header">
+                        <h5>Research Themes Report</h5>
+                        <button onclick="loadThemesReport()" class="btn btn-sm btn-primary">Load Themes</button>
+                    </div>
+                    <div class="card-body">
+                        <div id="themes-loading" class="loading">Loading...</div>
+                        <div id="themes-content"></div>
+                        <canvas id="themesChart" class="chart-container"></canvas>
+                    </div>
+                </div>
+
+                <!-- Grants Report -->
+                <div class="card report-card">
+                    <div class="card-header">
+                        <h5>Grants Report</h5>
+                        <button onclick="loadGrantsReport()" class="btn btn-sm btn-primary">Load Grants</button>
+                    </div>
+                    <div class="card-body">
+                        <div id="grants-loading" class="loading">Loading...</div>
+                        <div id="grants-content"></div>
+                        <canvas id="grantsChart" class="chart-container"></canvas>
+                    </div>
+                </div>
+
+                <!-- Schools Report -->
+                <div class="card report-card">
+                    <div class="card-header">
+                        <h5>Schools Report</h5>
+                        <button onclick="loadSchoolsReport()" class="btn btn-sm btn-primary">Load Schools</button>
+                    </div>
+                    <div class="card-body">
+                        <div id="schools-loading" class="loading">Loading...</div>
+                        <div id="schools-content"></div>
+                        <canvas id="schoolsChart" class="chart-container"></canvas>
+                    </div>
+                </div>
+
+                <!-- Departments Report -->
+                <div class="card report-card">
+                    <div class="card-header">
+                        <h5>Departments Report</h5>
+                        <button onclick="loadDepartmentsReport()" class="btn btn-sm btn-primary">Load Departments</button>
+                    </div>
+                    <div class="card-body">
+                        <div id="departments-loading" class="loading">Loading...</div>
+                        <div id="departments-content"></div>
+                    </div>
+                </div>
+
+                <!-- Export Options -->
+                <div class="card report-card">
+                    <div class="card-header">
+                        <h5>Export Reports</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <select id="exportType" class="form-control">
+                                    <option value="summary">Summary</option>
+                                    <option value="proposals">Proposals</option>
+                                    <option value="projects">Projects</option>
+                                    <option value="users">Users</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <select id="exportFormat" class="form-control">
+                                    <option value="pdf">PDF</option>
+                                    <option value="json">JSON</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button onclick="exportReport()" class="btn btn-success">Export Report</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let authToken = localStorage.getItem('authToken');
+        const API_BASE = '/api/v1';
+
+        // Authentication
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                if (data.access_token) {
+                    authToken = data.access_token;
+                    localStorage.setItem('authToken', authToken);
+                    document.getElementById('auth-status').innerHTML = '<div class="alert alert-success">Logged in successfully</div>';
+                } else {
+                    document.getElementById('auth-status').innerHTML = '<div class="alert alert-danger">Login failed</div>';
+                }
+            } catch (error) {
+                document.getElementById('auth-status').innerHTML = '<div class="alert alert-danger">Login error: ' + error.message + '</div>';
+            }
+        }
+
+        function logout() {
+            authToken = null;
+            localStorage.removeItem('authToken');
+            document.getElementById('auth-status').innerHTML = '<div class="alert alert-info">Logged out</div>';
+        }
+
+        // API Helper
+        async function apiCall(endpoint) {
+            if (!authToken) {
+                throw new Error('Not authenticated');
+            }
+            
+            const response = await fetch(`${API_BASE}${endpoint}`, {
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            return response.json();
+        }
+
+        // Summary Report
+        async function loadSummaryReport() {
+            showLoading('summary');
+            try {
+                const data = await apiCall('/reports/summary');
+                displaySummary(data);
+            } catch (error) {
+                showError('summary', error.message);
+            }
+        }
+
+        function displaySummary(data) {
+            const html = `
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card stats-card">
+                            <div class="card-body text-center">
+                                <h3>${data.proposals.total}</h3>
+                                <p>Total Proposals</p>
+                                <small>Approved: ${data.proposals.approved} | Rejected: ${data.proposals.rejected} | Pending: ${data.proposals.pending}</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card stats-card">
+                            <div class="card-body text-center">
+                                <h3>${data.projects.total}</h3>
+                                <p>Total Projects</p>
+                                <small>Active: ${data.projects.active} | Completed: ${data.projects.completed}</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card stats-card">
+                            <div class="card-body text-center">
+                                <h3>${data.users.total}</h3>
+                                <p>Total Users</p>
+                                <small>Verified: ${data.users.verified} | Male: ${data.users.male} | Female: ${data.users.female}</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card stats-card">
+                            <div class="card-body text-center">
+                                <h3>$${data.projects.totalFunding || 0}</h3>
+                                <p>Total Funding</p>
+                                <small>Themes: ${data.system.themes} | Grants: ${data.system.grants}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('summary-content').innerHTML = html;
+            hideLoading('summary');
+        }
+
+        // Proposals Reports
+        async function loadProposalsReport() {
+            showLoading('proposals');
+            try {
+                const data = await apiCall('/reports/proposals');
+                displayProposalsList(data);
+            } catch (error) {
+                showError('proposals', error.message);
+            }
+        }
+
+        async function loadProposalsBySchool() {
+            showLoading('proposals');
+            try {
+                const data = await apiCall('/reports/proposals/by-school');
+                displayProposalsChart(data, 'proposalsChart');
+            } catch (error) {
+                showError('proposals', error.message);
+            }
+        }
+
+        async function loadProposalsByTheme() {
+            showLoading('proposals');
+            try {
+                const data = await apiCall('/reports/proposals/by-theme');
+                displayProposalsChart(data, 'proposalsChart');
+            } catch (error) {
+                showError('proposals', error.message);
+            }
+        }
+
+        function displayProposalsList(data) {
+            const html = `<p>Total Proposals: ${data.length}</p>`;
+            document.getElementById('proposals-content').innerHTML = html;
+            hideLoading('proposals');
+        }
+
+        function displayProposalsChart(data, canvasId) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+            hideLoading('proposals');
+        }
+
+        // Projects Report
+        async function loadProjectsReport() {
+            showLoading('projects');
+            try {
+                const data = await apiCall('/reports/projects');
+                displayProjectsReport(data);
+            } catch (error) {
+                showError('projects', error.message);
+            }
+        }
+
+        function displayProjectsReport(data) {
+            const html = `
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h4>${data.totalProjects}</h4>
+                                <p>Total Projects</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h4>$${data.totalFunding}</h4>
+                                <p>Total Funding</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('projects-content').innerHTML = html;
+            
+            const ctx = document.getElementById('projectsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: data.chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+            hideLoading('projects');
+        }
+
+        // Users Report
+        async function loadUsersReport() {
+            showLoading('users');
+            try {
+                const data = await apiCall('/reports/users');
+                displayUsersReport(data);
+            } catch (error) {
+                showError('users', error.message);
+            }
+        }
+
+        function displayUsersReport(data) {
+            const html = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h4>${data.totalUsers}</h4>
+                                <p>Total Users</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h4>${data.verifiedUsers}</h4>
+                                <p>Verified Users</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('users-content').innerHTML = html;
+            
+            const ctx = document.getElementById('usersChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: data.genderChart,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+            hideLoading('users');
+        }
+
+        // Themes Report
+        async function loadThemesReport() {
+            showLoading('themes');
+            try {
+                const data = await apiCall('/reports/themes');
+                displayThemesReport(data);
+            } catch (error) {
+                showError('themes', error.message);
+            }
+        }
+
+        function displayThemesReport(data) {
+            const html = `<p>Total Themes: ${data.totalThemes}</p>`;
+            document.getElementById('themes-content').innerHTML = html;
+            
+            const ctx = document.getElementById('themesChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: data.chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+            hideLoading('themes');
+        }
+
+        // Grants Report
+        async function loadGrantsReport() {
+            showLoading('grants');
+            try {
+                const data = await apiCall('/reports/grants');
+                displayGrantsReport(data);
+            } catch (error) {
+                showError('grants', error.message);
+            }
+        }
+
+        function displayGrantsReport(data) {
+            const html = `
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h4>${data.totalGrants}</h4>
+                                <p>Total Grants</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h4>${data.activeGrants}</h4>
+                                <p>Active Grants</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h4>$${data.totalFunding}</h4>
+                                <p>Total Funding</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('grants-content').innerHTML = html;
+            
+            const ctx = document.getElementById('grantsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: data.chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+            hideLoading('grants');
+        }
+
+        // Schools Report
+        async function loadSchoolsReport() {
+            showLoading('schools');
+            try {
+                const data = await apiCall('/reports/schools');
+                displaySchoolsReport(data);
+            } catch (error) {
+                showError('schools', error.message);
+            }
+        }
+
+        function displaySchoolsReport(data) {
+            const html = `<p>Total Schools: ${data.totalSchools}</p>`;
+            document.getElementById('schools-content').innerHTML = html;
+            
+            const ctx = document.getElementById('schoolsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: data.chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+            hideLoading('schools');
+        }
+
+        // Departments Report
+        async function loadDepartmentsReport() {
+            showLoading('departments');
+            try {
+                const data = await apiCall('/reports/departments');
+                displayDepartmentsReport(data);
+            } catch (error) {
+                showError('departments', error.message);
+            }
+        }
+
+        function displayDepartmentsReport(data) {
+            let html = `<p>Total Departments: ${data.totalDepartments}</p><div class="table-responsive"><table class="table table-striped"><thead><tr><th>Department</th><th>School</th><th>Users</th><th>Proposals</th><th>Approved</th><th>Rejected</th><th>Pending</th></tr></thead><tbody>`;
+            
+            data.departmentData.forEach(dept => {
+                html += `<tr><td>${dept.department}</td><td>${dept.school}</td><td>${dept.users}</td><td>${dept.proposals}</td><td>${dept.approved}</td><td>${dept.rejected}</td><td>${dept.pending}</td></tr>`;
+            });
+            
+            html += '</tbody></table></div>';
+            document.getElementById('departments-content').innerHTML = html;
+            hideLoading('departments');
+        }
+
+        // Export Report
+        async function exportReport() {
+            const type = document.getElementById('exportType').value;
+            const format = document.getElementById('exportFormat').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/reports/export`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ type, format })
+                });
+                
+                if (format === 'pdf') {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${type}_report.pdf`;
+                    a.click();
+                } else {
+                    const data = await response.json();
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${type}_report.json`;
+                    a.click();
+                }
+            } catch (error) {
+                alert('Export failed: ' + error.message);
+            }
+        }
+
+        // Utility functions
+        function showLoading(section) {
+            document.getElementById(`${section}-loading`).style.display = 'block';
+            document.getElementById(`${section}-content`).innerHTML = '';
+        }
+
+        function hideLoading(section) {
+            document.getElementById(`${section}-loading`).style.display = 'none';
+        }
+
+        function showError(section, message) {
+            document.getElementById(`${section}-content`).innerHTML = `<div class="alert alert-danger">Error: ${message}</div>`;
+            hideLoading(section);
+        }
+
+        // Initialize
+        if (authToken) {
+            document.getElementById('auth-status').innerHTML = '<div class="alert alert-success">Already logged in</div>';
+        }
+    </script>
+</body>
+</html>

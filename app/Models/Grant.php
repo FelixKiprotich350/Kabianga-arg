@@ -21,9 +21,12 @@ class Grant extends Model
     protected $primaryKey = 'grantid';
 
     protected $fillable = [
+        'grantname',
         'title',
         'finyearfk', 
-        'status'
+        'status',
+        'maxfunding',
+        'description'
     ];
 
     public function proposals()

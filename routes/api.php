@@ -256,19 +256,16 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
     
     // Reports
     Route::prefix('reports')->group(function () {
-        Route::get('/summary', [ReportsController::class, 'getReportsSummary']);
+        Route::get('/summary', [ReportsController::class, 'getSummaryReport']);
         Route::get('/proposals', [ReportsController::class, 'getallproposals']);
         Route::get('/proposals/by-school', [ReportsController::class, 'getProposalsBySchool']);
         Route::get('/proposals/by-theme', [ReportsController::class, 'getProposalsByTheme']);
-        Route::get('/proposals/by-grant', [ReportsController::class, 'getProposalsByGrant']);
-        Route::get('/financial', [ReportsController::class, 'getFinancialSummary']);
         Route::get('/projects', [ReportsController::class, 'getProjectsReport']);
-        Route::get('/users', [ReportsController::class, 'getUserActivityReport']);
-        Route::get('/publications', [ReportsController::class, 'getPublicationsReport']);
-        Route::get('/progress', [ReportsController::class, 'getProgressReport']);
-        Route::get('/compliance', [ReportsController::class, 'getComplianceReport']);
-        Route::get('/performance', [ReportsController::class, 'getPerformanceReport']);
-        Route::get('/budget-actual', [ReportsController::class, 'getBudgetActualReport']);
+        Route::get('/users', [ReportsController::class, 'getUsersReport']);
+        Route::get('/themes', [ReportsController::class, 'getThemesReport']);
+        Route::get('/grants', [ReportsController::class, 'getGrantsReport']);
+        Route::get('/schools', [ReportsController::class, 'getSchoolsReport']);
+        Route::get('/departments', [ReportsController::class, 'getDepartmentsReport']);
         Route::post('/export', [ReportsController::class, 'exportReport']);
     });
     

@@ -20,4 +20,9 @@ class ResearchTheme extends Model
         'applicablestatus',         
         'themedescription'
     ];
+
+    public function proposals()
+    {
+        return $this->hasMany(Proposal::class, 'themeidfk', 'themeid');
+    }
 }
