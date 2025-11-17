@@ -6,9 +6,9 @@ use App\Models\Proposal;
 use App\Models\ResearchFunding;
 use App\Models\ResearchProject;
 use App\Models\ResearchTheme;
+use App\Models\User;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -16,13 +16,13 @@ class DashboardController extends Controller
 
     public function chartdata(Request $request)
     {
-        if (!auth()->user()->haspermission('canviewadmindashboard')) {
+        if (! auth()->user()->haspermission('canviewadmindashboard')) {
             return $this->errorResponse('Unauthorized', null, 403);
         }
 
         try {
             $themes = ResearchTheme::all();
-            
+
             // Bar Chart Data 1 - Proposals per Theme
             $barChartData = [
                 'labels' => [],
@@ -31,8 +31,8 @@ class DashboardController extends Controller
                     'backgroundColor' => 'rgba(54, 162, 235, 0.8)',
                     'borderColor' => 'rgba(54, 162, 235, 1)',
                     'borderWidth' => 1,
-                    'data' => []
-                ]]
+                    'data' => [],
+                ]],
             ];
 
             foreach ($themes as $theme) {
@@ -53,18 +53,18 @@ class DashboardController extends Controller
                     'data' => [$approvedCount, $rejectedCount, $pendingCount, $draftCount],
                     'backgroundColor' => [
                         'rgba(40, 167, 69, 0.8)',
-                        'rgba(220, 53, 69, 0.8)', 
+                        'rgba(220, 53, 69, 0.8)',
                         'rgba(255, 193, 7, 0.8)',
-                        'rgba(108, 117, 125, 0.8)'
+                        'rgba(108, 117, 125, 0.8)',
                     ],
                     'borderColor' => [
                         'rgba(40, 167, 69, 1)',
                         'rgba(220, 53, 69, 1)',
                         'rgba(255, 193, 7, 1)',
-                        'rgba(108, 117, 125, 1)'
+                        'rgba(108, 117, 125, 1)',
                     ],
-                    'borderWidth' => 1
-                ]]
+                    'borderWidth' => 1,
+                ]],
             ];
 
             // Bar Chart Data 2 - Projects per Theme
@@ -75,12 +75,12 @@ class DashboardController extends Controller
                     'backgroundColor' => 'rgba(255, 99, 132, 0.8)',
                     'borderColor' => 'rgba(255, 99, 132, 1)',
                     'borderWidth' => 1,
-                    'data' => []
-                ]]
+                    'data' => [],
+                ]],
             ];
 
             foreach ($themes as $theme) {
-                $count = ResearchProject::whereHas('proposal', function($query) use ($theme) {
+                $count = ResearchProject::whereHas('proposal', function ($query) use ($theme) {
                     $query->where('themefk', $theme->themeid);
                 })->count();
                 $barChart2Data['labels'][] = $theme->themename;
@@ -90,7 +90,7 @@ class DashboardController extends Controller
             $chartData = [
                 'barChart_data1' => $barChartData,
                 'barchart_data2' => $barChart2Data,
-                'pieChart' => $pieChartData
+                'pieChart' => $pieChartData,
             ];
 
             return $this->successResponse($chartData, 'Chart data retrieved successfully');
@@ -99,11 +99,9 @@ class DashboardController extends Controller
         }
     }
 
-
-
     public function getStats()
     {
-        if (!auth()->user()->haspermission('canviewadmindashboard')) {
+        if (! auth()->user()->haspermission('canviewadmindashboard')) {
             return $this->errorResponse('Unauthorized', null, 403);
         }
 
@@ -113,29 +111,34 @@ class DashboardController extends Controller
                     'total' => Proposal::count(),
                     'approved' => Proposal::where('approvalstatus', 'APPROVED')->count(),
                     'pending' => Proposal::where('approvalstatus', 'PENDING')->count(),
-                    'rejected' => Proposal::where('approvalstatus', 'REJECTED')->count()
+                    'rejected' => Proposal::where('approvalstatus', 'REJECTED')->count(),
                 ],
                 'projects' => [
                     'total' => ResearchProject::count(),
                     'active' => ResearchProject::where('projectstatus', ResearchProject::STATUS_ACTIVE)->count(),
                     'completed' => ResearchProject::where('projectstatus', ResearchProject::STATUS_COMPLETED)->count(),
-                    'cancelled' => ResearchProject::where('projectstatus', ResearchProject::STATUS_CANCELLED)->count()
+                    'cancelled' => ResearchProject::where('projectstatus', ResearchProject::STATUS_CANCELLED)->count(),
                 ],
                 'funding' => [
                     'total' => ResearchFunding::sum('amount') ?? 0,
-                    'count' => ResearchFunding::count()
-                ]
+                    'count' => ResearchFunding::count(),
+                ],
+                'users' => [
+                    'total' => User::count(),
+                    'active' => User::where('isactive', true)->count(),
+                    'inactive' => User::where('isactive', false)->count(),
+                ],
             ];
 
             return $this->successResponse($stats, 'Dashboard statistics retrieved successfully');
         } catch (\Exception $e) {
-            return $this->errorResponse('Failed to fetch stats', null, 500);
+            return $this->errorResponse('Failed to fetch stats', $e, 500);
         }
     }
 
     public function getRecentActivity()
     {
-        if (!auth()->user()->haspermission('canviewadmindashboard')) {
+        if (! auth()->user()->haspermission('canviewadmindashboard')) {
             return $this->errorResponse('Unauthorized', null, 403);
         }
 
@@ -144,13 +147,13 @@ class DashboardController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->limit(5)
                 ->get()
-                ->map(function($proposal) {
+                ->map(function ($proposal) {
                     return [
                         'type' => 'proposal',
                         'title' => $proposal->researchtitle ?? 'New Proposal',
                         'user' => $proposal->applicant->name ?? 'Unknown',
                         'status' => $proposal->approvalstatus,
-                        'date' => $proposal->created_at->format('M d, Y')
+                        'date' => $proposal->created_at->format('M d, Y'),
                     ];
                 });
 
@@ -158,13 +161,13 @@ class DashboardController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->limit(5)
                 ->get()
-                ->map(function($project) {
+                ->map(function ($project) {
                     return [
                         'type' => 'project',
                         'title' => $project->researchnumber,
                         'user' => $project->proposal->applicant->name ?? 'Unknown',
                         'status' => $project->projectstatus,
-                        'date' => $project->created_at->format('M d, Y')
+                        'date' => $project->created_at->format('M d, Y'),
                     ];
                 });
 
@@ -178,5 +181,4 @@ class DashboardController extends Controller
             return $this->errorResponse('Failed to fetch recent activity', null, 500);
         }
     }
-
 }

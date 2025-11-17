@@ -10,7 +10,14 @@ trait NotifiesUsers
 {
     protected function notify($to, string $type, string $title, string $message, array $options = [])
     {
-        $users = is_array($to) ? $to : [$to];
+        // Handle different input types
+        if (is_array($to)) {
+            $users = $to;
+        } elseif ($to instanceof \Illuminate\Database\Eloquent\Collection) {
+            $users = $to->all();
+        } else {
+            $users = [$to];
+        }
         
         foreach ($users as $user) {
             // Create in-app notification

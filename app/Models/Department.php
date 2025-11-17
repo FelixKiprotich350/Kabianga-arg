@@ -54,7 +54,14 @@ class Department extends Model
     
     public function users()
     {
-        return $this->hasMany(User::class, 'departmentidfk', 'depid');
+        return $this->hasManyThrough(
+            User::class,
+            Proposal::class,
+            'departmentidfk', // Foreign key on proposals table
+            'userid', // Foreign key on users table
+            'depid', // Local key on departments table
+            'useridfk' // Local key on proposals table
+        )->distinct();
     }
 
     public function proposals()

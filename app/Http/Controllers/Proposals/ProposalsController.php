@@ -334,86 +334,83 @@ class ProposalsController extends Controller
 
     }
 
-    public function approverejectproposal(Request $request, $id)
+    public function approveProposal(Request $request, $id)
     {
-        if ($request->input('status') == ApprovalStatus::APPROVED->value && auth()->user()->haspermission('canapproveproposal')) {
-        } elseif ($request->input('status') == ApprovalStatus::REJECTED->value && auth()->user()->haspermission('canrejectproposal')) {
-        } else {
-            return response()->json([
-                'success' => false,
-                'message' => 'You are not Authorized to Approve/Reject this Proposal!',
-            ], 403);
+        if (!auth()->user()->haspermission('canapproveproposal')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
-        $rules = [
-            'comment' => 'required|string',
-            'status' => 'required|string',
-            'fundingfinyearfk' => [
-                'required_if:status,Approved',
-                'nullable',
-                'string',
-            ],
-        ];
-        // Validate incoming request
-        $validator = Validator::make($request->all(), $rules);
+        $validator = Validator::make($request->all(), [
+            'comment' => 'nullable|string',
+            'fundingfinyearfk' => 'required|integer|min:1',
+        ]);
 
-        // Check if validation fails
         if ($validator->fails()) {
-            return response()->json(['message' => 'Please provide a comment,Funding Year & status!', 'type' => 'warning'], 400);
+            return response()->json(['success' => false, 'message' => 'Please select a valid funding year'], 400);
         }
 
         $proposal = Proposal::findOrFail($id);
-        if ($proposal->submittedstatus != SubmittedStatus::SUBMITTED) {
-            return response(['message' => 'This Proposal has not been Submitted by the owner!!', 'type' => 'danger']);
+        if ($proposal->approvalstatus !== ApprovalStatus::PENDING) {
+            return response()->json(['success' => false, 'message' => 'Proposal already processed'], 400);
         }
-        if ($proposal->receivedstatus != ReceivedStatus::RECEIVED) {
-            return response(['message' => 'This Proposal has not been Received by the office!!', 'type' => 'danger']);
-        }
-        if ($proposal->approvalstatus == ApprovalStatus::REJECTED || ResearchProject::where('proposalidfk', $id)->exists()) {
-            return response(['message' => 'This Proposal has been Approved or Rejected before!!', 'type' => 'danger']);
-        }
-        DB::transaction(function () use ($id, $request) {
-            $proposal = Proposal::findOrFail($id);
-            $proposal->approvalstatus = $request->input('status');
-            $proposal->comment = $request->input('comment');
-            $proposal->allowediting = false;
-            $proposal->saveOrFail();
 
-            $yearid = GlobalSetting::where('item', 'current_fin_year')->first();
-            $currentyear = FinancialYear::findOrFail($yearid->value1);
+        try {
+            DB::transaction(function () use ($proposal, $request) {
+                $proposal->approvalstatus = ApprovalStatus::APPROVED;
+                $proposal->comment = $request->input('comment', 'Approved');
+                $proposal->allowediting = false;
+                $proposal->save();
 
-            if ($request->input('status') == ApprovalStatus::APPROVED->value) {
+                $yearid = GlobalSetting::where('item', 'current_fin_year')->first();
+                if (!$yearid) throw new Exception('Current financial year not set');
+                
+                $currentyear = FinancialYear::findOrFail($yearid->value1);
                 $lastRecord = ResearchProject::orderBy('researchid', 'desc')->first();
                 $incrementNumber = $lastRecord ? $lastRecord->researchid + 1 : 1;
-                $generatedCode = 'UOK/ARG/'.$currentyear->finyear.'/'.$incrementNumber;
-                // new project
+                $generatedCode = 'UOK/ARG/' . $currentyear->finyear . '/' . $incrementNumber;
+
                 $project = new ResearchProject;
                 $project->researchnumber = $generatedCode;
                 $project->proposalidfk = $proposal->proposalid;
                 $project->projectstatus = ResearchProject::STATUS_ACTIVE;
                 $project->ispaused = false;
                 $project->fundingfinyearfk = $request->input('fundingfinyearfk');
-                $project->saveOrFail();
-            }
+                $project->save();
+            });
 
-        });
-        if ($request->input('status') == ApprovalStatus::APPROVED->value) {
-            $project = ResearchProject::where('proposalidfk', $id)->firstOrFail();
-            $notificationService = new DualNotificationService;
-            $url = '/api/v1/projects/'.$project->researchid;
-            $notificationService->notifyUsersOfProposalActivity('proposalapproved', 'Proposal Approved!', 'success', ['This Proposal has been Approved Successfully.', 'The project will kick off on the indicated Start Date.'], 'View Project', $url);
+            $this->notifyProposalApproved($proposal);
+            return response()->json(['success' => true, 'message' => 'Proposal approved successfully']);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+        }
+    }
 
-            return response(['message' => 'Proposal Approved Successfully! Project Started!', 'type' => 'success']);
-        } elseif ($request->input('status') == ApprovalStatus::REJECTED->value) {
-            $notificationService = new DualNotificationService;
-            $url = '/api/v1/proposals/'.$id;
-            $notificationService->notifyUsersOfProposalActivity('proposalrejected', 'Proposal Rejected', 'success', ['The project didnt qualify for further steps.'], 'View Proposal', $url);
-
-            return response(['message' => 'Proposal Rejected Successfully!!', 'type' => 'danger']);
-        } else {
-            return response(['message' => 'Unknown Action on Status!!', 'type' => 'danger']);
+    public function rejectProposal(Request $request, $id)
+    {
+        if (!auth()->user()->haspermission('canrejectproposal')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
+        $validator = Validator::make($request->all(), [
+            'comment' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => 'Comment is required'], 400);
+        }
+
+        $proposal = Proposal::findOrFail($id);
+        if ($proposal->approvalstatus !== ApprovalStatus::PENDING) {
+            return response()->json(['success' => false, 'message' => 'Proposal already processed'], 400);
+        }
+
+        $proposal->approvalstatus = ApprovalStatus::REJECTED;
+        $proposal->comment = $request->input('comment');
+        $proposal->allowediting = false;
+        $proposal->save();
+
+        $this->notifyProposalRejected($proposal);
+        return response()->json(['success' => true, 'message' => 'Proposal rejected']);
     }
 
     public function cansubmit($id)
@@ -756,101 +753,9 @@ class ProposalsController extends Controller
         ]);
     }
 
-    public function approveProposal(Request $request, $id)
-    {
-        try {
-            if (! auth()->user()->haspermission('canapproveproposal')) {
-                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-            }
 
-            $validator = Validator::make($request->all(), [
-                'comment' => 'nullable|string',
-                'fundingfinyearfk' => 'required|integer|min:1',
-            ]);
 
-            if ($validator->fails()) {
-                return response()->json(['success' => false, 'message' => 'Please select a valid funding year'], 400);
-            }
 
-            $fundingYear = $request->input('fundingfinyearfk');
-            if (! $fundingYear || $fundingYear === 'undefined' || $fundingYear === '') {
-                return response()->json(['success' => false, 'message' => 'Please select a funding year'], 400);
-            }
-
-            $proposal = Proposal::findOrFail($id);
-
-            if ($proposal->approvalstatus !== ApprovalStatus::PENDING) {
-                return response()->json(['success' => false, 'message' => 'Proposal already processed'], 400);
-            }
-
-            DB::transaction(function () use ($proposal, $request) {
-                $proposal->approvalstatus = ApprovalStatus::APPROVED;
-                $proposal->comment = $request->input('comment', 'Approved');
-                $proposal->allowediting = false;
-                $proposal->save();
-
-                $yearid = GlobalSetting::where('item', 'current_fin_year')->first();
-                if (! $yearid) {
-                    throw new Exception('Current financial year not set');
-                }
-
-                $currentyear = FinancialYear::findOrFail($yearid->value1);
-                $lastRecord = ResearchProject::orderBy('researchid', 'desc')->first();
-                $incrementNumber = $lastRecord ? $lastRecord->researchid + 1 : 1;
-                $generatedCode = 'UOK/ARG/'.$currentyear->finyear.'/'.$incrementNumber;
-
-                $project = new ResearchProject;
-                $project->researchnumber = $generatedCode;
-                $project->proposalidfk = $proposal->proposalid;
-                $project->projectstatus = ResearchProject::STATUS_ACTIVE;
-                $project->ispaused = false;
-                $project->fundingfinyearfk = $request->input('fundingfinyearfk');
-                $project->save();
-            });
-
-            // Send dual notifications
-            $this->notifyProposalApproved($proposal);
-
-            return response()->json(['success' => true, 'message' => 'Proposal approved successfully']);
-        } catch (Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Error: '.$e->getMessage()], 500);
-        }
-    }
-
-    public function rejectProposal(Request $request, $id)
-    {
-        if (! auth()->user()->haspermission('canrejectproposal')) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'comment' => 'required|string',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['success' => false, 'message' => 'Comment is required'], 400);
-        }
-
-        $proposal = Proposal::findOrFail($id);
-
-        if ($proposal->approvalstatus !== ApprovalStatus::PENDING) {
-            return response()->json(['success' => false, 'message' => 'Proposal already processed'], 400);
-        }
-
-        $proposal->approvalstatus = ApprovalStatus::REJECTED;
-        $proposal->comment = $request->input('comment');
-        $proposal->allowediting = false;
-        $proposal->save();
-
-        // Send dual notifications
-        $this->notifyProposalRejected($proposal);
-
-        $notificationService = new DualNotificationService;
-        $url = '/api/v1/proposals/'.$id;
-        $notificationService->notifyUsersOfProposalActivity('proposalrejected', 'Proposal Rejected', 'danger', ['The project didnt qualify for further steps.'], 'View Proposal', $url);
-
-        return response()->json(['success' => true, 'message' => 'Proposal rejected']);
-    }
 
     public function markAsDraft(Request $request, $id)
     {
@@ -905,8 +810,11 @@ class ProposalsController extends Controller
             $change->status = 'Pending';
             $change->save();
 
-            $proposal->allowediting = true;
-            $proposal->save();
+            // Enable editing for the proposal owner to make requested changes
+            if (!$proposal->allowediting) {
+                $proposal->allowediting = true;
+                $proposal->save();
+            }
 
             // Send dual notifications
             $this->notifyChangesRequested($proposal);

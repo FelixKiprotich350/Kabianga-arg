@@ -232,7 +232,8 @@ class UsersController extends Controller
 
     public function apiGetUser($id)
     {
-        $user = User::select('userid', 'name', 'email', 'pfno', 'phonenumber', 'isadmin', 'isactive', 'created_at')
+        $user = User::with('permissions:pid,shortname,description')
+            ->select('userid', 'name', 'email', 'pfno', 'phonenumber', 'isadmin', 'isactive', 'created_at')
             ->find($id);
         
         if (!$user) {

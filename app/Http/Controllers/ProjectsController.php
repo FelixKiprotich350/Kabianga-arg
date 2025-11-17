@@ -135,7 +135,7 @@ class ProjectsController extends Controller
         // Define validation rules
         $rules = [
             'report' => 'required|string', // Example rules, adjust as needed
-            'researchidfk' => 'required|string',
+            'researchidfk' => 'required',
             'reportedbyfk' => 'required|string',
         ];
 
@@ -280,10 +280,21 @@ class ProjectsController extends Controller
 
     public function fetchprojectprogress($id)
     {
-        // Fetch projects where the related proposals' useridfk matches the current user
-        $progresshistory = ResearchProgress::where('researchidfk', $id)->get();
-
-        return response()->json($progresshistory);
+        try {
+            $progresshistory = ResearchProgress::where('researchidfk', $id)->get();
+            
+            return response()->json([
+                'success' => true,
+                'data' => $progresshistory,
+                'message' => 'Progress history retrieved successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch progress history',
+                'data' => []
+            ], 500);
+        }
     }
 
     public function addfunding(Request $request, $id)
