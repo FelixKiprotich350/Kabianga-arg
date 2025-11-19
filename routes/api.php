@@ -43,13 +43,13 @@ Route::prefix('v1')->group(function () {
     Route::post('/auth/password/reset', [PasswordResetController::class, 'reset']);
     Route::get('/auth/permission', [LoginController::class, 'subpermission']);
 
-    // Public Data
-    Route::get('/users', [UsersController::class, 'apiGetAllUsers']);
-    Route::get('/users/{id}', [UsersController::class, 'apiGetUser']);
+    // Reference Data
     Route::get('/themes', [ResearchThemeController::class, 'fetchAllThemes']);
     Route::get('/schools', [SchoolsController::class, 'fetchallschools']);
     Route::get('/departments', [DepartmentsController::class, 'fetchalldepartments']);
     Route::get('/grants', [GrantsController::class, 'fetchallgrants']);
+    Route::get('/financial-years', action: [FinYearController::class, 'fetchallfinyears']);
+
 });
 
 // Protected API Routes (Authentication Required)
@@ -68,6 +68,7 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
 
     // User Management
     Route::prefix('users')->group(function () {
+        // Route::get('/users-r', [UsersController::class, 'apiGetAllUsers']);
         Route::get('/', [UsersController::class, 'fetchallusers']);
         Route::post('/', [UsersController::class, 'createUser']);
         Route::get('/search', [UsersController::class, 'fetchsearchusers']);
@@ -192,7 +193,6 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
 
     // Schools Management
     Route::prefix('schools')->group(function () {
-        Route::get('/', [SchoolsController::class, 'fetchallschools']);
         Route::post('/', [SchoolsController::class, 'postnewschool']);
         Route::get('/search', [SchoolsController::class, 'fetchsearchschools']);
         Route::get('/{id}', [SchoolsController::class, 'getviewschoolpage']);
@@ -201,7 +201,6 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
 
     // Departments Management
     Route::prefix('departments')->group(function () {
-        Route::get('/', [DepartmentsController::class, 'fetchalldepartments']);
         Route::get('/for-proposals', [DepartmentsController::class, 'fetchdepartmentsforproposals']);
         Route::post('/', [DepartmentsController::class, 'postnewdepartment']);
         Route::get('/{id}', [DepartmentsController::class, 'getviewdepartmentpage']);
@@ -210,7 +209,6 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
 
     // Grants Management
     Route::prefix('grants')->group(function () {
-        Route::get('/', [GrantsController::class, 'fetchallgrants']);
         Route::post('/', [GrantsController::class, 'postnewgrant']);
         Route::get('/search', [GrantsController::class, 'fetchsearchgrants']);
         Route::get('/{id}', [GrantsController::class, 'getviewsinglegrantpage']);
@@ -219,13 +217,11 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
 
     // Financial Years
     Route::prefix('financial-years')->group(function () {
-        Route::get('/', [FinYearController::class, 'fetchallfinyears']);
         Route::post('/', [FinYearController::class, 'postnewfinyear']);
     });
 
     // Research Themes
     Route::prefix('themes')->group(function () {
-        Route::get('/', [ResearchThemeController::class, 'fetchAllThemes']);
         Route::post('/', [ResearchThemeController::class, 'createTheme']);
         Route::put('/{id}', [ResearchThemeController::class, 'updateTheme']);
         Route::delete('/{id}', [ResearchThemeController::class, 'deleteTheme']);

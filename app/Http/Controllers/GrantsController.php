@@ -15,7 +15,7 @@ class GrantsController extends Controller
     //
     public function postnewgrant(Request $request)
     {
-        if (!auth()->user()->haspermission('canaddoreditgrant')) {
+        if (!auth()->user()->isadmin) {
             return response()->json(['success' => false, 'message' => 'You are not Authorized to Add or Edit a Grant!'], 403);
         }
         // Validate incoming request data if needed
@@ -52,7 +52,7 @@ class GrantsController extends Controller
 
     public function updategrant(Request $request, $id)
     {
-        if (!auth()->user()->haspermission('canaddoreditgrant')) {
+        if (!auth()->user()->isadmin) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403); // message: "You are not Authorized to Add or Edit a Grant!";
         }
         // Validate incoming request data if needed
@@ -109,7 +109,7 @@ class GrantsController extends Controller
     
     public function getviewsinglegrantpage($id)
     {
-        if (!auth()->user()->haspermission('canaddoreditgrant')) {
+        if (!auth()->user()->isadmin) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
         
@@ -127,7 +127,7 @@ class GrantsController extends Controller
     
     public function geteditsinglegrantpage($id)
     {
-        if (!auth()->user()->haspermission('canaddoreditgrant')) {
+        if (!auth()->user()->isadmin) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
         
@@ -167,7 +167,7 @@ class GrantsController extends Controller
     //settings
     public function postcurrentgrant(Request $request)
     {
-        if (!auth()->user()->haspermission('canupdatecurrentgrantandyear')) {
+        if (!auth()->user()->isadmin) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403); // message: "You are not Authorized to Update Current Settings!";
         }
         // Validate incoming request data if needed
@@ -201,7 +201,7 @@ class GrantsController extends Controller
 
     public function postcurrentfinyear(Request $request)
     {
-        if (!auth()->user()->haspermission('canupdatecurrentgrantandyear')) {
+        if (!auth()->user()->isadmin) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403); // message: "You are not Authorized to Update Current Settings!";
         }
         // Validate incoming request data if needed

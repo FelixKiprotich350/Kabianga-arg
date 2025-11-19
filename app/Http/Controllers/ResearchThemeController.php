@@ -24,6 +24,10 @@ class ResearchThemeController extends Controller
 
     public function createTheme(Request $request)
     {
+        if (!auth()->user()->isadmin) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+        
         $rules = [
             'themename' => 'required|string|max:255|unique:researchthemes',
             'themedescription' => 'required|string',
@@ -54,6 +58,10 @@ class ResearchThemeController extends Controller
 
     public function updateTheme(Request $request, $id)
     {
+        if (!auth()->user()->isadmin) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+        
         $rules = [
             'themename' => 'required|string|max:255|unique:researchthemes,themename,' . $id . ',themeid',
             'themedescription' => 'required|string',
@@ -81,6 +89,10 @@ class ResearchThemeController extends Controller
 
     public function deleteTheme($id)
     {
+        if (!auth()->user()->isadmin) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+        
         try {
             $theme = ResearchTheme::findOrFail($id);
             $theme->delete();

@@ -640,7 +640,7 @@ class ReportsController extends Controller
     // Financial Reports
     public function getFinancialSummary(Request $request)
     {
-        if (! auth()->user()->haspermission('canviewreports')) {
+        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canviewreports')) {
             return $this->errorResponse('Unauthorized', null, 403);
         }
 
@@ -721,7 +721,7 @@ class ReportsController extends Controller
     // User Activity Reports
     public function getUserActivityReport(Request $request)
     {
-        if (! auth()->user()->haspermission('canviewreports')) {
+        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canviewreports')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -801,7 +801,7 @@ class ReportsController extends Controller
     // Publications Report
     public function getPublicationsReport(Request $request)
     {
-        if (! auth()->user()->haspermission('canviewreports')) {
+        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canviewreports')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -861,7 +861,7 @@ class ReportsController extends Controller
     // Progress Tracking Report
     public function getProgressReport(Request $request)
     {
-        if (! auth()->user()->haspermission('canviewreports')) {
+        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canviewreports')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -909,7 +909,7 @@ class ReportsController extends Controller
     // Compliance Report
     public function getComplianceReport(Request $request)
     {
-        if (! auth()->user()->haspermission('canviewreports')) {
+        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canviewreports')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -948,7 +948,7 @@ class ReportsController extends Controller
     // Performance Analytics Report
     public function getPerformanceReport(Request $request)
     {
-        if (! auth()->user()->haspermission('canviewreports')) {
+        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canviewreports')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -986,7 +986,7 @@ class ReportsController extends Controller
     // Budget vs Actual Report
     public function getBudgetActualReport(Request $request)
     {
-        if (! auth()->user()->haspermission('canviewreports')) {
+        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canviewreports')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -1086,7 +1086,7 @@ class ReportsController extends Controller
     // Dashboard Summary for Reports
     public function getReportsSummary()
     {
-        if (! auth()->user()->haspermission('canviewreports')) {
+        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canviewreports')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 

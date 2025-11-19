@@ -252,7 +252,7 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
     public function getEffectivePermissions()
     {
         if ($this->isadmin) {
-            return ['*']; // All permissions for admin
+            return Permission::pluck('shortname')->toArray();
         }
 
         // Only user-assigned permissions

@@ -61,7 +61,7 @@ class AccessControlService
         $user = $user ?? Auth::user();
         
         if (!$user) return [];
-        if ($user->isadmin) return ['*']; // All permissions
+        if ($user->isadmin) return \App\Models\Permission::pluck('shortname')->toArray();
         
         // Only user-specific permissions
         return $user->permissions()->pluck('shortname')->toArray();

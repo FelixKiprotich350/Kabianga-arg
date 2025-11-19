@@ -16,7 +16,7 @@ class SchoolsController extends Controller
     //
     public function postnewschool(Request $request)
     {
-        if(!auth()->user()->haspermission('canaddoreditschool')){
+        if(!auth()->user()->isadmin){
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403); // message: "You are not Authorized to Add or Edit a Department!";
         }
         // Validate incoming request data if needed
@@ -51,7 +51,7 @@ class SchoolsController extends Controller
 
     public function updateschool(Request $request, $id)
     {
-        if(!auth()->user()->haspermission('canaddoreditschool')){
+        if(!auth()->user()->isadmin){
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403); // message: "You are not Authorized to Add or Edit a Department!";
         }
         // Validate incoming request data if needed
@@ -91,10 +91,6 @@ class SchoolsController extends Controller
     public function fetchallschools()
     {
         try {
-            // Check permissions if user is authenticated
-            if (auth()->check() && !auth()->user()->isadmin && !auth()->user()->haspermission('canviewdepartmentsandschools')) {
-                return $this->errorResponse('Unauthorized', null, 403);
-            }
             
             $data = School::withCount('departments')->get();
             
@@ -107,10 +103,6 @@ class SchoolsController extends Controller
     public function fetchsearchschools(Request $request)
     {
         try {
-            // Check permissions if user is authenticated
-            if (auth()->check() && !auth()->user()->isadmin && !auth()->user()->haspermission('canviewdepartmentsandschools')) {
-                return $this->errorResponse('Unauthorized', null, 403);
-            }
             
             $searchTerm = $request->input('search');
             $data = School::where('schoolname', 'like', '%' . $searchTerm . '%') 

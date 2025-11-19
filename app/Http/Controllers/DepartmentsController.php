@@ -16,7 +16,7 @@ class DepartmentsController extends Controller
     //
     public function postnewdepartment(Request $request)
     {
-        if(!auth()->user()->haspermission('canaddoreditdepartment')){
+        if(!auth()->user()->isadmin){
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403); // message: "You are not Authorized to Add or Edit a Department!";
         }
         // Validate incoming request data if needed
@@ -55,7 +55,7 @@ class DepartmentsController extends Controller
 
     public function updatedepartment(Request $request, $id)
     {
-        if(!auth()->user()->haspermission('canaddoreditdepartment')){
+        if(!auth()->user()->isadmin){
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403); // message: "You are not Authorized to Add or Edit a Department!";
         }
         // Validate incoming request data if needed
@@ -97,10 +97,6 @@ class DepartmentsController extends Controller
     public function fetchalldepartments()
     {
         try {
-            // Check permissions if user is authenticated
-            if (auth()->check() && !auth()->user()->isadmin && !auth()->user()->haspermission('canviewdepartmentsandschools')) {
-                return $this->errorResponse('Unauthorized', null, 403);
-            }
             
             $data = Department::with('school')->withCount('users as staff_count')->get();
             

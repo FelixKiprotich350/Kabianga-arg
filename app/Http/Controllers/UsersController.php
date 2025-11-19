@@ -240,6 +240,9 @@ class UsersController extends Controller
             return $this->errorResponse('User not found', null, 404);
         }
 
+        // Add effective permissions to the response
+        $user->effective_permissions = $user->getEffectivePermissions();
+
         return $this->successResponse($user, 'User retrieved successfully');
     }
 

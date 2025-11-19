@@ -60,7 +60,10 @@ class LoginController extends Controller
 
     public function apiMe(Request $request)
     {
-        return $this->successResponse($request->user(), 'User information retrieved successfully');
+        $user = $request->user();
+        $user->permissions = $user->getEffectivePermissions();
+        
+        return $this->successResponse($user, 'User information retrieved successfully');
     }
 
     public function apiRefresh(Request $request)

@@ -22,7 +22,7 @@ class FinYearController extends Controller
     //
     public function postnewfinyear(Request $request)
     {
-        if(!auth()->user()->haspermission('canaddoreditfinyear')){
+        if(!auth()->user()->isadmin){
             return response()->json(['success' => false, 'message'=> 'You do not have permission to Add Financial Year!!'], 403);
         }
         // Validate incoming request data if needed

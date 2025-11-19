@@ -285,10 +285,18 @@ class ProposalsController extends Controller
 
     public function receiveproposal(Request $request, $id)
     {
-        if (! auth()->user()->haspermission('canreceiveproposal')) {
+        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canreceiveproposal')) {
             return response()->json([
                 'success' => false,
                 'message' => 'You are not Authorized to receive this Proposal!',
+            ], 403);
+        }
+
+        $proposal = Proposal::findOrFail($id);
+        if (auth()->user()->userid == $proposal->useridfk) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You cannot receive your own proposal!',
             ], 403);
         }
 
@@ -316,10 +324,18 @@ class ProposalsController extends Controller
 
     public function changeeditstatus(Request $request, $id)
     {
-        if (! auth()->user()->haspermission('canenabledisableproposaledit')) {
+        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canenabledisableproposaledit')) {
             return response()->json([
                 'success' => false,
                 'message' => 'You are not Authorized to Enable or Disable editing of this Proposal!',
+            ], 403);
+        }
+
+        $proposal = Proposal::findOrFail($id);
+        if (auth()->user()->userid == $proposal->useridfk) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You cannot change edit status of your own proposal!',
             ], 403);
         }
 
@@ -336,8 +352,13 @@ class ProposalsController extends Controller
 
     public function approveProposal(Request $request, $id)
     {
-        if (!auth()->user()->haspermission('canapproveproposal')) {
+        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canapproveproposal')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $proposal = Proposal::findOrFail($id);
+        if (auth()->user()->userid == $proposal->useridfk) {
+            return response()->json(['success' => false, 'message' => 'You cannot approve your own proposal'], 403);
         }
 
         $validator = Validator::make($request->all(), [
@@ -387,8 +408,13 @@ class ProposalsController extends Controller
 
     public function rejectProposal(Request $request, $id)
     {
-        if (!auth()->user()->haspermission('canrejectproposal')) {
+        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canrejectproposal')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $proposal = Proposal::findOrFail($id);
+        if (auth()->user()->userid == $proposal->useridfk) {
+            return response()->json(['success' => false, 'message' => 'You cannot reject your own proposal'], 403);
         }
 
         $validator = Validator::make($request->all(), [
@@ -534,7 +560,7 @@ class ProposalsController extends Controller
                 ->with('department', 'grantitem.financialyear', 'themeitem', 'applicant')
                 ->get();
         } else {
-            if (! $user->haspermission('canviewallapplications')) {
+            if (!$user->isadmin && !$user->haspermission('canviewallproposals')) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized', 'data' => []], 403);
             }
             $proposals = Proposal::with('department', 'grantitem.financialyear', 'themeitem', 'applicant')->get();
@@ -585,7 +611,7 @@ class ProposalsController extends Controller
 
     public function fetchsearchproposals(Request $request)
     {
-        if (! auth()->user()->haspermission('canviewallapplications')) {
+        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canviewallproposals')) {
             return response()->json(['success' => false, 'message' => 'You are not Authorized to view all Proposals!'], 403);
         }
         $searchTerm = $request->input('search');

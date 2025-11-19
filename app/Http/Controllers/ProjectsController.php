@@ -30,7 +30,7 @@ class ProjectsController extends Controller
                 })
                 ->get();
         } else {
-            if (! $user->haspermission('canviewallprojects')) {
+            if (!$user->isadmin && !$user->haspermission('canviewallprojects')) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized', 'data' => []], 403);
             }
             $allprojects = ResearchProject::where('projectstatus', ResearchProject::STATUS_ACTIVE)
@@ -68,7 +68,7 @@ class ProjectsController extends Controller
                 })
                 ->get();
         } else {
-            if (! $user->haspermission('canviewallprojects')) {
+            if (!$user->isadmin && !$user->haspermission('canviewallprojects')) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized', 'data' => []], 403);
             }
             $allprojects = ResearchProject::with(['proposal.applicant'])->get();
@@ -165,8 +165,13 @@ class ProjectsController extends Controller
 
     public function assignme(Request $request, $id)
     {
-        if (! auth()->user()->hasPermission('canassignmonitoringperson')) {
+        if (!auth()->user()->isadmin && !auth()->user()->hasPermission('canassignmonitoringperson')) {
             return response()->json(['success' => false, 'message' => 'You are not authorized to Assign M & E!'], 403);
+        }
+
+        $project = ResearchProject::with('proposal')->findOrFail($id);
+        if (auth()->user()->userid == $project->proposal->useridfk) {
+            return response()->json(['success' => false, 'message' => 'You cannot assign monitoring to your own project'], 403);
         }
         $rules = [
             'supervisorfk' => 'required|string',
@@ -196,8 +201,13 @@ class ProjectsController extends Controller
 
     public function pauseproject(Request $request, $id)
     {
-        if (! auth()->user()->hasPermission('canpauseresearchproject')) {
+        if (!auth()->user()->isadmin && !auth()->user()->hasPermission('canpauseresearchproject')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $project = ResearchProject::with('proposal')->findOrFail($id);
+        if (auth()->user()->userid == $project->proposal->useridfk) {
+            return response()->json(['success' => false, 'message' => 'You cannot pause your own project'], 403);
         }
 
         $item = ResearchProject::findOrFail($id);
@@ -218,8 +228,13 @@ class ProjectsController extends Controller
 
     public function resumeproject(Request $request, $id)
     {
-        if (! auth()->user()->hasPermission('canresumeresearchproject')) {
+        if (!auth()->user()->isadmin && !auth()->user()->hasPermission('canresumeresearchproject')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $project = ResearchProject::with('proposal')->findOrFail($id);
+        if (auth()->user()->userid == $project->proposal->useridfk) {
+            return response()->json(['success' => false, 'message' => 'You cannot resume your own project'], 403);
         }
 
         $item = ResearchProject::findOrFail($id);
@@ -239,8 +254,13 @@ class ProjectsController extends Controller
 
     public function cancelproject(Request $request, $id)
     {
-        if (! auth()->user()->hasPermission('cancancelresearchproject')) {
+        if (!auth()->user()->isadmin && !auth()->user()->hasPermission('cancancelresearchproject')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $project = ResearchProject::with('proposal')->findOrFail($id);
+        if (auth()->user()->userid == $project->proposal->useridfk) {
+            return response()->json(['success' => false, 'message' => 'You cannot cancel your own project'], 403);
         }
         $item = ResearchProject::findOrFail($id);
 
@@ -259,8 +279,13 @@ class ProjectsController extends Controller
 
     public function completeproject(Request $request, $id)
     {
-        if (! auth()->user()->hasPermission('cancompleteresearchproject')) {
+        if (!auth()->user()->isadmin && !auth()->user()->hasPermission('cancompleteresearchproject')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $project = ResearchProject::with('proposal')->findOrFail($id);
+        if (auth()->user()->userid == $project->proposal->useridfk) {
+            return response()->json(['success' => false, 'message' => 'You cannot complete your own project'], 403);
         }
 
         $item = ResearchProject::findOrFail($id);
@@ -299,7 +324,7 @@ class ProjectsController extends Controller
 
     public function addfunding(Request $request, $id)
     {
-        if (! auth()->user()->hasPermission('canaddprojectfunding')) {
+        if (!auth()->user()->isadmin && !auth()->user()->hasPermission('canmanageprojectfunding')) {
             return response()->json(['success' => false, 'message' => 'You are not Authorized to Add funds to this Project!'], 403);
         }
 

@@ -55,10 +55,11 @@ class Kernel extends HttpKernel
      * @var array<string, class-string|string>
      */
     protected $routeMiddleware = [
-        'auth' => \App\Http\Middleware\AuthMiddleware::class,
+        'auth' => \Illuminate\Auth\Middleware\Authenticate::class,
         'auth.custom' => \App\Http\Middleware\AuthMiddleware::class,
         'verified' => \App\Http\Middleware\EmailAccountVerification::class,
         'access' => \App\Http\Middleware\UnifiedAccessMiddleware::class,
+        'permission' => \App\Http\Middleware\PermissionMiddleware::class,
         'role' => \App\Http\Middleware\RoleMiddleware::class,
         'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
         'cache.headers' => \Illuminate\Http\Middleware\SetCacheHeaders::class,
