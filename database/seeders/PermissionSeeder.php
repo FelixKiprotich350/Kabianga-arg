@@ -29,6 +29,9 @@ class PermissionSeeder extends Seeder
 
             // Reports
             ['shortname' => 'canviewreports', 'menuname' => 'View Reports', 'description' => 'Can view reports'],
+            
+            //Dashboard
+            ['shortname' => 'canviewdashboard', 'menuname' => 'View Dashboard', 'description' => 'Can view dashboard'],
         ];
 
         foreach ($permissions as $index => $permission) {

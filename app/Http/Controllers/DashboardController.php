@@ -16,7 +16,7 @@ class DashboardController extends Controller
 
     public function chartdata(Request $request)
     {
-        if (! auth()->user()->haspermission('canviewadmindashboard')) {
+        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canviewdashboard')) {
             return $this->errorResponse('Unauthorized', null, 403);
         }
 
@@ -101,7 +101,7 @@ class DashboardController extends Controller
 
     public function getStats()
     {
-        if (! auth()->user()->haspermission('canviewadmindashboard')) {
+        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canviewdashboard')) {
             return $this->errorResponse('Unauthorized', null, 403);
         }
 
@@ -136,49 +136,4 @@ class DashboardController extends Controller
         }
     }
 
-    public function getRecentActivity()
-    {
-        if (! auth()->user()->haspermission('canviewadmindashboard')) {
-            return $this->errorResponse('Unauthorized', null, 403);
-        }
-
-        try {
-            $recentProposals = Proposal::with('applicant')
-                ->orderBy('created_at', 'desc')
-                ->limit(5)
-                ->get()
-                ->map(function ($proposal) {
-                    return [
-                        'type' => 'proposal',
-                        'title' => $proposal->researchtitle ?? 'New Proposal',
-                        'user' => $proposal->applicant->name ?? 'Unknown',
-                        'status' => $proposal->approvalstatus,
-                        'date' => $proposal->created_at->format('M d, Y'),
-                    ];
-                });
-
-            $recentProjects = ResearchProject::with(['proposal.applicant'])
-                ->orderBy('created_at', 'desc')
-                ->limit(5)
-                ->get()
-                ->map(function ($project) {
-                    return [
-                        'type' => 'project',
-                        'title' => $project->researchnumber,
-                        'user' => $project->proposal->applicant->name ?? 'Unknown',
-                        'status' => $project->projectstatus,
-                        'date' => $project->created_at->format('M d, Y'),
-                    ];
-                });
-
-            $activities = $recentProposals->concat($recentProjects)
-                ->sortByDesc('date')
-                ->take(5)
-                ->values();
-
-            return $this->successResponse($activities, 'Recent activity retrieved successfully');
-        } catch (\Exception $e) {
-            return $this->errorResponse('Failed to fetch recent activity', null, 500);
-        }
-    }
 }

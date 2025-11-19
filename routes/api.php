@@ -64,7 +64,6 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
     // Dashboard
     Route::get('/dashboard/stats', [DashboardController::class, 'getStats']);
     Route::get('/dashboard/charts', [DashboardController::class, 'chartdata']);
-    Route::get('/dashboard/activity', [DashboardController::class, 'getRecentActivity']);
 
     // User Management
     Route::prefix('users')->group(function () {
