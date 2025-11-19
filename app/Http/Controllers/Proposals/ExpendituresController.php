@@ -37,7 +37,7 @@ class ExpendituresController extends Controller
             $rules['description'] = 'required|string';
             $rules['amount'] = 'required|numeric';
         } else {
-            $rules['itemtype'] = 'required|string';
+            $rules['itemtypeid'] = 'required|integer|exists:expendituretypes,typeid';
             $rules['item'] = 'required|string';
             $rules['total'] = 'required|numeric|regex:/^\d+(\.\d{1,2})?$/';
             $rules['quantity'] = 'required|integer';
@@ -50,23 +50,23 @@ class ExpendituresController extends Controller
         }
 
         // Handle both field name formats
-        $itemtype = $request->input('category') ?? $request->input('itemtype');
+        $itemtypeid = $request->input('itemtypeid');
         $total = $request->input('amount') ?? $request->input('total');
         
-        if (!$this->isvalidbudget($request->input('proposalidfk'), $total, $itemtype)) {
+        if (!$this->isvalidbudget($request->input('proposalidfk'), $total, $itemtypeid)) {
             return response()->json(['message' => 'The 60/40 Rule failed to Validate!', 'type' => 'danger'], 400);
         }
 
         $expenditure = new Expenditureitem();
         
         if ($request->has('category')) {
-            $expenditure->itemtype = $request->input('category');
+            $expenditure->itemtypeid = $request->input('itemtypeid');
             $expenditure->item = $request->input('description');
             $expenditure->total = $request->input('amount');
             $expenditure->unitprice = $request->input('amount');
             $expenditure->quantity = 1;
         } else {
-            $expenditure->itemtype = $request->input('itemtype');
+            $expenditure->itemtypeid = $request->input('itemtypeid');
             $expenditure->total = $request->input('total');
             $expenditure->unitprice = $request->input('unitprice');
             $expenditure->quantity = $request->input('quantity');
@@ -85,7 +85,7 @@ class ExpendituresController extends Controller
         try {
             $proposalId = $request->input('proposalid');
             if ($proposalId) {
-                $data = Expenditureitem::where('proposalidfk', $proposalId)->get();
+                $data = Expenditureitem::with('expenditureType')->where('proposalidfk', $proposalId)->get();
                 
                 $totalBudget = $data->sum('total');
                 $rule_40 = $data->whereIn('itemtype', ['Travel/Other', 'Travels', 'Personnel/Subsistence'])->sum('total');
@@ -98,7 +98,7 @@ class ExpendituresController extends Controller
                     'total_budget' => $totalBudget
                 ], 'Expenditures retrieved successfully');
             } else {
-                $data = Expenditureitem::all();
+                $data = Expenditureitem::with('expenditureType')->get();
                 return $this->successResponse($data, 'All expenditures retrieved successfully');
             }
         } catch (\Exception $e) {
@@ -180,7 +180,7 @@ class ExpendituresController extends Controller
         }
         
         $rules = [
-            'itemtype' => 'required|string',
+            'itemtypeid' => 'required|integer|exists:expendituretypes,typeid',
             'item' => 'required|string',
             'total' => 'required|numeric|regex:/^\d+(\.\d{1,2})?$/',
             'quantity' => 'required|integer',
@@ -193,7 +193,7 @@ class ExpendituresController extends Controller
         }
 
         $expenditure = Expenditureitem::findOrFail($id);
-        $expenditure->itemtype = $request->input('itemtype');
+        $expenditure->itemtypeid = $request->input('itemtypeid');
         $expenditure->total = $request->input('total');
         $expenditure->unitprice = $request->input('unitprice');
         $expenditure->quantity = $request->input('quantity');

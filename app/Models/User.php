@@ -2,36 +2,29 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Auth;
-use Error;
-use Exception;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
-use Tymon\JWTAuth\Contracts\JWTSubject;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\URL;
-use App\Models\Department;
-use App\Models\Notification;
-use App\Models\NotificationType;
-use App\Models\Permission;
-use App\Models\Proposal;
 use App\Services\SimpleMailService;
 use App\Traits\HasPermissions;
+use Exception;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
+use Laravel\Sanctum\HasApiTokens;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
-
-class User extends Authenticatable implements MustVerifyEmail, JWTSubject
+class User extends Authenticatable implements JWTSubject, MustVerifyEmail
 {
-    use HasApiTokens, HasFactory, Notifiable, HasPermissions;
+    use HasApiTokens, HasFactory, HasPermissions, Notifiable;
+
     // Table name (optional, if not following Laravel naming conventions)
     protected $table = 'users';
 
     // Use UUIDs instead of auto-incrementing IDs
     public $incrementing = false;
+
     protected $keyType = 'string';
+
     /**
      * The primary key associated with the table.
      *
@@ -49,6 +42,7 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
             }
         });
     }
+
     /**
      * The attributes that are mass assignable.
      *
@@ -65,7 +59,7 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
         'isadmin',
         'highqualification',
         'officenumber',
-        'faxnumber'
+        'faxnumber',
     ];
 
     /**
@@ -89,12 +83,11 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
         'isadmin' => 'boolean',
     ];
 
-
     public function sendPasswordResetNotification($token)
     {
         $frontendUrl = config('app.frontend_url', config('app.url'));
-        $url = $frontendUrl . '/auth/reset-password?token=' . $token . '&email=' . urlencode($this->email);
-        $content = "You are receiving this email because we received a password reset request for your account. This link will expire in 60 minutes.";
+        $url = $frontendUrl.'/auth/reset-password?token='.$token.'&email='.urlencode($this->email);
+        $content = 'You are receiving this email because we received a password reset request for your account. This link will expire in 60 minutes.';
 
         SimpleMailService::send($this->email, 'Reset Your Password', $content, $url, 'Reset Password');
     }
@@ -102,17 +95,18 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
     public function sendEmailVerificationNotification()
     {
         $frontendUrl = config('app.frontend_url', config('app.url'));
-        $url = $frontendUrl . '/verify-email?id=' . $this->userid . '&hash=' . sha1($this->email);
-        $content = "Please click the button below to verify your email address.";
+        $url = $frontendUrl.'/verify-email?id='.$this->userid.'&hash='.sha1($this->email);
+        $content = 'Please click the button below to verify your email address.';
 
         SimpleMailService::send($this->email, 'Verify Your Email Address', $content, $url, 'Verify Email');
     }
 
-    //functions 
+    // functions
     public function permissions()
     {
         return $this->belongsToMany(Permission::class, 'userpermissions', 'useridfk', 'permissionidfk');
     }
+
     public function notifiabletypes()
     {
         return $this->belongsToMany(NotificationType::class, 'notifiableusers', 'useridfk', 'notificationfk');
@@ -131,31 +125,15 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
         )->latest();
     }
 
-
     public function haspermission($shortname)
     {
-        // Super admin has all permissions
-        if ((isset($this->isadmin) && $this->isadmin)) {
-            return true;
-        }
 
         // Check user permissions
         return $this->permissions()->where('shortname', $shortname)->exists();
     }
 
+  
 
-    // public function hasselfpermission($shortname)
-    // {
-    //     return $this->permissions()->where('shortname', $shortname)->exists();
-    // }
-    public function issuperadmin()
-    {
-        if ($this->isadmin) {
-            return true;
-        } else {
-            return false;
-        }
-    }
     public function canapproveproposal($proposalid)
     {
         try {
@@ -185,6 +163,7 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
         }
 
     }
+
     public function canproposechanges($proposalid)
     {
         try {
@@ -199,6 +178,7 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
         }
 
     }
+
     public function canreceiveproposal($proposalid)
     {
         try {
@@ -213,11 +193,12 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
         }
 
     }
+
     public function canenableediting($proposalid)
     {
         try {
             $proposal = Proposal::findOrFail($proposalid);
-            if ($this->haspermission('canenabledisableproposaledit') && ($proposal->useridfk != $this->userid) && $proposal->approvalstatus == \App\Models\ApprovalStatus::PENDING && $proposal->submittedstatus == \App\Models\SubmittedStatus::SUBMITTED && $proposal->receivedstatus == \App\Models\ReceivedStatus::RECEIVED && !$proposal->allowediting) {
+            if ($this->haspermission('canenabledisableproposaledit') && ($proposal->useridfk != $this->userid) && $proposal->approvalstatus == \App\Models\ApprovalStatus::PENDING && $proposal->submittedstatus == \App\Models\SubmittedStatus::SUBMITTED && $proposal->receivedstatus == \App\Models\ReceivedStatus::RECEIVED && ! $proposal->allowediting) {
                 return true;
             } else {
                 return false;
@@ -227,6 +208,7 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
         }
 
     }
+
     public function candisableediting($proposalid)
     {
         try {
@@ -242,28 +224,21 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
 
     }
 
-
-
     public function proposals()
     {
         return $this->hasMany(Proposal::class, 'useridfk', 'userid');
     }
 
-    public function getEffectivePermissions()
-    {
-        if ($this->isadmin) {
-            return Permission::pluck('shortname')->toArray();
-        }
-
-        // Only user-assigned permissions
-        return $this->permissions()->pluck('shortname')->toArray();
-    }
+    // public function getEffectivePermissions()
+    // {
+       
+    //     // Only user-assigned permissions
+    //     return $this->permissions()->pluck('shortname')->toArray();
+    // }
 
     public function hasPermissionDynamic($permission)
     {
-        if ($this->isadmin)
-            return true;
-
+        
         return $this->permissions()->where('shortname', $permission)->exists();
     }
 

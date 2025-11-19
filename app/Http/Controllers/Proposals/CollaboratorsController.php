@@ -91,22 +91,6 @@ class CollaboratorsController extends Controller
         return response()->json($data); // Return filtered data as JSON
     }
 
-    public function geteditsinglecollaboratorpage($id)
-    {
-        $collaborator = Collaborator::findOrFail($id);
-        $isreadonlypage = false;
-        $isadminmode = true;
-        
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'collaborator' => $collaborator,
-                'isreadonlypage' => $isreadonlypage,
-                'isadminmode' => $isadminmode
-            ]
-        ]);
-    }
-
     public function updateCollaborator(Request $request, $id)
     {
         if(!auth()->user()->haspermission('canmakenewproposal')){

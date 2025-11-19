@@ -15,7 +15,6 @@ use Illuminate\Support\Facades\Validator;
 class ProjectsController extends Controller
 {
     use NotifiesUsers;
- 
 
     public function fetchallactiveprojects(Request $request)
     {
@@ -30,7 +29,7 @@ class ProjectsController extends Controller
                 })
                 ->get();
         } else {
-            if (!$user->isadmin && !$user->haspermission('canviewallprojects')) {
+            if (! $user->haspermission('canviewallprojects')) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized', 'data' => []], 403);
             }
             $allprojects = ResearchProject::where('projectstatus', ResearchProject::STATUS_ACTIVE)
@@ -59,20 +58,35 @@ class ProjectsController extends Controller
     public function fetchallprojects(Request $request)
     {
         $scope = $request->query('scope', 'all');
+        $search = $request->input('search');
         $user = auth()->user();
 
+        $query = ResearchProject::with(['proposal.applicant']);
+
         if ($scope === 'my') {
-            $allprojects = ResearchProject::with(['proposal.applicant'])
-                ->whereHas('proposal', function ($query) use ($user) {
-                    $query->where('useridfk', $user->userid);
-                })
-                ->get();
+            $query->whereHas('proposal', function ($q) use ($user) {
+                $q->where('useridfk', $user->userid);
+            });
         } else {
-            if (!$user->isadmin && !$user->haspermission('canviewallprojects')) {
+            if (! $user->haspermission('canviewallprojects')) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized', 'data' => []], 403);
             }
-            $allprojects = ResearchProject::with(['proposal.applicant'])->get();
         }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('projectstatus', 'like', '%'.$search.'%')
+                    ->orWhere('researchnumber', 'like', '%'.$search.'%')
+                    ->orWhereHas('proposal', function ($query) use ($search) {
+                        $query->where('researchtitle', 'like', '%'.$search.'%');
+                    })
+                    ->orWhereHas('proposal.applicant', function ($query) use ($search) {
+                        $query->where('name', 'like', '%'.$search.'%');
+                    });
+            });
+        }
+
+        $allprojects = $query->get();
 
         try {
             $data = $allprojects->map(function ($project) {
@@ -95,28 +109,9 @@ class ProjectsController extends Controller
         }
     }
 
-    public function fetchsearchallprojects(Request $request)
+    public function viewprojectdetails($id)
     {
         if (! auth()->user()->hasPermission('canviewallprojects')) {
-            return response()->json([]);
-        }
-
-        $searchTerm = $request->input('search');
-
-        // Fetch projects where the applicant's name or project status matches the search term
-        $allprojects = ResearchProject::with(['proposal', 'applicant'])
-            ->whereHas('applicant', function ($query) use ($searchTerm) {
-                $query->where('name', 'like', '%'.$searchTerm.'%');
-            })
-            ->orWhere('projectstatus', 'like', '%'.$searchTerm.'%')
-            ->get();
-
-        return response()->json($allprojects);
-    }
-
-    public function viewanyproject($id)
-    {
-        if (! auth()->user()->hasPermission('canreadanyproject')) {
             return response()->json(['success' => false, 'message' => 'You are not Authorized to view this Project!'], 403);
         }
 
@@ -165,7 +160,7 @@ class ProjectsController extends Controller
 
     public function assignme(Request $request, $id)
     {
-        if (!auth()->user()->isadmin && !auth()->user()->hasPermission('canassignmonitoringperson')) {
+        if (! auth()->user()->hasPermission('canassignmonitoringperson')) {
             return response()->json(['success' => false, 'message' => 'You are not authorized to Assign M & E!'], 403);
         }
 
@@ -201,7 +196,7 @@ class ProjectsController extends Controller
 
     public function pauseproject(Request $request, $id)
     {
-        if (!auth()->user()->isadmin && !auth()->user()->hasPermission('canpauseresearchproject')) {
+        if (! auth()->user()->hasPermission('canpauseresearchproject')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -228,7 +223,7 @@ class ProjectsController extends Controller
 
     public function resumeproject(Request $request, $id)
     {
-        if (!auth()->user()->isadmin && !auth()->user()->hasPermission('canresumeresearchproject')) {
+        if (! auth()->user()->hasPermission('canresumeresearchproject')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -254,7 +249,7 @@ class ProjectsController extends Controller
 
     public function cancelproject(Request $request, $id)
     {
-        if (!auth()->user()->isadmin && !auth()->user()->hasPermission('cancancelresearchproject')) {
+        if (! auth()->user()->hasPermission('cancancelresearchproject')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -279,7 +274,7 @@ class ProjectsController extends Controller
 
     public function completeproject(Request $request, $id)
     {
-        if (!auth()->user()->isadmin && !auth()->user()->hasPermission('cancompleteresearchproject')) {
+        if (! auth()->user()->hasPermission('cancompleteresearchproject')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -307,24 +302,24 @@ class ProjectsController extends Controller
     {
         try {
             $progresshistory = ResearchProgress::where('researchidfk', $id)->get();
-            
+
             return response()->json([
                 'success' => true,
                 'data' => $progresshistory,
-                'message' => 'Progress history retrieved successfully'
+                'message' => 'Progress history retrieved successfully',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to fetch progress history',
-                'data' => []
+                'data' => [],
             ], 500);
         }
     }
 
     public function addfunding(Request $request, $id)
     {
-        if (!auth()->user()->isadmin && !auth()->user()->hasPermission('canmanageprojectfunding')) {
+        if (! auth()->user()->hasPermission('canmanageprojectfunding')) {
             return response()->json(['success' => false, 'message' => 'You are not Authorized to Add funds to this Project!'], 403);
         }
 
@@ -394,5 +389,36 @@ class ProjectsController extends Controller
         ];
 
         return response()->json($result);
+    }
+
+    public function commissionproject(Request $request, $id)
+    {
+        if (! auth()->user()->hasPermission('canmanageprojectfunding')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $rules = [
+            'commissioningdate' => 'required|date',
+        ];
+
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => 'Valid commissioning date is required', 'data' => $validator->errors()], 400);
+        }
+
+        try {
+            $project = ResearchProject::findOrFail($id);
+            
+            if ($project->commissioningdate) {
+                return response()->json(['success' => false, 'message' => 'Project already commissioned'], 400);
+            }
+
+            $project->commissioningdate = $request->input('commissioningdate');
+            $project->save();
+
+            return response()->json(['success' => true, 'message' => 'Project commissioned successfully', 'data' => $project]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to commission project', 'data' => []], 500);
+        }
     }
 }

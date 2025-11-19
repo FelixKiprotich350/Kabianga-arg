@@ -36,4 +36,9 @@ class Expenditureitem extends Model
     {
         return $this->belongsTo(Proposal::class, 'proposalidfk', 'proposalid');
     }
+
+    public function expenditureType()
+    {
+        return $this->belongsTo(ExpenditureType::class, 'itemtypeid', 'typeid');
+    }
 }

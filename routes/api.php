@@ -49,6 +49,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/departments', [DepartmentsController::class, 'fetchalldepartments']);
     Route::get('/grants', [GrantsController::class, 'fetchallgrants']);
     Route::get('/financial-years', action: [FinYearController::class, 'fetchallfinyears']);
+    Route::get('/expenditure-types', [\App\Http\Controllers\ExpenditureTypesController::class, 'fetchallexpendituretypes']);
 
 });
 
@@ -86,7 +87,7 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
     Route::prefix('proposals')->group(function () {
         Route::get('/', [ProposalsController::class, 'fetchallproposals']);
         Route::post('/', [ProposalsController::class, 'postnewproposal']);
-        Route::get('/search', [ProposalsController::class, 'fetchsearchproposals']);
+
         Route::get('/{id}', [ProposalsController::class, 'fetchsingleproposal']);
         Route::get('/{id}/view', [ProposalsController::class, 'getsingleproposalpage']);
         Route::put('/{id}/basic', [ProposalsController::class, 'updatebasicdetails']);
@@ -147,6 +148,14 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
         Route::delete('/{id}', [ExpendituresController::class, 'deleteExpenditure']);
     });
 
+    // Expenditure Types
+    Route::prefix('expenditure-types')->group(function () {
+        Route::post('/', [\App\Http\Controllers\ExpenditureTypesController::class, 'store']);
+        Route::get('/{id}', [\App\Http\Controllers\ExpenditureTypesController::class, 'show']);
+        Route::put('/{id}', [\App\Http\Controllers\ExpenditureTypesController::class, 'update']);
+        Route::delete('/{id}', [\App\Http\Controllers\ExpenditureTypesController::class, 'destroy']);
+    });
+
     // Workplans
     Route::prefix('workplans')->group(function () {
         Route::get('/', [WorkplanController::class, 'fetchall']);
@@ -169,8 +178,7 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
     Route::prefix('projects')->group(function () {
         Route::get('/', [ProjectsController::class, 'fetchallprojects']);
         Route::get('/active', [ProjectsController::class, 'fetchallactiveprojects']);
-        Route::get('/search', [ProjectsController::class, 'fetchsearchallprojects']);
-        Route::get('/{id}', [ProjectsController::class, 'viewanyproject']);
+        Route::get('/{id}', [ProjectsController::class, 'viewprojectdetails']);
         Route::post('/{id}/progress', [ProjectsController::class, 'submitmyprogress'])->name('api.projects.submitmyprogress');
         Route::get('/{id}/progress', [ProjectsController::class, 'fetchprojectprogress'])->name('api.projects.fetchprojectprogress');
         Route::post('/{id}/funding', [ProjectsController::class, 'addfunding'])->name('api.projects.addfunding');
@@ -180,6 +188,7 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
         Route::patch('/{id}/cancel', [ProjectsController::class, 'cancelproject'])->name('api.projects.cancelproject');
         Route::patch('/{id}/complete', [ProjectsController::class, 'completeproject'])->name('api.projects.completeproject');
         Route::patch('/{id}/assign', [ProjectsController::class, 'assignme']);
+        Route::patch('/{id}/commission', [ProjectsController::class, 'commissionproject']);
     });
 
     // Monitoring/Supervision

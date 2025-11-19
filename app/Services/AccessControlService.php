@@ -10,36 +10,36 @@ class AccessControlService
     /**
      * Check if user has access based on permission only
      */
-    public static function hasAccess($requirement, User $user = null): bool
+    public static function hasAccess($requirement, ?User $user = null): bool
     {
         $user = $user ?? Auth::user();
-        
-        if (!$user) return false;
-        
-        // Super admin bypass
-        if ($user->isadmin) return true;
-        
+
+        if (! $user) {
+            return false;
+        }
+
         // Handle array of requirements (OR logic)
         if (is_array($requirement)) {
-            return collect($requirement)->some(fn($req) => self::checkSingle($req, $user));
+            return collect($requirement)->some(fn ($req) => self::checkSingle($req, $user));
         }
-        
+
         return self::checkSingle($requirement, $user);
     }
-    
+
     /**
      * Check if user has all requirements (AND logic)
      */
-    public static function hasAllAccess(array $requirements, User $user = null): bool
+    public static function hasAllAccess(array $requirements, ?User $user = null): bool
     {
         $user = $user ?? Auth::user();
-        
-        if (!$user) return false;
-        if ($user->isadmin) return true;
-        
-        return collect($requirements)->every(fn($req) => self::checkSingle($req, $user));
+
+        if (! $user) {
+            return false;
+        }
+
+        return collect($requirements)->every(fn ($req) => self::checkSingle($req, $user));
     }
-    
+
     /**
      * Check single requirement (permission only)
      */
@@ -49,20 +49,21 @@ class AccessControlService
         if (is_string($requirement)) {
             return $user->hasPermissionDynamic($requirement);
         }
-        
+
         return false;
     }
-    
+
     /**
      * Get user's effective permissions (assigned permissions only)
      */
-    public static function getEffectivePermissions(User $user = null): array
+    public static function getEffectivePermissions(?User $user = null): array
     {
         $user = $user ?? Auth::user();
-        
-        if (!$user) return [];
-        if ($user->isadmin) return \App\Models\Permission::pluck('shortname')->toArray();
-        
+
+        if (! $user) {
+            return [];
+        }
+
         // Only user-specific permissions
         return $user->permissions()->pluck('shortname')->toArray();
     }

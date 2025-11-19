@@ -285,7 +285,7 @@ class ProposalsController extends Controller
 
     public function receiveproposal(Request $request, $id)
     {
-        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canreceiveproposal')) {
+        if (! auth()->user()->haspermission('canreceiveproposal')) {
             return response()->json([
                 'success' => false,
                 'message' => 'You are not Authorized to receive this Proposal!',
@@ -324,7 +324,7 @@ class ProposalsController extends Controller
 
     public function changeeditstatus(Request $request, $id)
     {
-        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canenabledisableproposaledit')) {
+        if (! auth()->user()->haspermission('canenabledisableproposaledit')) {
             return response()->json([
                 'success' => false,
                 'message' => 'You are not Authorized to Enable or Disable editing of this Proposal!',
@@ -352,7 +352,7 @@ class ProposalsController extends Controller
 
     public function approveProposal(Request $request, $id)
     {
-        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canapproveproposal')) {
+        if (! auth()->user()->haspermission('canapproveproposal')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -383,12 +383,14 @@ class ProposalsController extends Controller
                 $proposal->save();
 
                 $yearid = GlobalSetting::where('item', 'current_fin_year')->first();
-                if (!$yearid) throw new Exception('Current financial year not set');
-                
+                if (! $yearid) {
+                    throw new Exception('Current financial year not set');
+                }
+
                 $currentyear = FinancialYear::findOrFail($yearid->value1);
                 $lastRecord = ResearchProject::orderBy('researchid', 'desc')->first();
                 $incrementNumber = $lastRecord ? $lastRecord->researchid + 1 : 1;
-                $generatedCode = 'UOK/ARG/' . $currentyear->finyear . '/' . $incrementNumber;
+                $generatedCode = 'UOK/ARG/'.$currentyear->finyear.'/'.$incrementNumber;
 
                 $project = new ResearchProject;
                 $project->researchnumber = $generatedCode;
@@ -400,15 +402,16 @@ class ProposalsController extends Controller
             });
 
             $this->notifyProposalApproved($proposal);
+
             return response()->json(['success' => true, 'message' => 'Proposal approved successfully']);
         } catch (Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'Error: '.$e->getMessage()], 500);
         }
     }
 
     public function rejectProposal(Request $request, $id)
     {
-        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canrejectproposal')) {
+        if (! auth()->user()->haspermission('canrejectproposal')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -436,6 +439,7 @@ class ProposalsController extends Controller
         $proposal->save();
 
         $this->notifyProposalRejected($proposal);
+
         return response()->json(['success' => true, 'message' => 'Proposal rejected']);
     }
 
@@ -552,21 +556,35 @@ class ProposalsController extends Controller
 
     public function fetchallproposals(Request $request)
     {
-        $scope = $request->query('scope', 'all');
+        $scope = $request->query('scope', 'my');
+        $search = $request->input('q');
         $user = auth()->user();
 
+        $query = Proposal::with('department', 'grantitem.financialyear', 'themeitem', 'applicant');
+
         if ($scope === 'my') {
-            $proposals = Proposal::where('useridfk', $user->userid)
-                ->with('department', 'grantitem.financialyear', 'themeitem', 'applicant')
-                ->get();
+            $query->where('useridfk', $user->userid);
         } else {
-            if (!$user->isadmin && !$user->haspermission('canviewallproposals')) {
+            if (! $user->haspermission('canviewallproposals')) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized', 'data' => []], 403);
             }
-            $proposals = Proposal::with('department', 'grantitem.financialyear', 'themeitem', 'applicant')->get();
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('approvalstatus', 'like', '%'.$search.'%')
+                    ->orWhere('researchtitle', 'like', '%'.$search.'%')
+                    ->orWhereHas('themeitem', function ($query) use ($search) {
+                        $query->where('themename', 'like', '%'.$search.'%');
+                    })
+                    ->orWhereHas('applicant', function ($query) use ($search) {
+                        $query->where('name', 'like', '%'.$search.'%');
+                    });
+            });
         }
 
         try {
+            $proposals = $query->get();
             $data = $proposals->map(function ($proposal) {
                 return [
                     'proposalid' => $proposal->proposalid,
@@ -592,44 +610,21 @@ class ProposalsController extends Controller
     {
         try {
             $proposal = Proposal::with([
-                'department', 
-                'grantitem', 
-                'themeitem', 
+                'department',
+                'grantitem',
+                'themeitem',
                 'applicant',
-                'expenditures',
+                'expenditures.expenditureType',
                 'researchdesigns',
                 'workplans',
                 'collaborators',
-                'publications'
+                'publications',
             ])->findOrFail($id);
 
             return response()->json(['success' => true, 'data' => $proposal]);
         } catch (Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
-    }
-
-    public function fetchsearchproposals(Request $request)
-    {
-        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canviewallproposals')) {
-            return response()->json(['success' => false, 'message' => 'You are not Authorized to view all Proposals!'], 403);
-        }
-        $searchTerm = $request->input('search');
-        $data = Proposal::with('department', 'grantitem', 'themeitem', 'applicant')
-            ->where('approvalstatus', 'like', '%'.$searchTerm.'%')
-            ->orWhere('highqualification', 'like', '%'.$searchTerm.'%')
-            ->orWhereHas('themeitem', function ($query) use ($searchTerm) {
-                $query->where('themename', 'like', '%'.$searchTerm.'%');
-            })
-            ->orWhereHas('applicant', function ($query1) use ($searchTerm) {
-                $query1->where('name', 'like', '%'.$searchTerm.'%');
-            })
-            ->orWhereHas('department', function ($query) use ($searchTerm) {
-                $query->where('shortname', 'like', '%'.$searchTerm.'%');
-            })
-            ->get();
-
-        return response()->json($data); // Return filtered data as JSON
     }
 
     public function fetchcollaborators($id)
@@ -657,7 +652,7 @@ class ProposalsController extends Controller
     public function fetchexpenditures($id)
     {
         try {
-            $data = Expenditureitem::where('proposalidfk', $id)->get();
+            $data = Expenditureitem::with('expenditureType')->where('proposalidfk', $id)->get();
             $summary = [];
             $totalOthers = $data->where('itemtype', 'Others')->sum('total');
             $totalTravels = $data->where('itemtype', 'Travels')->sum('total');
@@ -779,10 +774,6 @@ class ProposalsController extends Controller
         ]);
     }
 
-
-
-
-
     public function markAsDraft(Request $request, $id)
     {
         try {
@@ -837,7 +828,7 @@ class ProposalsController extends Controller
             $change->save();
 
             // Enable editing for the proposal owner to make requested changes
-            if (!$proposal->allowediting) {
+            if (! $proposal->allowediting) {
                 $proposal->allowediting = true;
                 $proposal->save();
             }
@@ -854,7 +845,7 @@ class ProposalsController extends Controller
     private function generateProposalHtml($proposal)
     {
         $totalBudget = $proposal->expenditures->sum('total');
-        
+
         return '
         <!DOCTYPE html>
         <html>
@@ -940,7 +931,7 @@ class ProposalsController extends Controller
                 <div class="section-title">RESEARCH FINDINGS UTILIZATION</div>
                 <div class="content">'.nl2br($proposal->res_findings ?? 'Not specified').'</div>
             </div>'.
-            
+
             ($proposal->expenditures->count() > 0 ? '
             <div class="section">
                 <div class="section-title">BUDGET BREAKDOWN</div>
@@ -954,9 +945,9 @@ class ProposalsController extends Controller
                             <th>Total (KES)</th>
                         </tr>
                     </thead>
-                    <tbody>'.collect($proposal->expenditures)->map(function($exp) {
-                        return '<tr><td>'.($exp->item ?? 'N/A').'</td><td>'.($exp->itemtype ?? 'N/A').'</td><td>'.($exp->quantity ?? 'N/A').'</td><td>'.number_format($exp->unitprice ?? 0, 2).'</td><td>'.number_format($exp->total ?? 0, 2).'</td></tr>';
-                    })->join('').
+                    <tbody>'.collect($proposal->expenditures)->map(function ($exp) {
+                return '<tr><td>'.($exp->item ?? 'N/A').'</td><td>'.($exp->itemtype ?? 'N/A').'</td><td>'.($exp->quantity ?? 'N/A').'</td><td>'.number_format($exp->unitprice ?? 0, 2).'</td><td>'.number_format($exp->total ?? 0, 2).'</td></tr>';
+            })->join('').
                     '</tbody>
                     <tfoot>
                         <tr style="font-weight: bold; background-color: #f0f0f0;">
@@ -966,7 +957,7 @@ class ProposalsController extends Controller
                     </tfoot>
                 </table>
             </div>' : '').
-            
+
             ($proposal->workplans->count() > 0 ? '
             <div class="section">
                 <div class="section-title">WORK PLAN</div>
@@ -979,13 +970,13 @@ class ProposalsController extends Controller
                             <th>Responsible Person</th>
                         </tr>
                     </thead>
-                    <tbody>'.collect($proposal->workplans)->map(function($wp) {
-                        return '<tr><td>'.($wp->activity ?? 'N/A').'</td><td>'.($wp->time ?? 'N/A').'</td><td>'.($wp->input ?? 'N/A').'</td><td>'.($wp->bywhom ?? 'N/A').'</td></tr>';
-                    })->join('').
-                    '</tbody>
+                    <tbody>'.collect($proposal->workplans)->map(function ($wp) {
+                return '<tr><td>'.($wp->activity ?? 'N/A').'</td><td>'.($wp->time ?? 'N/A').'</td><td>'.($wp->input ?? 'N/A').'</td><td>'.($wp->bywhom ?? 'N/A').'</td></tr>';
+            })->join('').
+            '</tbody>
                 </table>
             </div>' : '').
-            
+
             ($proposal->collaborators->count() > 0 ? '
             <div class="section">
                 <div class="section-title">COLLABORATORS</div>
@@ -997,13 +988,13 @@ class ProposalsController extends Controller
                             <th>Institution</th>
                         </tr>
                     </thead>
-                    <tbody>'.collect($proposal->collaborators)->map(function($collab) {
-                        return '<tr><td>'.($collab->collaboratorname ?? 'N/A').'</td><td>'.($collab->position ?? 'N/A').'</td><td>'.($collab->institution ?? 'N/A').'</td></tr>';
-                    })->join('').
-                    '</tbody>
+                    <tbody>'.collect($proposal->collaborators)->map(function ($collab) {
+                return '<tr><td>'.($collab->collaboratorname ?? 'N/A').'</td><td>'.($collab->position ?? 'N/A').'</td><td>'.($collab->institution ?? 'N/A').'</td></tr>';
+            })->join('').
+            '</tbody>
                 </table>
             </div>' : '').
-            
+
             ($proposal->publications->count() > 0 ? '
             <div class="section">
                 <div class="section-title">RELATED PUBLICATIONS</div>
@@ -1015,20 +1006,20 @@ class ProposalsController extends Controller
                             <th>Year</th>
                         </tr>
                     </thead>
-                    <tbody>'.collect($proposal->publications)->map(function($pub) {
-                        return '<tr><td>'.($pub->title ?? 'N/A').'</td><td>'.($pub->publisher ?? 'N/A').'</td><td>'.($pub->year ?? 'N/A').'</td></tr>';
-                    })->join('').
-                    '</tbody>
+                    <tbody>'.collect($proposal->publications)->map(function ($pub) {
+                return '<tr><td>'.($pub->title ?? 'N/A').'</td><td>'.($pub->publisher ?? 'N/A').'</td><td>'.($pub->year ?? 'N/A').'</td></tr>';
+            })->join('').
+            '</tbody>
                 </table>
             </div>' : '').
-            
+
             ($proposal->researchdesigns->count() > 0 ? '
             <div class="section">
-                <div class="section-title">RESEARCH DESIGN</div>'.collect($proposal->researchdesigns)->map(function($design) {
-                    return '<div class="content"><strong>Goal:</strong> '.($design->goal ?? 'N/A').'<br><strong>Summary:</strong> '.nl2br($design->summary ?? 'N/A').'<br><strong>Indicators:</strong> '.nl2br($design->indicators ?? 'N/A').'</div>';
-                })->join('').
+                <div class="section-title">RESEARCH DESIGN</div>'.collect($proposal->researchdesigns)->map(function ($design) {
+                return '<div class="content"><strong>Goal:</strong> '.($design->goal ?? 'N/A').'<br><strong>Summary:</strong> '.nl2br($design->summary ?? 'N/A').'<br><strong>Indicators:</strong> '.nl2br($design->indicators ?? 'N/A').'</div>';
+            })->join('').
             '</div>' : '').
-            
+
             '<div class="footer">
                 <p>Generated on '.now()->format('F j, Y \a\t g:i A').'</p>
                 <p>University of Kabianga - Annual Research Grants Portal</p>

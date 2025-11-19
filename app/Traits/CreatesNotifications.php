@@ -10,8 +10,7 @@ trait CreatesNotifications
     protected function notifyProposalSubmitted($proposal)
     {
         // Notify committee members and admins
-        $recipients = User::where('isadmin', true)
-            ->orWhereHas('permissions', function($query) {
+        $recipients = User::whereHas('permissions', function($query) {
                 $query->where('shortname', 'canreceiveproposal');
             })
             ->get();

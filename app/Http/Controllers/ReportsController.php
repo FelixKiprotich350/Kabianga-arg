@@ -640,7 +640,7 @@ class ReportsController extends Controller
     // Financial Reports
     public function getFinancialSummary(Request $request)
     {
-        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canviewreports')) {
+        if (!auth()->user()->haspermission('canviewreports')) {
             return $this->errorResponse('Unauthorized', null, 403);
         }
 
@@ -718,90 +718,10 @@ class ReportsController extends Controller
         }
     }
 
-    // User Activity Reports
-    public function getUserActivityReport(Request $request)
-    {
-        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canviewreports')) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
-
-        try {
-            $departmentFilter = $request->input('department');
-            $roleFilter = $request->input('role');
-
-            $query = User::with(['department']);
-
-            if ($departmentFilter && $departmentFilter != 'all') {
-                $query->whereHas('department', function ($q) use ($departmentFilter) {
-                    $q->where('depid', $departmentFilter);
-                });
-            }
-
-            if ($roleFilter && $roleFilter != 'all') {
-                if ($roleFilter === 'admin') {
-                    $query->where('isadmin', true);
-                } else {
-                    $query->where('isadmin', false);
-                }
-            }
-
-            $users = $query->get();
-
-            $userStats = $users->map(function ($user) {
-                $proposalCount = Proposal::where('useridfk', $user->userid)->count();
-                $approvedProposals = Proposal::where('useridfk', $user->userid)
-                    ->where('approvalstatus', 'APPROVED')->count();
-                $activeProjects = ResearchProject::whereHas('proposal', function ($q) use ($user) {
-                    $q->where('useridfk', $user->userid);
-                })->where('projectstatus', 'ACTIVE')->count();
-
-                // Get user role - only check isadmin property
-                $role = $user->isadmin ? 'Admin' : 'User';
-
-                return [
-                    'id' => $user->userid,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'role' => $role,
-                    'department' => $user->department->shortname ?? 'N/A',
-                    'proposal_count' => $proposalCount,
-                    'approved_proposals' => $approvedProposals,
-                    'active_projects' => $activeProjects,
-                    'success_rate' => $proposalCount > 0 ? round(($approvedProposals / $proposalCount) * 100, 2) : 0,
-                    'last_login' => $user->updated_at->format('Y-m-d H:i:s'),
-                ];
-            });
-
-            // Calculate role distribution
-            $roleDistribution = [];
-            foreach ($users as $user) {
-                if ($user->isadmin) {
-                    $roleDistribution['Admin'] = ($roleDistribution['Admin'] ?? 0) + 1;
-                } else {
-                    $roleDistribution['User'] = ($roleDistribution['User'] ?? 0) + 1;
-                }
-            }
-
-            return response()->json([
-                'success' => true,
-                'total_users' => $users->count(),
-                'active_users' => $users->where('isactive', true)->count(),
-                'role_distribution' => $roleDistribution,
-                'users' => $userStats,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => 'Failed to load user activity report',
-                'message' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
     // Publications Report
     public function getPublicationsReport(Request $request)
     {
-        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canviewreports')) {
+        if (!auth()->user()->haspermission('canviewreports')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -861,7 +781,7 @@ class ReportsController extends Controller
     // Progress Tracking Report
     public function getProgressReport(Request $request)
     {
-        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canviewreports')) {
+        if (!auth()->user()->haspermission('canviewreports')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -909,7 +829,7 @@ class ReportsController extends Controller
     // Compliance Report
     public function getComplianceReport(Request $request)
     {
-        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canviewreports')) {
+        if (!auth()->user()->haspermission('canviewreports')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -948,7 +868,7 @@ class ReportsController extends Controller
     // Performance Analytics Report
     public function getPerformanceReport(Request $request)
     {
-        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canviewreports')) {
+        if (!auth()->user()->haspermission('canviewreports')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -986,7 +906,7 @@ class ReportsController extends Controller
     // Budget vs Actual Report
     public function getBudgetActualReport(Request $request)
     {
-        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canviewreports')) {
+        if (!auth()->user()->haspermission('canviewreports')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -1086,7 +1006,7 @@ class ReportsController extends Controller
     // Dashboard Summary for Reports
     public function getReportsSummary()
     {
-        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canviewreports')) {
+        if (!auth()->user()->haspermission('canviewreports')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 

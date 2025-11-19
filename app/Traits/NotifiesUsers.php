@@ -58,8 +58,7 @@ trait NotifiesUsers
         );
 
         // Notify reviewers
-        $reviewers = User::where('isadmin', true)
-            ->orWhereHas('permissions', fn($q) => $q->where('shortname', 'canreceiveproposal'))
+        $reviewers = User::WhereHas('permissions', fn($q) => $q->where('shortname', 'canreceiveproposal'))
             ->get();
 
         $this->notify(
@@ -227,8 +226,7 @@ trait NotifiesUsers
     protected function notifyProgressSubmitted($project, $progress)
     {
         // Notify supervisors and admins
-        $supervisors = User::where('isadmin', true)
-            ->orWhere('userid', $project->supervisorfk)
+        $supervisors = User::where('userid', $project->supervisorfk)
             ->get();
 
         $this->notify(

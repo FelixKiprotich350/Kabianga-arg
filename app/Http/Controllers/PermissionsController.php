@@ -11,7 +11,7 @@ class PermissionsController extends Controller
     use ApiResponse;
     public function fetchAllPermissions()
     {
-        if (!auth()->user()->haspermission('canviewpermissions')) {
+        if (!auth()->user()->isadmin) {
             return $this->errorResponse('Unauthorized', null, 403);
         }
 

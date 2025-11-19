@@ -10,15 +10,11 @@ class RoleMiddleware
 {
     public function handle(Request $request, Closure $next, ...$permissions)
     {
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
         $user = Auth::user();
-        
-        if ($user->isadmin) {
-            return $next($request);
-        }
 
         // Check if user has any of the required permissions
         $hasPermission = false;
@@ -29,7 +25,7 @@ class RoleMiddleware
             }
         }
 
-        if (!$hasPermission) {
+        if (! $hasPermission) {
             return response()->json(['message' => 'Access denied'], 403);
         }
 

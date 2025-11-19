@@ -16,7 +16,7 @@ class DashboardController extends Controller
 
     public function chartdata(Request $request)
     {
-        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canviewdashboard')) {
+        if (!auth()->user()->haspermission('canviewdashboard')) {
             return $this->errorResponse('Unauthorized', null, 403);
         }
 
@@ -101,7 +101,7 @@ class DashboardController extends Controller
 
     public function getStats()
     {
-        if (!auth()->user()->isadmin && !auth()->user()->haspermission('canviewdashboard')) {
+        if (!auth()->user()->haspermission('canviewdashboard')) {
             return $this->errorResponse('Unauthorized', null, 403);
         }
 
