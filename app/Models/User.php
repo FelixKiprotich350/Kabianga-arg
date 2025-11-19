@@ -93,7 +93,7 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
     public function sendPasswordResetNotification($token)
     {
         $frontendUrl = config('app.frontend_url', config('app.url'));
-        $url = $frontendUrl . '/reset-password?token=' . $token . '&email=' . urlencode($this->email);
+        $url = $frontendUrl . '/auth/reset-password?token=' . $token . '&email=' . urlencode($this->email);
         $content = "You are receiving this email because we received a password reset request for your account. This link will expire in 60 minutes.";
 
         SimpleMailService::send($this->email, 'Reset Your Password', $content, $url, 'Reset Password');

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentsController;
@@ -30,8 +31,6 @@ use Illuminate\Support\Facades\Route;
 
 // Public API Routes (No Authentication)
 Route::prefix('v1')->group(function () {
-    // Test endpoints
-    Route::get('/test/connection', [\App\Http\Controllers\ApiTestController::class, 'testConnection']);
 
     // Auth check
     Route::get('/auth/check', [\App\Http\Controllers\Auth\AuthController::class, 'check']);
@@ -39,7 +38,9 @@ Route::prefix('v1')->group(function () {
     // Authentication
     Route::post('/auth/login', [LoginController::class, 'apiLogin']);
     Route::post('/auth/register', [RegisterController::class, 'apiRegister']);
-    Route::post('/auth/forgot-password', [RegisterController::class, 'apiForgotPassword']);
+    Route::post('/auth/password/email', [PasswordResetController::class, 'sendResetLinkEmail']);
+    Route::post('/auth/password/validate', [PasswordResetController::class, 'validateToken']);
+    Route::post('/auth/password/reset', [PasswordResetController::class, 'reset']);
     Route::get('/auth/permission', [LoginController::class, 'subpermission']);
 
     // Public Data
@@ -53,10 +54,6 @@ Route::prefix('v1')->group(function () {
 
 // Protected API Routes (Authentication Required)
 Route::prefix('v1')->middleware(['auth:api'])->group(function () {
-
-    // Test endpoints (authenticated)
-    Route::get('/test/users', [\App\Http\Controllers\ApiTestController::class, 'testUsers']);
-    Route::get('/test/proposals', [\App\Http\Controllers\ApiTestController::class, 'testProposals']);
 
     // Authentication
     Route::post('/auth/logout', [LoginController::class, 'apiLogout']);

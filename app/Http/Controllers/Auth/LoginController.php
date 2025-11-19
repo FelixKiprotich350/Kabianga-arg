@@ -36,6 +36,10 @@ class LoginController extends Controller
         if ($token = JWTAuth::attempt($credentials)) {
             $user = Auth::user();
 
+            if (!$user->isactive) {
+                return $this->errorResponse('Account is inactive. Please contact administrator.', null, 403);
+            }
+
             return $this->successResponse([
                 'access_token' => $token,
                 'token_type' => 'bearer',
