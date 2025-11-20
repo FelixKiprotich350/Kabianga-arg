@@ -8,19 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
-/**
- * @OA\Info(
- *     title="Kabianga ARG Portal API",
- *     version="1.0.0",
- *     description="Research grants management API"
- * )
- *
- * @OA\SecurityScheme(
- *     securityScheme="bearerAuth",
- *     type="http",
- *     scheme="bearer"
- * )
- */
+
 class LoginController extends Controller
 {
     use ApiResponse;

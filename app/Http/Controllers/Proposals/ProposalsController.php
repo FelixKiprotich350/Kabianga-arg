@@ -23,7 +23,7 @@ use App\Models\Workplan;
 use App\Services\DualNotificationService;
 use App\Traits\ApiResponse;
 use App\Traits\NotifiesUsers;
-use Barryvdh\Snappy\Facades\SnappyPdf;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -501,7 +501,7 @@ class ProposalsController extends Controller
                 'department:depid,shortname,description',
                 'themeitem:themeid,themename',
                 'grantitem:grantid,title,status',
-                'expenditures:expenditureid,proposalidfk,item,itemtype,quantity,unitprice,total',
+                'expenditures:expenditureid,proposalidfk,item,itemtypeid,quantity,unitprice,total',
                 'researchdesigns:designid,proposalidfk,summary,indicators,goal',
                 'workplans:workplanid,proposalidfk,activity,time,input,bywhom',
                 'collaborators:collaboratorid,proposalidfk,collaboratorname,position,institution',
@@ -511,7 +511,7 @@ class ProposalsController extends Controller
             $html = $this->generateProposalHtml($proposal);
             $filename = 'Research-Proposal-'.str_replace(['/', ' ', '\\'], ['-', '-', '-'], $proposal->proposalcode).'.pdf';
 
-            $pdf = SnappyPdf::loadHTML($html);
+            $pdf = Pdf::loadHTML($html);
 
             return response($pdf->output(), 200, [
                 'Content-Type' => 'application/pdf',
@@ -539,11 +539,11 @@ class ProposalsController extends Controller
         try {
             $html = '<html><body><h1>Test PDF Generation with Snappy</h1><p>This is a test document to verify that laravel-snappy is working correctly.</p><p>Generated at: '.now().'</p></body></html>';
 
-            $pdf = SnappyPdf::loadHTML($html);
+            $pdf = Pdf::loadHTML($html);
 
             return response($pdf->output(), 200, [
                 'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="test-snappy.pdf"',
+                'Content-Disposition' => 'inline; filename="test-dompdf.pdf"',
             ]);
 
         } catch (Exception $e) {
@@ -946,7 +946,7 @@ class ProposalsController extends Controller
                         </tr>
                     </thead>
                     <tbody>'.collect($proposal->expenditures)->map(function ($exp) {
-                return '<tr><td>'.($exp->item ?? 'N/A').'</td><td>'.($exp->itemtype ?? 'N/A').'</td><td>'.($exp->quantity ?? 'N/A').'</td><td>'.number_format($exp->unitprice ?? 0, 2).'</td><td>'.number_format($exp->total ?? 0, 2).'</td></tr>';
+                return '<tr><td>'.($exp->item ?? 'N/A').'</td><td>'.($exp->expenditureType->typename ?? 'N/A').'</td><td>'.($exp->quantity ?? 'N/A').'</td><td>'.number_format($exp->unitprice ?? 0, 2).'</td><td>'.number_format($exp->total ?? 0, 2).'</td></tr>';
             })->join('').
                     '</tbody>
                     <tfoot>

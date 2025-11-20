@@ -15,7 +15,7 @@ use App\Models\School;
 use App\Models\User;
 use App\Services\PdfGenerationService;
 use App\Traits\ApiResponse;
-use Barryvdh\Snappy\Facades\SnappyPdf;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -1121,7 +1121,8 @@ class ReportsController extends Controller
         $filename = 'proposals_report_'.date('Y-m-d_H-i-s').'.pdf';
 
         try {
-            $pdfContent = SnappyPdf::loadHTML($html)->output();
+            $pdf = Pdf::loadHTML($html);
+            $pdfContent = $pdf->output();
 
             return response($pdfContent, 200, [
                 'Content-Type' => 'application/pdf',
@@ -1207,7 +1208,8 @@ class ReportsController extends Controller
         $filename = 'projects_report_'.date('Y-m-d_H-i-s').'.pdf';
 
         try {
-            $pdfContent = SnappyPdf::loadHTML($html)->output();
+            $pdf = Pdf::loadHTML($html);
+            $pdfContent = $pdf->output();
 
             return response($pdfContent, 200, [
                 'Content-Type' => 'application/pdf',
@@ -1281,7 +1283,8 @@ class ReportsController extends Controller
         $filename = 'summary_report_'.date('Y-m-d_H-i-s').'.pdf';
 
         try {
-            $pdfContent = SnappyPdf::loadHTML($html)->output();
+            $pdf = Pdf::loadHTML($html);
+            $pdfContent = $pdf->output();
 
             return response($pdfContent, 200, [
                 'Content-Type' => 'application/pdf',
