@@ -32,12 +32,12 @@ class ReportsController extends Controller
 
     public function getallproposals(Request $request)
     {
-        if (! auth()->user()->haspermission('canviewallapplications')) {
+        if (! auth()->user()->haspermission('canviewreports')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
         $searchTerm = $request->input('search');
-        $exportType = $request->input('exporttype');
+        $output = $request->input('output', 'json');
 
         if ($searchTerm != null) {
             $data = Proposal::with('department', 'grantitem', 'themeitem', 'applicant')
@@ -59,10 +59,9 @@ class ReportsController extends Controller
                 ->get();
         }
 
-        // Handle export types
-        if ($exportType === 'csv') {
+        if ($output === 'csv') {
             return $this->exportProposalsCSV($data);
-        } elseif ($exportType === 'pdf') {
+        } elseif ($output === 'pdf') {
             return $this->exportProposalsPDF($data);
         }
 
@@ -247,13 +246,12 @@ class ReportsController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
-        $exportType = $request->input('exporttype');
+        $output = $request->input('output', 'json');
         $projects = ResearchProject::with('proposal.applicant', 'proposal.department', 'proposal.grantitem')->get();
 
-        // Handle export types
-        if ($exportType === 'csv') {
+        if ($output === 'csv') {
             return $this->exportProjectsCSV($projects);
-        } elseif ($exportType === 'pdf') {
+        } elseif ($output === 'pdf') {
             return $this->exportProjectsPDF($projects);
         }
 
@@ -466,6 +464,8 @@ class ReportsController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
+        $output = $request->input('output', 'json');
+
         $summary = [
             'proposals' => [
                 'total' => Proposal::count(),
@@ -492,6 +492,12 @@ class ReportsController extends Controller
                 'departments' => Department::count(),
             ],
         ];
+
+        if ($output === 'csv') {
+            return $this->exportSummaryCSV($summary);
+        } elseif ($output === 'pdf') {
+            return $this->exportSummaryPDF($summary);
+        }
 
         return response()->json([
             'success' => true,
@@ -640,7 +646,7 @@ class ReportsController extends Controller
     // Financial Reports
     public function getFinancialSummary(Request $request)
     {
-        if (!auth()->user()->haspermission('canviewreports')) {
+        if (! auth()->user()->haspermission('canviewreports')) {
             return $this->errorResponse('Unauthorized', null, 403);
         }
 
@@ -721,7 +727,7 @@ class ReportsController extends Controller
     // Publications Report
     public function getPublicationsReport(Request $request)
     {
-        if (!auth()->user()->haspermission('canviewreports')) {
+        if (! auth()->user()->haspermission('canviewreports')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -781,7 +787,7 @@ class ReportsController extends Controller
     // Progress Tracking Report
     public function getProgressReport(Request $request)
     {
-        if (!auth()->user()->haspermission('canviewreports')) {
+        if (! auth()->user()->haspermission('canviewreports')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -829,7 +835,7 @@ class ReportsController extends Controller
     // Compliance Report
     public function getComplianceReport(Request $request)
     {
-        if (!auth()->user()->haspermission('canviewreports')) {
+        if (! auth()->user()->haspermission('canviewreports')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -868,7 +874,7 @@ class ReportsController extends Controller
     // Performance Analytics Report
     public function getPerformanceReport(Request $request)
     {
-        if (!auth()->user()->haspermission('canviewreports')) {
+        if (! auth()->user()->haspermission('canviewreports')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -906,7 +912,7 @@ class ReportsController extends Controller
     // Budget vs Actual Report
     public function getBudgetActualReport(Request $request)
     {
-        if (!auth()->user()->haspermission('canviewreports')) {
+        if (! auth()->user()->haspermission('canviewreports')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -1006,7 +1012,7 @@ class ReportsController extends Controller
     // Dashboard Summary for Reports
     public function getReportsSummary()
     {
-        if (!auth()->user()->haspermission('canviewreports')) {
+        if (! auth()->user()->haspermission('canviewreports')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -1081,11 +1087,18 @@ class ReportsController extends Controller
             table { width: 100%; border-collapse: collapse; margin-top: 20px; }
             th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
             th { background-color: #f2f2f2; }
-            h1 { color: #333; text-align: center; }
+            h1 { color: #333; text-align: center; margin-bottom: 5px; }
+            h2 { color: #666; text-align: center; margin-top: 0; margin-bottom: 20px; }
+            .header-info { text-align: center; margin-bottom: 20px; }
         </style></head><body>';
 
-        $html .= '<h1>Proposals Report</h1>';
+        $html .= '<h1>University of Kabianga</h1>';
+        $html .= '<h2>Research and Innovation Management System</h2>';
+        $html .= '<div class="header-info">';
+        $html .= '<h3>Proposals Report</h3>';
         $html .= '<p>Generated on: '.date('Y-m-d H:i:s').'</p>';
+        $html .= '<p>Generated by: '.auth()->user()->name.'</p>';
+        $html .= '</div>';
         $html .= '<table><thead><tr>';
         $html .= '<th>ID</th><th>Title</th><th>Applicant</th><th>Department</th><th>Grant</th><th>Theme</th><th>Status</th><th>Created At</th>';
         $html .= '</tr></thead><tbody>';
@@ -1160,11 +1173,18 @@ class ReportsController extends Controller
             table { width: 100%; border-collapse: collapse; margin-top: 20px; }
             th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
             th { background-color: #f2f2f2; }
-            h1 { color: #333; text-align: center; }
+            h1 { color: #333; text-align: center; margin-bottom: 5px; }
+            h2 { color: #666; text-align: center; margin-top: 0; margin-bottom: 20px; }
+            .header-info { text-align: center; margin-bottom: 20px; }
         </style></head><body>';
 
-        $html .= '<h1>Projects Report</h1>';
+        $html .= '<h1>University of Kabianga</h1>';
+        $html .= '<h2>Research and Innovation Management System</h2>';
+        $html .= '<div class="header-info">';
+        $html .= '<h3>Projects Report</h3>';
         $html .= '<p>Generated on: '.date('Y-m-d H:i:s').'</p>';
+        $html .= '<p>Generated by: '.auth()->user()->name.'</p>';
+        $html .= '</div>';
         $html .= '<table><thead><tr>';
         $html .= '<th>ID</th><th>Title</th><th>Applicant</th><th>Department</th><th>Grant</th><th>Status</th><th>Total Funding</th><th>Created At</th>';
         $html .= '</tr></thead><tbody>';
@@ -1198,6 +1218,79 @@ class ReportsController extends Controller
             return response($html, 200, [
                 'Content-Type' => 'text/html',
                 'Content-Disposition' => 'attachment; filename="projects_report_'.date('Y-m-d_H-i-s').'.html"',
+            ]);
+        }
+    }
+
+    private function exportSummaryCSV($data)
+    {
+        $filename = 'summary_report_'.date('Y-m-d_H-i-s').'.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ];
+
+        $callback = function () use ($data) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Category', 'Metric', 'Count']);
+
+            foreach ($data as $category => $metrics) {
+                foreach ($metrics as $metric => $count) {
+                    fputcsv($file, [ucfirst($category), ucfirst(str_replace('_', ' ', $metric)), $count]);
+                }
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    private function exportSummaryPDF($data)
+    {
+        $html = '<html><head><title>Summary Report</title><style>
+            body { font-family: Arial, sans-serif; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+            h1 { color: #333; text-align: center; margin-bottom: 5px; }
+            h2 { color: #666; text-align: center; margin-top: 0; margin-bottom: 20px; }
+            .header-info { text-align: center; margin-bottom: 20px; }
+        </style></head><body>';
+
+        $html .= '<h1>University of Kabianga</h1>';
+        $html .= '<h2>Research and Innovation Management System</h2>';
+        $html .= '<div class="header-info">';
+        $html .= '<h3>Summary Report</h3>';
+        $html .= '<p>Generated on: '.date('Y-m-d H:i:s').'</p>';
+        $html .= '<p>Generated by: '.auth()->user()->name.'</p>';
+        $html .= '</div>';
+        $html .= '<table><thead><tr><th>Category</th><th>Metric</th><th>Count</th></tr></thead><tbody>';
+
+        foreach ($data as $category => $metrics) {
+            foreach ($metrics as $metric => $count) {
+                $html .= '<tr>';
+                $html .= '<td>'.ucfirst($category).'</td>';
+                $html .= '<td>'.ucfirst(str_replace('_', ' ', $metric)).'</td>';
+                $html .= '<td>'.$count.'</td>';
+                $html .= '</tr>';
+            }
+        }
+
+        $html .= '</tbody></table></body></html>';
+
+        $filename = 'summary_report_'.date('Y-m-d_H-i-s').'.pdf';
+
+        try {
+            $pdfContent = SnappyPdf::loadHTML($html)->output();
+
+            return response($pdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+            ]);
+        } catch (\Exception $e) {
+            return response($html, 200, [
+                'Content-Type' => 'text/html',
+                'Content-Disposition' => 'attachment; filename="summary_report_'.date('Y-m-d_H-i-s').'.html"',
             ]);
         }
     }

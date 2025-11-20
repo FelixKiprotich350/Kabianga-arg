@@ -261,7 +261,6 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
         Route::get('/grants', [ReportsController::class, 'getGrantsReport']);
         Route::get('/schools', [ReportsController::class, 'getSchoolsReport']);
         Route::get('/departments', [ReportsController::class, 'getDepartmentsReport']);
-        Route::post('/export', [ReportsController::class, 'exportReport']);
     });
 
     // Notifications
