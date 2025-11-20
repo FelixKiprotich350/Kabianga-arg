@@ -22,7 +22,7 @@ Route::get('/', function () {
     return response()->json([
         'message' => 'Kabianga ARG Portal API',
         'version' => '1.0.0',
-        'documentation' => url('/api/documentation'),
+        'documentation' => url('/docs/api'),
         'endpoints' => [
             'auth' => '/api/v1/auth/*',
             'proposals' => '/api/v1/proposals/*',
@@ -38,15 +38,3 @@ Route::get('/health', function () {
     return response()->json(['status' => 'ok', 'timestamp' => now()]);
 });
 
-// Swagger documentation route
-Route::get('/api/documentation', function () {
-    $swaggerJson = file_get_contents(storage_path('api-docs/api-docs.json'));
-    $swaggerData = json_decode($swaggerJson, true);
-    
-    return view('swagger-ui', compact('swaggerData'));
-});
-
-// Swagger JSON endpoint
-Route::get('/api/docs.json', function () {
-    return response()->file(storage_path('api-docs/api-docs.json'));
-});
