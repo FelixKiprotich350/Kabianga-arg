@@ -49,7 +49,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/departments', [DepartmentsController::class, 'fetchalldepartments']);
     Route::get('/grants', [GrantsController::class, 'fetchallgrants']);
     Route::get('/financial-years', action: [FinYearController::class, 'fetchallfinyears']);
-    Route::get('/expenditure-types', [\App\Http\Controllers\ExpenditureTypesController::class, 'fetchallexpendituretypes']);
+    Route::get('/expendituretypes', [\App\Http\Controllers\ExpenditureTypesController::class, 'fetchallexpendituretypes']);
 
 });
 
@@ -149,7 +149,7 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
     });
 
     // Expenditure Types
-    Route::prefix('expenditure-types')->group(function () {
+    Route::prefix('expendituretypes')->group(function () {
         Route::post('/', [\App\Http\Controllers\ExpenditureTypesController::class, 'store']);
         Route::get('/{id}', [\App\Http\Controllers\ExpenditureTypesController::class, 'show']);
         Route::put('/{id}', [\App\Http\Controllers\ExpenditureTypesController::class, 'update']);
