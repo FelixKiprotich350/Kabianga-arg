@@ -48,6 +48,7 @@ class ResearchProject extends Model
         'proposalidfk',
         'projectstatus',
         'ispaused',
+        'commissioningdate',
     ];
 
     protected static function boot()
@@ -83,5 +84,29 @@ class ResearchProject extends Model
     public function mandeperson()
     {
         return $this->belongsTo(User::class, 'supervisorfk', 'userid');
+    }
+    
+    /**
+     * Check if the project is commissioned and can receive funding
+     */
+    public function canReceiveFunding()
+    {
+        return !is_null($this->commissioningdate);
+    }
+    
+    /**
+     * Check if the given user is the owner of this project
+     */
+    public function isOwnedBy($userId)
+    {
+        return $this->applicant && $this->applicant->userid === $userId;
+    }
+    
+    /**
+     * Check if project has reached maximum funding tranches (3)
+     */
+    public function hasReachedMaxTranches()
+    {
+        return ResearchFunding::where('researchidfk', $this->researchid)->count() >= 3;
     }
 }

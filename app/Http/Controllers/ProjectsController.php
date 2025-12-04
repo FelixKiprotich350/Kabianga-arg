@@ -111,11 +111,11 @@ class ProjectsController extends Controller
 
     public function viewprojectdetails($id)
     {
-        if (! auth()->user()->hasPermission('canviewallprojects')) {
+        $project = ResearchProject::with(['proposal.applicant', 'proposal.department', 'applicant'])->findOrFail($id);
+        
+        if (!auth()->user()->hasPermission('canviewallprojects') && !$project->isOwnedBy(auth()->user()->userid)) {
             return response()->json(['success' => false, 'message' => 'You are not Authorized to view this Project!'], 403);
         }
-
-        $project = ResearchProject::with(['proposal.applicant', 'proposal.department', 'applicant'])->findOrFail($id);
 
         return response()->json(['success' => true, 'data' => $project]);
     }
@@ -317,33 +317,36 @@ class ProjectsController extends Controller
         }
     }
 
-    public function addfunding(Request $request, $id)
+    public function addfundingrequest(Request $request, $id)
     {
-        if (! auth()->user()->hasPermission('canmanageprojectfunding')) {
-            return response()->json(['success' => false, 'message' => 'You are not Authorized to Add funds to this Project!'], 403);
+        $project = ResearchProject::with(['proposal', 'applicant'])->findOrFail($id);
+        
+        // Check if user is the project owner
+        if (!$project->isOwnedBy(auth()->user()->userid)) {
+            return response()->json(['success' => false, 'message' => 'Only the project owner can request funding'], 403);
+        }
+        
+        // Check if project has been commissioned
+        if (!$project->canReceiveFunding()) {
+            return response()->json(['success' => false, 'message' => 'Project must be commissioned before funding can be requested'], 400);
         }
 
-        // Validate incoming request data if needed
-        // Define validation rules
+        // Validate incoming request data
         $rules = [
             'amount' => 'required|int',
         ];
 
-        // Validate incoming request
         $validator = Validator::make($request->all(), $rules);
-
-        // Check if validation fails
         if ($validator->fails()) {
-            // return response()->json(['error' => $validator->errors()], 400);
             return response(['message' => 'Fill all the required Fields!', 'type' => 'danger'], 400);
-
         }
-        $tranches = ResearchFunding::where('researchidfk', $id)->count();
-        if ($tranches >= 3) {
+        
+        if ($project->hasReachedMaxTranches()) {
             return response(['message' => 'This Project has reached the Maximum number of Funding Tranches!', 'type' => 'danger']);
-
         }
-        $project = ResearchProject::with('proposal')->findOrFail($id);
+        
+        $tranches = ResearchFunding::where('researchidfk', $id)->count();
+        
         $commencingDate = Carbon::parse($project->proposal->commencingdate);
         if ($tranches == 1) {
             $commencingDatePlusSixMonths = $commencingDate->addMonths(6);
@@ -357,6 +360,7 @@ class ProjectsController extends Controller
                 return response(['message' => 'You must wait until ['.$commencingDatePlusNineMonths->toDateString().'] to get the Third Tranch of Funding!', 'type' => 'danger']);
             }
         }
+        
         $item = new ResearchFunding;
         $item->researchidfk = $id;
         $item->createdby = Auth::user()->userid;
@@ -364,12 +368,9 @@ class ProjectsController extends Controller
         $item->save();
 
         // Send notification using new system
-        $project = ResearchProject::with(['proposal', 'applicant'])->findOrFail($id);
         $this->notifyFundingAdded($project, $request->input('amount'));
 
-        // Optionally, return a response or redirect
-        return response(['message' => 'Funding Release Submitted Successfully!!', 'type' => 'success']);
-
+        return response(['message' => 'Funding Request Submitted Successfully!!', 'type' => 'success']);
     }
 
     public function fetchprojectfunding($id)

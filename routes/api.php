@@ -181,7 +181,7 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
         Route::get('/{id}', [ProjectsController::class, 'viewprojectdetails']);
         Route::post('/{id}/progress', [ProjectsController::class, 'submitmyprogress'])->name('api.projects.submitmyprogress');
         Route::get('/{id}/progress', [ProjectsController::class, 'fetchprojectprogress'])->name('api.projects.fetchprojectprogress');
-        Route::post('/{id}/funding', [ProjectsController::class, 'addfunding'])->name('api.projects.addfunding');
+        Route::post('/{id}/funding', [ProjectsController::class, 'addfundingrequest'])->name('api.projects.addfundingrequest');
         Route::get('/{id}/funding', [ProjectsController::class, 'fetchprojectfunding'])->name('api.projects.fetchprojectfunding');
         Route::patch('/{id}/pause', [ProjectsController::class, 'pauseproject'])->name('api.projects.pauseproject');
         Route::patch('/{id}/resume', [ProjectsController::class, 'resumeproject'])->name('api.projects.resumeproject');
@@ -269,5 +269,13 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
         Route::get('/types/{id}/users', [UsersController::class, 'fetchtypewiseusers']);
         Route::post('/types/{id}/users', [UsersController::class, 'addnotifiableusers']);
         Route::delete('/types/{id}/users', [UsersController::class, 'removenotifiableuser']);
+    });
+
+    // Finances Management
+    Route::prefix('finances')->group(function () {
+        Route::patch('/funding/{fundingId}/approve', [\App\Http\Controllers\FinancesController::class, 'approveFundingRequest']);
+        Route::get('/summary', [\App\Http\Controllers\FinancesController::class, 'getFinanceSummary']);
+        Route::get('/pending-requests', [\App\Http\Controllers\FinancesController::class, 'getAllRequests']);
+        Route::get('/budget-allocations', [\App\Http\Controllers\FinancesController::class, 'getBudgetAllocation']);
     });
 });

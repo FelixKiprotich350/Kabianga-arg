@@ -16,9 +16,7 @@ class WorkplanController extends Controller
     //
     public function postworkplanitem(Request $request)
     {
-        if(!auth()->user()->haspermission('canmakenewproposal')){
-            return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
-        }
+        
         
         $proposal = \App\Models\Proposal::findOrFail($request->input('proposalidfk'));
         if (!$proposal->isEditable()) {

@@ -17,9 +17,7 @@ class PublicationsController extends Controller
     {
         \Log::info('Publication request received', $request->all());
         
-        if(!auth()->user()->haspermission('canmakenewproposal')){
-            return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
-        }
+       
         
         $proposal = \App\Models\Proposal::findOrFail($request->input('proposalidfk'));
         if (!$proposal->isEditable()) {
@@ -93,9 +91,7 @@ class PublicationsController extends Controller
 
     public function updatePublication(Request $request, $id)
     {
-        if(!auth()->user()->haspermission('canmakenewproposal')){
-            return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
-        }
+        
         
         $publication = Publication::findOrFail($id);
         $proposal = \App\Models\Proposal::findOrFail($publication->proposalidfk);
@@ -133,9 +129,7 @@ class PublicationsController extends Controller
 
     public function deletePublication($id)
     {
-        if(!auth()->user()->haspermission('canmakenewproposal')){
-            return response()->json(['message' => 'Unauthorized', 'type' => 'danger'], 403);
-        }
+        
         
         $publication = Publication::findOrFail($id);
         $proposal = \App\Models\Proposal::findOrFail($publication->proposalidfk);

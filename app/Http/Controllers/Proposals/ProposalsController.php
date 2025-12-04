@@ -39,32 +39,11 @@ class ProposalsController extends Controller
         return response()->json(['message' => 'Proposals API endpoint', 'status' => 'active']);
     }
 
-    //
-    public function modernNewProposal()
-    {
-        if (! auth()->user()->haspermission('canmakenewproposal')) {
-            return response()->json(['success' => false, 'message' => 'You are not Authorized to Make a new Proposal!'], 403);
-        }
-        $themes = ResearchTheme::all();
-        $departments = Department::select('depid', 'shortname', 'description')->get();
-        $user = auth()->user();
-        $currentgrant = GlobalSetting::where('item', 'current_open_grant')->first();
-        $grants = collect();
-        if ($currentgrant) {
-            $grants = Grant::where('grantid', $currentgrant->value1)
-                ->whereDoesntHave('proposals', function ($query) use ($user) {
-                    $query->where('useridfk', $user->userid);
-                })->get();
-        }
-
-        return response()->json(['success' => true, 'data' => compact('grants', 'themes', 'departments')]);
-    }
+    
 
     public function postnewproposal(Request $request)
     {
-        if (! auth()->user()->haspermission('canmakenewproposal')) {
-            return response()->json(['success' => false, 'message' => 'You are not Authorized to Make a new Proposal!'], 403);
-        }
+        
         // Define validation rules
         $rules = [
             'grantnofk' => 'required|integer',

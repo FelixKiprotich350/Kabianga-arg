@@ -14,33 +14,81 @@ class FinancesController extends Controller
 {
     use ApiResponse, NotifiesUsers;
     
-
-    
-    public function addFunding(Request $request, $projectId)
+    public function approveFundingRequest(Request $request, $fundingId)
     {
-        $validator = Validator::make($request->all(), [
-            'amount' => 'required|numeric|min:0.01'
-        ]);
-        
-        if ($validator->fails()) {
-            return $this->errorResponse('Validation failed', $validator->errors(), 400);
-        }
-        
         try {
-            $project = ResearchProject::with(['proposal', 'applicant'])->findOrFail($projectId);
+            $funding = ResearchFunding::with(['project.proposal', 'project.applicant'])->findOrFail($fundingId);
             
-            $funding = ResearchFunding::create([
-                'createdby' => Auth::user()->userid,
-                'researchidfk' => $project->researchid,
-                'amount' => $request->amount
-            ]);
+            // Check if user has permission to approve funding
+            if (!auth()->user()->hasPermission('canmanageprojectfunding')) {
+                return $this->errorResponse('Unauthorized', 'You do not have permission to approve funding requests', 403);
+            }
             
-            // Send notification to project owner
-            $this->notifyFundingAdded($project, $request->amount);
+            // Update funding status to approved (assuming there's a status field)
+            $funding->status = 'approved';
+            $funding->approved_by = Auth::user()->userid;
+            $funding->approved_at = now();
+            $funding->save();
             
-            return $this->successResponse($funding, 'Funding added successfully and user notified');
+            // Notify project owner
+            $this->notifyFundingApproved($funding->project, $funding->amount);
+            
+            return $this->successResponse($funding, 'Funding request approved successfully');
         } catch (\Exception $e) {
-            return $this->errorResponse('Failed to add funding', $e->getMessage(), 500);
+            return $this->errorResponse('Failed to approve funding request', $e->getMessage(), 500);
         }
+    }
+    
+    public function getFinanceSummary()
+    {
+        if (!auth()->user()->hasPermission('canmanageprojectfunding')) {
+            return $this->errorResponse('Unauthorized', 'You do not have permission to view finance summary', 403);
+        }
+        
+        $totalReleased = ResearchFunding::sum('amount');
+        $totalRequests = ResearchFunding::count();
+        $totalProjects = ResearchProject::count();
+        $activeProjects = ResearchProject::where('projectstatus', 'ACTIVE')->count();
+        $completedProjects = ResearchProject::where('projectstatus', 'COMPLETED')->count();
+        $totalGrants = \App\Models\Grant::count();
+        
+        return $this->successResponse([
+            'total_released' => $totalReleased,
+            'total_requests' => $totalRequests,
+            'pending_requests' => $totalRequests,
+            'approved_requests' => $totalRequests,
+            'total_projects' => $totalProjects,
+            'active_projects' => $activeProjects,
+            'completed_projects' => $completedProjects,
+            'total_grants' => $totalGrants
+        ]);
+    }
+    
+    public function getAllRequests()
+    {
+        if (!auth()->user()->hasPermission('canmanageprojectfunding')) {
+            return $this->errorResponse('Unauthorized', 'You do not have permission to view funding requests', 403);
+        }
+        
+        $requests = ResearchFunding::with(['project.proposal.applicant', 'applicant'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+            
+        return $this->successResponse($requests);
+    }
+    
+    public function getBudgetAllocation()
+    {
+        if (!auth()->user()->hasPermission('canmanageprojectfunding')) {
+            return $this->errorResponse('Unauthorized', 'You do not have permission to view budget allocation', 403);
+        }
+        
+        $allocations = ResearchProject::with(['proposal.applicant'])
+            ->selectRaw('researchprojects.*, COALESCE(SUM(researchfundings.amount), 0) as total_funding')
+            ->leftJoin('researchfundings', 'researchprojects.researchid', '=', 'researchfundings.researchidfk')
+            ->groupBy('researchprojects.researchid')
+            ->get();
+            
+        return $this->successResponse($allocations);
     }
 }
