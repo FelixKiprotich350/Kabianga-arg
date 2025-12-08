@@ -126,6 +126,21 @@ class Proposal extends Model
         return $this->belongsTo(ResearchTheme::class, 'themefk', 'themeid');
     }
 
+    public function reviewers()
+    {
+        return $this->hasMany(ProposalReviewer::class, 'proposal_id', 'proposalid');
+    }
+
+    public function isReviewer($userId)
+    {
+        return $this->reviewers()->where('reviewer_id', $userId)->exists();
+    }
+
+    public function canRequestChanges($userId)
+    {
+        return $this->isReviewer($userId);
+    }
+
     public function hasPendingUpdates()
     {
         try {

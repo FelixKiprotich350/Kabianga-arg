@@ -458,9 +458,9 @@ class ProposalsController extends Controller
     {
         try {
             $user = Auth::user();
-            $prop = Proposal::with(['applicant', 'department', 'themeitem', 'grantitem'])->findOrFail($id);
+            $prop = Proposal::with(['applicant', 'department', 'themeitem', 'grantitem', 'reviewers.reviewer'])->findOrFail($id);
 
-            if (! $user->haspermission('canreadproposaldetails') && $user->userid != $prop->useridfk) {
+            if (!$user->haspermission('canreadproposaldetails') && $user->userid != $prop->useridfk && !$prop->isReviewer($user->userid)) {
                 return response()->json(['success' => false, 'message' => 'You are not Authorized to read the requested Proposal!'], 403);
             }
 
@@ -779,8 +779,11 @@ class ProposalsController extends Controller
     public function requestChanges(Request $request, $id)
     {
         try {
-            if (! auth()->user()->haspermission('canapproveproposal')) {
-                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            $proposal = Proposal::findOrFail($id);
+            $user = auth()->user();
+            
+            if (!$proposal->canRequestChanges($user->userid) && !$user->haspermission('canapproveproposal')) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized. Only assigned reviewers can suggest changes.'], 403);
             }
 
             $validator = Validator::make($request->all(), [
@@ -791,8 +794,6 @@ class ProposalsController extends Controller
             if ($validator->fails()) {
                 return response()->json(['success' => false, 'message' => 'Both issue and suggested changes are required'], 400);
             }
-
-            $proposal = Proposal::findOrFail($id);
 
             if ($proposal->approvalstatus !== ApprovalStatus::PENDING) {
                 return response()->json(['success' => false, 'message' => 'Proposal already processed'], 400);

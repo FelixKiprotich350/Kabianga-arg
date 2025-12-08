@@ -111,9 +111,18 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
         Route::get('/{id}/workplans', [ProposalsController::class, 'fetchworkplanitems']);
         Route::get('/{id}/research-design', [ProposalsController::class, 'fetchresearchdesign']);
         Route::get('/{id}/budget-validation', [ProposalsController::class, 'budgetValidation']);
+        
+        // Proposal Reviewers
+        Route::post('/{id}/reviewers', [\App\Http\Controllers\Proposals\ProposalReviewersController::class, 'assignReviewers']);
+        Route::get('/{id}/reviewers', [\App\Http\Controllers\Proposals\ProposalReviewersController::class, 'getReviewers']);
+        Route::delete('/{id}/reviewers/{reviewerId}', [\App\Http\Controllers\Proposals\ProposalReviewersController::class, 'removeReviewer']);
     });
 
+    // My Review Proposals
+    Route::get('/my-reviews', [\App\Http\Controllers\Proposals\ProposalReviewersController::class, 'getMyReviewProposals']);
+    
     // Proposal Changes
+
     Route::prefix('proposal-changes')->group(function () {
         Route::post('/', [\App\Http\Controllers\Proposals\ProposalChangesController::class, 'postproposalchanges']);
         Route::get('/search', [\App\Http\Controllers\Proposals\ProposalChangesController::class, 'fetchsearch']);
