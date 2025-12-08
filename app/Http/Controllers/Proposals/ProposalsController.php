@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Proposals;
 use App\Http\Controllers\Controller;
 use App\Models\ApprovalStatus;
 use App\Models\Collaborator;
-use App\Models\Department;
 use App\Models\Expenditureitem;
 use App\Models\FinancialYear;
 use App\Models\GlobalSetting;
@@ -16,7 +15,6 @@ use App\Models\Publication;
 use App\Models\ReceivedStatus;
 use App\Models\ResearchDesignItem;
 use App\Models\ResearchProject;
-use App\Models\ResearchTheme;
 use App\Models\SubmittedStatus;
 use App\Models\User;
 use App\Models\Workplan;
@@ -39,11 +37,9 @@ class ProposalsController extends Controller
         return response()->json(['message' => 'Proposals API endpoint', 'status' => 'active']);
     }
 
-    
-
     public function postnewproposal(Request $request)
     {
-        
+
         // Define validation rules
         $rules = [
             'grantnofk' => 'required|integer',
@@ -460,7 +456,7 @@ class ProposalsController extends Controller
             $user = Auth::user();
             $prop = Proposal::with(['applicant', 'department', 'themeitem', 'grantitem', 'reviewers.reviewer'])->findOrFail($id);
 
-            if (!$user->haspermission('canreadproposaldetails') && $user->userid != $prop->useridfk && !$prop->isReviewer($user->userid)) {
+            if (! $user->haspermission('canreadproposaldetails') && $user->userid != $prop->useridfk && ! $prop->isReviewer($user->userid)) {
                 return response()->json(['success' => false, 'message' => 'You are not Authorized to read the requested Proposal!'], 403);
             }
 
@@ -781,8 +777,8 @@ class ProposalsController extends Controller
         try {
             $proposal = Proposal::findOrFail($id);
             $user = auth()->user();
-            
-            if (!$proposal->canRequestChanges($user->userid) && !$user->haspermission('canapproveproposal')) {
+
+            if (! $proposal->canRequestChanges($user->userid) && ! $user->haspermission('canapproveproposal')) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized. Only assigned reviewers can suggest changes.'], 403);
             }
 

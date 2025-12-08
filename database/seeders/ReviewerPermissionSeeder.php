@@ -10,7 +10,14 @@ class ReviewerPermissionSeeder extends Seeder
     public function run()
     {
         $permission = [
-            'permissionname' => 'canassignreviewers',
+            'pid' => \Illuminate\Support\Str::uuid(),
+            'menuname' => 'Assign Reviewers',
+            'shortname' => 'canassignreviewers',
+            'path' => '/proposals/reviewers',
+            'priorityno' => 100,
+            'permissionlevel' => 2,
+            'targetrole' => 2,
+            'issuperadminright' => false,
             'description' => 'Can assign reviewers to proposals',
             'created_at' => now(),
             'updated_at' => now(),
