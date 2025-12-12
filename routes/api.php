@@ -50,6 +50,15 @@ Route::prefix('v1')->group(function () {
     Route::get('/grants', [GrantsController::class, 'fetchallgrants']);
     Route::get('/financial-years', action: [FinYearController::class, 'fetchallfinyears']);
     Route::get('/expendituretypes', [\App\Http\Controllers\ExpenditureTypesController::class, 'fetchallexpendituretypes']);
+    Route::get('/proposal-types', function() {
+        return response()->json([
+            'success' => true,
+            'data' => [
+                ['value' => 'research', 'label' => 'Research'],
+                ['value' => 'innovation', 'label' => 'Innovation']
+            ]
+        ]);
+    });
 
 });
 
@@ -288,3 +297,13 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
         Route::get('/budget-allocations', [\App\Http\Controllers\FinancesController::class, 'getBudgetAllocation']);
     });
 });
+    // Proposal Types endpoint
+    Route::get('/proposal-types', function() {
+        return response()->json([
+            'success' => true,
+            'data' => [
+                ['value' => 'research', 'label' => 'Research'],
+                ['value' => 'innovation', 'label' => 'Innovation']
+            ]
+        ]);
+    });

@@ -30,6 +30,12 @@ enum ApprovalStatus: string
     case REJECTED = 'REJECTED';
 }
 
+enum ProposalType: string
+{
+    case RESEARCH = 'research';
+    case INNOVATION = 'innovation';
+}
+
 
 
 class Proposal extends Model
@@ -61,6 +67,7 @@ class Proposal extends Model
         'themefk',
         'departmentidfk',
         'approvalstatus',
+        'proposaltype',
         'cellphone',
         'submittedstatus',
         'receivedstatus',
@@ -71,6 +78,7 @@ class Proposal extends Model
         'submittedstatus' => SubmittedStatus::class,
         'receivedstatus' => ReceivedStatus::class,
         'approvalstatus' => ApprovalStatus::class,
+        'proposaltype' => ProposalType::class,
         'allowediting' => 'boolean',
     ];
 

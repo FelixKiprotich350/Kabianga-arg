@@ -46,6 +46,7 @@ class ProposalsController extends Controller
             'departmentfk' => 'required|string',
             'themefk' => 'required|string',
             'researchtitle' => 'required|string',
+            'proposaltype' => 'required|in:research,innovation',
         ];
 
         // Validate incoming request
@@ -88,6 +89,7 @@ class ProposalsController extends Controller
         $proposal->allowediting = true;
         $proposal->themefk = $request->input('themefk');
         $proposal->researchtitle = $request->input('researchtitle');
+        $proposal->proposaltype = ProposalType::from($request->input('proposaltype'));
 
         // Save the proposal
         $proposal->save();
@@ -138,6 +140,7 @@ class ProposalsController extends Controller
             'grantnofk' => 'required|integer',
             'departmentfk' => 'required|string',
             'themefk' => 'required|string',
+            'proposaltype' => 'sometimes|in:research,innovation',
         ];
 
         // Validate incoming request
@@ -152,6 +155,9 @@ class ProposalsController extends Controller
         $proposal->departmentidfk = $request->input('departmentfk');
         $proposal->grantnofk = $request->input('grantnofk');
         $proposal->themefk = $request->input('themefk');
+        if ($request->has('proposaltype')) {
+            $proposal->proposaltype = ProposalType::from($request->input('proposaltype'));
+        }
         // Save the proposal
         $proposal->save();
 
@@ -566,6 +572,7 @@ class ProposalsController extends Controller
                     'researchtitle' => $proposal->researchtitle,
                     'objectives' => $proposal->objectives,
                     'approvalstatus' => $proposal->approvalstatus,
+                    'proposaltype' => $proposal->proposaltype,
                     'theme_name' => $proposal->themeitem->themename ?? 'N/A',
                     'financial_year' => $proposal->grantitem->financialyear->finyear ?? 'N/A',
                     'created_at' => $proposal->created_at,
@@ -865,6 +872,7 @@ class ProposalsController extends Controller
                 <div class="section-title">BASIC INFORMATION</div>
                 <div class="field"><span class="label">Proposal Code:</span> <span class="value">'.($proposal->proposalcode ?? 'N/A').'</span></div>
                 <div class="field"><span class="label">Research Title:</span> <span class="value">'.($proposal->researchtitle ?? 'N/A').'</span></div>
+                <div class="field"><span class="label">Proposal Type:</span> <span class="value">'.ucfirst($proposal->proposaltype->value ?? 'N/A').'</span></div>
                 <div class="field"><span class="label">Principal Investigator:</span> <span class="value">'.($proposal->applicant->name ?? 'N/A').'</span></div>
                 <div class="field"><span class="label">Department:</span> <span class="value">'.($proposal->department->shortname ?? 'N/A').'</span></div>
                 <div class="field"><span class="label">Research Theme:</span> <span class="value">'.($proposal->themeitem->themename ?? 'N/A').'</span></div>
