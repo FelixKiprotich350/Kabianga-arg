@@ -73,6 +73,9 @@ The Kabianga ARG API provides complete backend functionality for research lifecy
    DB_PASSWORD=your_password
    ```
 
+    composer require --dev kitloong/laravel-migrations-generator
+composer require --dev doctrine/dbal
+ php artisan migrate:generate
 5. **Run migrations and seeders**
    ```bash
    php artisan migrate
