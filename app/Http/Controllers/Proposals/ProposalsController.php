@@ -12,6 +12,8 @@ use App\Models\Grant;
 use App\Models\InnovationTeam;
 use App\Models\Proposal;
 use App\Models\ProposalChanges;
+use App\Models\ProposalInnovationMeta;
+use App\Models\ProposalResearchMeta;
 use App\Models\ProposalType;
 use App\Models\Publication;
 use App\Models\ReceivedStatus;
@@ -77,29 +79,33 @@ class ProposalsController extends Controller
         $proposal->researchtitle = $request->input('researchtitle');
         $proposal->proposaltype = ProposalType::from($request->input('proposaltype'));
         
-        // Add innovation fields if proposal type is innovation
-        if ($request->proposaltype === 'innovation') {
-            $proposal->gap = $request->input('gap');
-            $proposal->solution = $request->input('solution');
-            $proposal->targetcustomers = $request->input('targetcustomers');
-            $proposal->valueproposition = $request->input('valueproposition');
-            $proposal->competitors = $request->input('competitors');
-            $proposal->attraction = $request->input('attraction');
-        }
-
         // Save the proposal
         $proposal->save();
         
-        // Save innovation team members if provided
-        if ($request->proposaltype === 'innovation' && $request->has('innovation_teams')) {
-            foreach ($request->innovation_teams as $teamMember) {
-                InnovationTeam::create([
-                    'proposal_id' => $proposal->proposalid,
-                    'name' => $teamMember['name'],
-                    'contacts' => $teamMember['contacts'],
-                    'role' => $teamMember['role']
-                ]);
+        // Create meta data based on proposal type
+        if ($request->proposaltype === 'innovation') {
+            ProposalInnovationMeta::create([
+                'proposal_id' => $proposal->proposalid,
+                'gap' => $request->input('gap'),
+                'solution' => $request->input('solution'),
+                'targetcustomers' => $request->input('targetcustomers'),
+                'valueproposition' => $request->input('valueproposition'),
+                'competitors' => $request->input('competitors'),
+                'attraction' => $request->input('attraction')
+            ]);
+            
+            if ($request->has('innovation_teams')) {
+                foreach ($request->innovation_teams as $teamMember) {
+                    InnovationTeam::create([
+                        'proposal_id' => $proposal->proposalid,
+                        'name' => $teamMember['name'],
+                        'contacts' => $teamMember['contacts'],
+                        'role' => $teamMember['role']
+                    ]);
+                }
             }
+        } else {
+            ProposalResearchMeta::create(['proposal_id' => $proposal->proposalid]);
         }
 
         // Return JSON response for API
@@ -229,33 +235,27 @@ class ProposalsController extends Controller
             return response()->json(['error' => $validator->errors()], 400);
         }
 
-        // Update basic research details
+        // Update basic proposal details
         $proposal->researchtitle = $request->input('researchtitle');
-        $proposal->objectives = $request->input('objectives');
-        $proposal->hypothesis = $request->input('hypothesis');
-        $proposal->significance = $request->input('significance');
-        $proposal->ethicals = $request->input('ethicals');
-        $proposal->expoutput = $request->input('outputs');
-        $proposal->socio_impact = $request->input('economicimpact');
-        $proposal->res_findings = $request->input('res_findings');
         $proposal->commencingdate = $request->input('commencingdate');
         $proposal->terminationdate = $request->input('terminationdate');
         
-        // Update innovation-specific fields if proposal type is innovation
+        // Update meta data based on proposal type
         if ($proposal->proposaltype->value === 'innovation') {
-            $proposal->gap = $request->input('gap');
-            $proposal->solution = $request->input('solution');
-            $proposal->targetcustomers = $request->input('targetcustomers');
-            $proposal->valueproposition = $request->input('valueproposition');
-            $proposal->competitors = $request->input('competitors');
-            $proposal->attraction = $request->input('attraction');
+            $proposal->innovationMeta()->updateOrCreate(
+                ['proposal_id' => $proposal->proposalid],
+                [
+                    'gap' => $request->input('gap'),
+                    'solution' => $request->input('solution'),
+                    'targetcustomers' => $request->input('targetcustomers'),
+                    'valueproposition' => $request->input('valueproposition'),
+                    'competitors' => $request->input('competitors'),
+                    'attraction' => $request->input('attraction')
+                ]
+            );
             
-            // Update innovation team members
             if ($request->has('innovation_teams')) {
-                // Delete existing team members
                 InnovationTeam::where('proposal_id', $proposal->proposalid)->delete();
-                
-                // Add new team members
                 foreach ($request->innovation_teams as $teamMember) {
                     InnovationTeam::create([
                         'proposal_id' => $proposal->proposalid,
@@ -265,6 +265,19 @@ class ProposalsController extends Controller
                     ]);
                 }
             }
+        } else {
+            $proposal->researchMeta()->updateOrCreate(
+                ['proposal_id' => $proposal->proposalid],
+                [
+                    'objectives' => $request->input('objectives'),
+                    'hypothesis' => $request->input('hypothesis'),
+                    'significance' => $request->input('significance'),
+                    'ethicals' => $request->input('ethicals'),
+                    'expoutput' => $request->input('outputs'),
+                    'socio_impact' => $request->input('economicimpact'),
+                    'res_findings' => $request->input('res_findings')
+                ]
+            );
         }
         
         $proposal->save();
@@ -651,6 +664,8 @@ class ProposalsController extends Controller
                 'collaborators',
                 'publications',
                 'innovationTeams',
+                'researchMeta',
+                'innovationMeta',
             ])->findOrFail($id);
 
             return response()->json(['success' => true, 'data' => $proposal]);

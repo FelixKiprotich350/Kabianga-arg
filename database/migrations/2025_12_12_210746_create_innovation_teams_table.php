@@ -6,21 +6,25 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up()
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
     {
         Schema::create('innovation_teams', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('proposal_id');
+            $table->bigIncrements('id');
+            $table->unsignedBigInteger('proposal_id')->index('innovation_teams_proposal_id_foreign');
             $table->string('name');
             $table->string('contacts');
             $table->string('role');
             $table->timestamps();
-
-            $table->foreign('proposal_id')->references('proposalid')->on('proposals')->onDelete('cascade');
         });
     }
 
-    public function down()
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
     {
         Schema::dropIfExists('innovation_teams');
     }

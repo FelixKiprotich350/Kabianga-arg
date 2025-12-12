@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('proposals', function (Blueprint $table) {
             $table->bigIncrements('proposalid');
             $table->string('proposalcode')->unique();
+            $table->enum('proposaltype', ['research', 'innovation'])->default('research');
             $table->unsignedInteger('grantnofk')->index('proposals_grantnofk_foreign');
             $table->char('departmentidfk', 36)->index('proposals_departmentidfk_foreign');
             $table->char('useridfk', 36)->index('proposals_useridfk_foreign');
@@ -26,13 +27,6 @@ return new class extends Migration
             $table->string('researchtitle')->nullable();
             $table->date('commencingdate')->nullable();
             $table->date('terminationdate')->nullable();
-            $table->text('objectives')->nullable();
-            $table->text('hypothesis')->nullable();
-            $table->text('significance')->nullable();
-            $table->text('ethicals')->nullable();
-            $table->text('expoutput')->nullable();
-            $table->text('socio_impact')->nullable();
-            $table->text('res_findings')->nullable();
             $table->text('comment')->nullable();
             $table->char('approvedrejectedbywhofk', 36)->nullable()->index('proposals_approvedrejectedbywhofk_foreign');
             $table->timestamps();

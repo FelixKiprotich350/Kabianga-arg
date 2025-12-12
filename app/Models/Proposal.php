@@ -71,13 +71,7 @@ class Proposal extends Model
         'cellphone',
         'submittedstatus',
         'receivedstatus',
-        'allowediting',
-        'gap',
-        'solution',
-        'targetcustomers',
-        'valueproposition',
-        'competitors',
-        'attraction'
+        'allowediting'
     ];
 
     protected $casts = [
@@ -148,6 +142,16 @@ class Proposal extends Model
     public function innovationTeams()
     {
         return $this->hasMany(InnovationTeam::class, 'proposal_id', 'proposalid');
+    }
+
+    public function researchMeta()
+    {
+        return $this->hasOne(ProposalResearchMeta::class, 'proposal_id', 'proposalid');
+    }
+
+    public function innovationMeta()
+    {
+        return $this->hasOne(ProposalInnovationMeta::class, 'proposal_id', 'proposalid');
     }
 
     public function isReviewer($userId)
