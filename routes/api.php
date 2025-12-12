@@ -119,6 +119,7 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
         Route::get('/{id}/expenditures', [ProposalsController::class, 'fetchexpenditures']);
         Route::get('/{id}/workplans', [ProposalsController::class, 'fetchworkplanitems']);
         Route::get('/{id}/research-design', [ProposalsController::class, 'fetchresearchdesign']);
+        Route::get('/{id}/innovation-teams', [ProposalsController::class, 'fetchinnovationteams']);
         Route::get('/{id}/budget-validation', [ProposalsController::class, 'budgetValidation']);
         
         // Proposal Reviewers

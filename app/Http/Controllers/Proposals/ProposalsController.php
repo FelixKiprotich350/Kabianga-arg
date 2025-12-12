@@ -9,8 +9,10 @@ use App\Models\Expenditureitem;
 use App\Models\FinancialYear;
 use App\Models\GlobalSetting;
 use App\Models\Grant;
+use App\Models\InnovationTeam;
 use App\Models\Proposal;
 use App\Models\ProposalChanges;
+use App\Models\ProposalType;
 use App\Models\Publication;
 use App\Models\ReceivedStatus;
 use App\Models\ResearchDesignItem;
@@ -18,6 +20,7 @@ use App\Models\ResearchProject;
 use App\Models\SubmittedStatus;
 use App\Models\User;
 use App\Models\Workplan;
+use App\Http\Requests\StoreProposalRequest;
 use App\Services\DualNotificationService;
 use App\Traits\ApiResponse;
 use App\Traits\NotifiesUsers;
@@ -37,25 +40,8 @@ class ProposalsController extends Controller
         return response()->json(['message' => 'Proposals API endpoint', 'status' => 'active']);
     }
 
-    public function postnewproposal(Request $request)
+    public function postnewproposal(StoreProposalRequest $request)
     {
-
-        // Define validation rules
-        $rules = [
-            'grantnofk' => 'required|integer',
-            'departmentfk' => 'required|string',
-            'themefk' => 'required|string',
-            'researchtitle' => 'required|string',
-            'proposaltype' => 'required|in:research,innovation',
-        ];
-
-        // Validate incoming request
-        $validator = Validator::make($request->all(), $rules);
-
-        // Check if validation fails
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 400);
-        }
 
         // Check if the grant has already been applied for
         if ($this->isgrantapplied($request->input('grantnofk'))) {
@@ -90,9 +76,31 @@ class ProposalsController extends Controller
         $proposal->themefk = $request->input('themefk');
         $proposal->researchtitle = $request->input('researchtitle');
         $proposal->proposaltype = ProposalType::from($request->input('proposaltype'));
+        
+        // Add innovation fields if proposal type is innovation
+        if ($request->proposaltype === 'innovation') {
+            $proposal->gap = $request->input('gap');
+            $proposal->solution = $request->input('solution');
+            $proposal->targetcustomers = $request->input('targetcustomers');
+            $proposal->valueproposition = $request->input('valueproposition');
+            $proposal->competitors = $request->input('competitors');
+            $proposal->attraction = $request->input('attraction');
+        }
 
         // Save the proposal
         $proposal->save();
+        
+        // Save innovation team members if provided
+        if ($request->proposaltype === 'innovation' && $request->has('innovation_teams')) {
+            foreach ($request->innovation_teams as $teamMember) {
+                InnovationTeam::create([
+                    'proposal_id' => $proposal->proposalid,
+                    'name' => $teamMember['name'],
+                    'contacts' => $teamMember['contacts'],
+                    'role' => $teamMember['role']
+                ]);
+            }
+        }
 
         // Return JSON response for API
         return response()->json([
@@ -185,8 +193,9 @@ class ProposalsController extends Controller
                 'message' => 'This proposal cannot be edited at this time.',
             ], 403);
         }
+        
         $rules = [
-            'researchtitle' => 'required|string', // Example rules, adjust as needed
+            'researchtitle' => 'required|string',
             'objectives' => 'required|string',
             'hypothesis' => 'required|string',
             'significance' => 'required|string',
@@ -197,27 +206,67 @@ class ProposalsController extends Controller
             'terminationdate' => 'required|date',
             'commencingdate' => 'required|date',
         ];
+        
+        // Add innovation-specific validation if proposal type is innovation
+        if ($proposal->proposaltype->value === 'innovation') {
+            $rules = array_merge($rules, [
+                'gap' => 'required|string',
+                'solution' => 'required|string',
+                'targetcustomers' => 'required|string',
+                'valueproposition' => 'required|string',
+                'competitors' => 'required|string',
+                'attraction' => 'required|string',
+                'innovation_teams' => 'sometimes|array',
+                'innovation_teams.*.name' => 'required_with:innovation_teams|string',
+                'innovation_teams.*.contacts' => 'required_with:innovation_teams|string',
+                'innovation_teams.*.role' => 'required_with:innovation_teams|string',
+            ]);
+        }
 
-        // Validate incoming request
         $validator = Validator::make($request->all(), $rules);
 
-        // Check if validation fails
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()], 400);
         }
 
-        // Assign values from the request
+        // Update basic research details
         $proposal->researchtitle = $request->input('researchtitle');
         $proposal->objectives = $request->input('objectives');
         $proposal->hypothesis = $request->input('hypothesis');
-        $proposal->significance = $request->input('significance'); // Example qualification
+        $proposal->significance = $request->input('significance');
         $proposal->ethicals = $request->input('ethicals');
         $proposal->expoutput = $request->input('outputs');
         $proposal->socio_impact = $request->input('economicimpact');
         $proposal->res_findings = $request->input('res_findings');
         $proposal->commencingdate = $request->input('commencingdate');
         $proposal->terminationdate = $request->input('terminationdate');
-        // Save the proposal
+        
+        // Update innovation-specific fields if proposal type is innovation
+        if ($proposal->proposaltype->value === 'innovation') {
+            $proposal->gap = $request->input('gap');
+            $proposal->solution = $request->input('solution');
+            $proposal->targetcustomers = $request->input('targetcustomers');
+            $proposal->valueproposition = $request->input('valueproposition');
+            $proposal->competitors = $request->input('competitors');
+            $proposal->attraction = $request->input('attraction');
+            
+            // Update innovation team members
+            if ($request->has('innovation_teams')) {
+                // Delete existing team members
+                InnovationTeam::where('proposal_id', $proposal->proposalid)->delete();
+                
+                // Add new team members
+                foreach ($request->innovation_teams as $teamMember) {
+                    InnovationTeam::create([
+                        'proposal_id' => $proposal->proposalid,
+                        'name' => $teamMember['name'],
+                        'contacts' => $teamMember['contacts'],
+                        'role' => $teamMember['role']
+                    ]);
+                }
+            }
+        }
+        
         $proposal->save();
 
         return response()->json([
@@ -601,6 +650,7 @@ class ProposalsController extends Controller
                 'workplans',
                 'collaborators',
                 'publications',
+                'innovationTeams',
             ])->findOrFail($id);
 
             return response()->json(['success' => true, 'data' => $proposal]);
@@ -686,6 +736,17 @@ class ProposalsController extends Controller
             return $this->successResponse($data, 'Research design items retrieved successfully');
         } catch (Exception $e) {
             return $this->errorResponse('Failed to fetch research design items', $e->getMessage(), 500);
+        }
+    }
+
+    public function fetchinnovationteams($id)
+    {
+        try {
+            $data = InnovationTeam::where('proposal_id', $id)->get();
+
+            return $this->successResponse($data, 'Innovation teams retrieved successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse('Failed to fetch innovation teams', $e->getMessage(), 500);
         }
     }
 

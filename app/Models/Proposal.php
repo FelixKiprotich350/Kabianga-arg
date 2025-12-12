@@ -71,7 +71,13 @@ class Proposal extends Model
         'cellphone',
         'submittedstatus',
         'receivedstatus',
-        'allowediting'
+        'allowediting',
+        'gap',
+        'solution',
+        'targetcustomers',
+        'valueproposition',
+        'competitors',
+        'attraction'
     ];
 
     protected $casts = [
@@ -137,6 +143,11 @@ class Proposal extends Model
     public function reviewers()
     {
         return $this->hasMany(ProposalReviewer::class, 'proposal_id', 'proposalid');
+    }
+
+    public function innovationTeams()
+    {
+        return $this->hasMany(InnovationTeam::class, 'proposal_id', 'proposalid');
     }
 
     public function isReviewer($userId)
