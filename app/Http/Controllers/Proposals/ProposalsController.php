@@ -11,7 +11,7 @@ use App\Models\GlobalSetting;
 use App\Models\Grant;
 use App\Models\InnovationTeam;
 use App\Models\Proposal;
-use App\Models\ProposalChanges;
+use App\Models\ProposalReview;
 use App\Models\ProposalInnovationMeta;
 use App\Models\ProposalResearchMeta;
 use App\Models\ProposalType;
@@ -76,7 +76,7 @@ class ProposalsController extends Controller
         $proposal->receivedstatus = ReceivedStatus::PENDING;
         $proposal->allowediting = true;
         $proposal->themefk = $request->input('themefk');
-        $proposal->researchtitle = $request->input('researchtitle');
+        $proposal->proposaltitle = $request->input('proposaltitle');
         $proposal->proposaltype = ProposalType::from($request->input('proposaltype'));
         
         // Save the proposal
@@ -213,95 +213,50 @@ class ProposalsController extends Controller
             ], 403);
         }
         
-        // Base validation rules
-        $rules = [
-            'researchtitle' => 'required|string',
-            'terminationdate' => 'required|date',
-            'commencingdate' => 'required|date',
-        ];
-        
-        // Add type-specific validation rules
-        if ($proposal->proposaltype->value === 'innovation') {
-            $rules = array_merge($rules, [
-                'gap' => 'required|string',
-                'solution' => 'required|string',
-                'targetcustomers' => 'required|string',
-                'valueproposition' => 'required|string',
-                'competitors' => 'required|string',
-                'attraction' => 'required|string',
-                'innovation_teams' => 'sometimes|array',
-                'innovation_teams.*.name' => 'required_with:innovation_teams|string',
-                'innovation_teams.*.contacts' => 'required_with:innovation_teams|string',
-                'innovation_teams.*.role' => 'required_with:innovation_teams|string',
-            ]);
-        } else {
-            $rules = array_merge($rules, [
-                'objectives' => 'required|string',
-                'hypothesis' => 'required|string',
-                'significance' => 'required|string',
-                'ethicals' => 'required|string',
-                'expoutput' => 'required|string',
-                'socio_impact' => 'required|string',
-                'res_findings' => 'required|string',
-            ]);
+        if ($proposal->proposaltype->value !== 'research') {
+            return response()->json(['success' => false, 'message' => 'This endpoint is only for research proposals'], 400);
         }
 
-        $validator = Validator::make($request->all(), $rules);
+        $validator = Validator::make($request->all(), [
+            'proposaltitle' => 'required|string',
+            'terminationdate' => 'required|date',
+            'commencingdate' => 'required|date',
+            'objectives' => 'required|string',
+            'hypothesis' => 'required|string',
+            'significance' => 'required|string',
+            'ethicals' => 'required|string',
+            'expoutput' => 'required|string',
+            'socio_impact' => 'required|string',
+            'res_findings' => 'required|string',
+        ]);
 
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()], 400);
         }
 
         // Update basic proposal details
-        $proposal->researchtitle = $request->input('researchtitle');
+        $proposal->proposaltitle = $request->input('proposaltitle');
         $proposal->commencingdate = $request->input('commencingdate');
         $proposal->terminationdate = $request->input('terminationdate');
-        
-        // Update meta data based on proposal type
-        if ($proposal->proposaltype->value === 'innovation') {
-            $proposal->innovationMeta()->updateOrCreate(
-                ['proposal_id' => $proposal->proposalid],
-                [
-                    'gap' => $request->input('gap'),
-                    'solution' => $request->input('solution'),
-                    'targetcustomers' => $request->input('targetcustomers'),
-                    'valueproposition' => $request->input('valueproposition'),
-                    'competitors' => $request->input('competitors'),
-                    'attraction' => $request->input('attraction')
-                ]
-            );
-            
-            if ($request->has('innovation_teams')) {
-                InnovationTeam::where('proposal_id', $proposal->proposalid)->delete();
-                foreach ($request->innovation_teams as $teamMember) {
-                    InnovationTeam::create([
-                        'proposal_id' => $proposal->proposalid,
-                        'name' => $teamMember['name'],
-                        'contacts' => $teamMember['contacts'],
-                        'role' => $teamMember['role']
-                    ]);
-                }
-            }
-        } else {
-            $proposal->researchMeta()->updateOrCreate(
-                ['proposal_id' => $proposal->proposalid],
-                [
-                    'objectives' => $request->input('objectives'),
-                    'hypothesis' => $request->input('hypothesis'),
-                    'significance' => $request->input('significance'),
-                    'ethicals' => $request->input('ethicals'),
-                    'expoutput' => $request->input('expoutput'),
-                    'socio_impact' => $request->input('socio_impact'),
-                    'res_findings' => $request->input('res_findings')
-                ]
-            );
-        }
-        
         $proposal->save();
+        
+        // Update research meta
+        $proposal->researchMeta()->updateOrCreate(
+            ['proposal_id' => $proposal->proposalid],
+            [
+                'objectives' => $request->input('objectives'),
+                'hypothesis' => $request->input('hypothesis'),
+                'significance' => $request->input('significance'),
+                'ethicals' => $request->input('ethicals'),
+                'expoutput' => $request->input('expoutput'),
+                'socio_impact' => $request->input('socio_impact'),
+                'res_findings' => $request->input('res_findings')
+            ]
+        );
 
         return response()->json([
             'success' => true,
-            'message' => ucfirst($proposal->proposaltype->value) . ' Details Saved Successfully!!',
+            'message' => 'Research Details Saved Successfully!!',
             'proposal_id' => $proposal->proposalid,
             'type' => 'success',
         ], 200);
@@ -633,7 +588,7 @@ class ProposalsController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('approvalstatus', 'like', '%'.$search.'%')
-                    ->orWhere('researchtitle', 'like', '%'.$search.'%')
+                    ->orWhere('proposaltitle', 'like', '%'.$search.'%')
                     ->orWhereHas('themeitem', function ($query) use ($search) {
                         $query->where('themename', 'like', '%'.$search.'%');
                     })
@@ -648,7 +603,7 @@ class ProposalsController extends Controller
             $data = $proposals->map(function ($proposal) {
                 return [
                     'proposalid' => $proposal->proposalid,
-                    'researchtitle' => $proposal->researchtitle,
+                    'proposaltitle' => $proposal->proposaltitle,
                     'objectives' => $proposal->objectives,
                     'approvalstatus' => $proposal->approvalstatus,
                     'proposaltype' => $proposal->proposaltype,
@@ -793,14 +748,14 @@ class ProposalsController extends Controller
         $researchinfo = 1;
         if ($prop->proposaltype->value === 'innovation') {
             $meta = $prop->innovationMeta;
-            if ($prop->researchtitle && $prop->commencingdate && $prop->terminationdate && 
+            if ($prop->proposaltitle && $prop->commencingdate && $prop->terminationdate && 
                 $meta && $meta->gap && $meta->solution && $meta->targetcustomers && 
                 $meta->valueproposition && $meta->competitors && $meta->attraction) {
                 $researchinfo = 2;
             }
         } else {
             $meta = $prop->researchMeta;
-            if ($prop->researchtitle && $prop->commencingdate && $prop->terminationdate && 
+            if ($prop->proposaltitle && $prop->commencingdate && $prop->terminationdate && 
                 $meta && $meta->objectives && $meta->hypothesis && $meta->significance && 
                 $meta->ethicals && $meta->expoutput && $meta->socio_impact && $meta->res_findings) {
                 $researchinfo = 2;
@@ -835,11 +790,27 @@ class ProposalsController extends Controller
         return response(['data' => $data, 'cansubmitstatus' => $cansubmit]);
     }
 
-    public function fetchproposalchanges($id)
+    public function fetchproposalreviews($id)
     {
-        $data = ProposalChanges::where('proposalidfk', $id)->with('suggestedby')->get();
+        $data = ProposalReview::where('proposalid', $id)->with('reviewer')->get();
 
         return response()->json($data);
+    }
+
+    public function markReviewAddressed($reviewId)
+    {
+        $review = ProposalReview::findOrFail($reviewId);
+        $proposal = $review->proposal;
+        
+        if (auth()->user()->userid != $proposal->useridfk) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+        
+        $review->status = 'addressed';
+        $review->addresstime = now();
+        $review->save();
+        
+        return response()->json(['success' => true, 'message' => 'Review marked as addressed']);
     }
 
     public function budgetValidation($id)
@@ -871,7 +842,7 @@ class ProposalsController extends Controller
         ]);
     }
 
-    public function updateMetaInfo(Request $request, $id)
+    public function updateinnovationdetails(Request $request, $id)
     {
         $proposal = Proposal::findOrFail($id);
         
@@ -883,46 +854,61 @@ class ProposalsController extends Controller
             return response()->json(['success' => false, 'message' => 'Proposal cannot be edited'], 403);
         }
 
-        if ($proposal->proposaltype->value === 'innovation') {
-            $validator = Validator::make($request->all(), [
-                'gap' => 'required|string',
-                'solution' => 'required|string',
-                'targetcustomers' => 'required|string',
-                'valueproposition' => 'required|string',
-                'competitors' => 'required|string',
-                'attraction' => 'required|string'
-            ]);
-            
-            if ($validator->fails()) {
-                return response()->json(['success' => false, 'errors' => $validator->errors()], 400);
-            }
-            
-            $proposal->innovationMeta()->updateOrCreate(
-                ['proposal_id' => $proposal->proposalid],
-                $request->only(['gap', 'solution', 'targetcustomers', 'valueproposition', 'competitors', 'attraction'])
-            );
-        } else {
-            $validator = Validator::make($request->all(), [
-                'objectives' => 'required|string',
-                'hypothesis' => 'required|string',
-                'significance' => 'required|string',
-                'ethicals' => 'required|string',
-                'expoutput' => 'required|string',
-                'socio_impact' => 'required|string',
-                'res_findings' => 'required|string'
-            ]);
-            
-            if ($validator->fails()) {
-                return response()->json(['success' => false, 'errors' => $validator->errors()], 400);
-            }
-            
-            $proposal->researchMeta()->updateOrCreate(
-                ['proposal_id' => $proposal->proposalid],
-                $request->only(['objectives', 'hypothesis', 'significance', 'ethicals', 'expoutput', 'socio_impact', 'res_findings'])
-            );
+        if ($proposal->proposaltype->value !== 'innovation') {
+            return response()->json(['success' => false, 'message' => 'This endpoint is only for innovation proposals'], 400);
         }
 
-        return response()->json(['success' => true, 'message' => 'Meta information updated successfully']);
+        $validator = Validator::make($request->all(), [
+            'proposaltitle' => 'required|string',
+            'terminationdate' => 'required|date',
+            'commencingdate' => 'required|date',
+            'gap' => 'required|string',
+            'solution' => 'required|string',
+            'targetcustomers' => 'required|string',
+            'valueproposition' => 'required|string',
+            'competitors' => 'required|string',
+            'attraction' => 'required|string',
+            'innovation_teams' => 'sometimes|array',
+            'innovation_teams.*.name' => 'required_with:innovation_teams|string',
+            'innovation_teams.*.contacts' => 'required_with:innovation_teams|string',
+            'innovation_teams.*.role' => 'required_with:innovation_teams|string',
+        ]);
+        
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 400);
+        }
+
+        // Update basic proposal details
+        $proposal->proposaltitle = $request->input('proposaltitle');
+        $proposal->commencingdate = $request->input('commencingdate');
+        $proposal->terminationdate = $request->input('terminationdate');
+        $proposal->save();
+        
+        // Update innovation meta
+        $proposal->innovationMeta()->updateOrCreate(
+            ['proposal_id' => $proposal->proposalid],
+            $request->only(['gap', 'solution', 'targetcustomers', 'valueproposition', 'competitors', 'attraction'])
+        );
+        
+        // Update innovation teams
+        if ($request->has('innovation_teams')) {
+            InnovationTeam::where('proposal_id', $proposal->proposalid)->delete();
+            foreach ($request->innovation_teams as $teamMember) {
+                InnovationTeam::create([
+                    'proposal_id' => $proposal->proposalid,
+                    'name' => $teamMember['name'],
+                    'contacts' => $teamMember['contacts'],
+                    'role' => $teamMember['role']
+                ]);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Innovation Details Saved Successfully!!',
+            'proposal_id' => $proposal->proposalid,
+            'type' => 'success',
+        ], 200);
     }
 
     public function markAsDraft(Request $request, $id)
@@ -948,38 +934,38 @@ class ProposalsController extends Controller
         }
     }
 
-    public function requestChanges(Request $request, $id)
+    public function submitReview(Request $request, $id)
     {
         try {
             $proposal = Proposal::findOrFail($id);
             $user = auth()->user();
 
             if (! $proposal->canRequestChanges($user->userid) && ! $user->haspermission('canapproveproposal')) {
-                return response()->json(['success' => false, 'message' => 'Unauthorized. Only assigned reviewers can suggest changes.'], 403);
+                return response()->json(['success' => false, 'message' => 'Unauthorized. Only assigned reviewers can submit reviews.'], 403);
             }
 
             $validator = Validator::make($request->all(), [
-                'triggerissue' => 'required|string',
-                'suggestedchange' => 'required|string',
+                'subject' => 'required|string',
+                'reviewcomment' => 'required|string',
             ]);
 
             if ($validator->fails()) {
-                return response()->json(['success' => false, 'message' => 'Both issue and suggested changes are required'], 400);
+                return response()->json(['success' => false, 'message' => 'Subject and review comment are required'], 400);
             }
 
             if ($proposal->approvalstatus !== ApprovalStatus::PENDING) {
                 return response()->json(['success' => false, 'message' => 'Proposal already processed'], 400);
             }
 
-            $change = new ProposalChanges;
-            $change->proposalidfk = $id;
-            $change->suggestedbyfk = auth()->user()->userid;
-            $change->triggerissue = $request->input('triggerissue');
-            $change->suggestedchange = $request->input('suggestedchange');
-            $change->status = 'Pending';
-            $change->save();
+            $review = new ProposalReview;
+            $review->proposalid = $id;
+            $review->reviewerid = auth()->user()->userid;
+            $review->subject = $request->input('subject');
+            $review->reviewcomment = $request->input('reviewcomment');
+            $review->status = 'pending';
+            $review->save();
 
-            // Enable editing for the proposal owner to make requested changes
+            // Enable editing for the proposal owner to address review
             if (! $proposal->allowediting) {
                 $proposal->allowediting = true;
                 $proposal->save();
@@ -988,7 +974,7 @@ class ProposalsController extends Controller
             // Send dual notifications
             $this->notifyChangesRequested($proposal);
 
-            return response()->json(['success' => true, 'message' => 'Change request sent']);
+            return response()->json(['success' => true, 'message' => 'Review submitted successfully']);
         } catch (Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error: '.$e->getMessage()], 500);
         }
@@ -1040,7 +1026,7 @@ class ProposalsController extends Controller
             <div class="section">
                 <div class="section-title">BASIC INFORMATION</div>
                 <div class="field"><span class="label">Proposal Code:</span> <span class="value">'.($proposal->proposalcode ?? 'N/A').'</span></div>
-                <div class="field"><span class="label">Research Title:</span> <span class="value">'.($proposal->researchtitle ?? 'N/A').'</span></div>
+                <div class="field"><span class="label">Proposal Title:</span> <span class="value">'.($proposal->proposaltitle ?? 'N/A').'</span></div>
                 <div class="field"><span class="label">Proposal Type:</span> <span class="value">'.ucfirst($proposal->proposaltype->value ?? 'N/A').'</span></div>
                 <div class="field"><span class="label">Principal Investigator:</span> <span class="value">'.($proposal->applicant->name ?? 'N/A').'</span></div>
                 <div class="field"><span class="label">Department:</span> <span class="value">'.($proposal->department->shortname ?? 'N/A').'</span></div>

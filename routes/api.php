@@ -101,16 +101,17 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
         Route::get('/{id}/view', [ProposalsController::class, 'getsingleproposalpage']);
         Route::put('/{id}/basic', [ProposalsController::class, 'updatebasicdetails']);
         Route::put('/{id}/research', [ProposalsController::class, 'updateresearchdetails']);
-        Route::put('/{id}/meta', [ProposalsController::class, 'updateMetaInfo']);
+        Route::put('/{id}/innovation', [ProposalsController::class, 'updateinnovationdetails']);
         Route::post('/{id}/submit', [ProposalsController::class, 'submitproposal']);
         Route::post('/{id}/receive', [ProposalsController::class, 'receiveproposal']);
         Route::patch('/{id}/approve', [ProposalsController::class, 'approveProposal']);
         Route::patch('/{id}/reject', [ProposalsController::class, 'rejectProposal']);
         Route::post('/{id}/mark-draft', [ProposalsController::class, 'markAsDraft']);
-        Route::post('/{id}/request-changes', [ProposalsController::class, 'requestChanges']);
+        Route::post('/{id}/review', [ProposalsController::class, 'submitReview']);
         Route::patch('/{id}/edit-status', [ProposalsController::class, 'changeeditstatus']);
         Route::get('/{id}/status', [ProposalsController::class, 'fetchsubmissionstatus']);
-        Route::get('/{id}/changes', [ProposalsController::class, 'fetchproposalchanges']);
+        Route::get('/{id}/reviews', [ProposalsController::class, 'fetchproposalreviews']);
+        Route::patch('/reviews/{reviewId}/address', [ProposalsController::class, 'markReviewAddressed']);
         Route::get('/{id}/pdf', [ProposalsController::class, 'printpdf']);
         Route::get('/test-snappy', [ProposalsController::class, 'testSnappy']);
 

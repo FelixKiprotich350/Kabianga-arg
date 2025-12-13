@@ -18,7 +18,7 @@ class StoreProposalRequest extends FormRequest
             'grantnofk' => 'required|integer',
             'departmentidfk' => 'required|string',
             'themefk' => 'required|integer',
-            'researchtitle' => 'nullable|string',
+            'proposaltitle' => 'nullable|string',
             'commencingdate' => 'nullable|date',
             'terminationdate' => 'nullable|date',
             'objectives' => 'nullable|string',

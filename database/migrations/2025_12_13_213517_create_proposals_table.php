@@ -24,7 +24,7 @@ return new class extends Migration
             $table->enum('receivedstatus', ['PENDING', 'RECEIVED'])->default('PENDING');
             $table->boolean('allowediting')->default(true);
             $table->enum('approvalstatus', ['DRAFT', 'PENDING', 'APPROVED', 'REJECTED'])->nullable()->default('PENDING');
-            $table->string('researchtitle')->nullable();
+            $table->string('proposaltitle')->nullable();
             $table->date('commencingdate')->nullable();
             $table->date('terminationdate')->nullable();
             $table->text('comment')->nullable();

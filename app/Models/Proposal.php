@@ -68,6 +68,7 @@ class Proposal extends Model
         'departmentidfk',
         'approvalstatus',
         'proposaltype',
+        'proposaltitle',
         'cellphone',
         'submittedstatus',
         'receivedstatus',
@@ -129,9 +130,9 @@ class Proposal extends Model
     {
         return $this->belongsTo(ResearchProject::class, 'research_project_id', 'id');
     }
-    public function proposalchanges()
+    public function proposalreviews()
     {
-        return $this->belongsTo(ResearchTheme::class, 'themefk', 'themeid');
+        return $this->hasMany(ProposalReview::class, 'proposalid', 'proposalid');
     }
 
     public function reviewers()
