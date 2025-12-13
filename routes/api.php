@@ -50,13 +50,13 @@ Route::prefix('v1')->group(function () {
     Route::get('/grants', [GrantsController::class, 'fetchallgrants']);
     Route::get('/financial-years', action: [FinYearController::class, 'fetchallfinyears']);
     Route::get('/expendituretypes', [\App\Http\Controllers\ExpenditureTypesController::class, 'fetchallexpendituretypes']);
-    Route::get('/proposal-types', function() {
+    Route::get('/proposal-types', function () {
         return response()->json([
             'success' => true,
             'data' => [
                 ['value' => 'research', 'label' => 'Research'],
-                ['value' => 'innovation', 'label' => 'Innovation']
-            ]
+                ['value' => 'innovation', 'label' => 'Innovation'],
+            ],
         ]);
     });
 
@@ -98,7 +98,6 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
         Route::post('/', [ProposalsController::class, 'postnewproposal']);
 
         Route::get('/{id}', [ProposalsController::class, 'fetchsingleproposal']);
-        Route::get('/{id}/view', [ProposalsController::class, 'getsingleproposalpage']);
         Route::put('/{id}/basic', [ProposalsController::class, 'updatebasicdetails']);
         Route::put('/{id}/research', [ProposalsController::class, 'updateresearchdetails']);
         Route::put('/{id}/innovation', [ProposalsController::class, 'updateinnovationdetails']);
@@ -123,7 +122,7 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
         Route::get('/{id}/research-design', [ProposalsController::class, 'fetchresearchdesign']);
         Route::get('/{id}/innovation-teams', [ProposalsController::class, 'fetchinnovationteams']);
         Route::get('/{id}/budget-validation', [ProposalsController::class, 'budgetValidation']);
-        
+
         // Proposal Reviewers
         Route::post('/{id}/reviewers', [\App\Http\Controllers\Proposals\ProposalReviewersController::class, 'assignReviewers']);
         Route::get('/{id}/reviewers', [\App\Http\Controllers\Proposals\ProposalReviewersController::class, 'getReviewers']);
@@ -132,7 +131,7 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
 
     // My Review Proposals
     Route::get('/my-reviews', [\App\Http\Controllers\Proposals\ProposalReviewersController::class, 'getMyReviewProposals']);
-    
+
     // Proposal Changes
 
     Route::prefix('proposal-changes')->group(function () {
@@ -300,13 +299,13 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
         Route::get('/budget-allocations', [\App\Http\Controllers\FinancesController::class, 'getBudgetAllocation']);
     });
 });
-    // Proposal Types endpoint
-    Route::get('/proposal-types', function() {
-        return response()->json([
-            'success' => true,
-            'data' => [
-                ['value' => 'research', 'label' => 'Research'],
-                ['value' => 'innovation', 'label' => 'Innovation']
-            ]
-        ]);
-    });
+// Proposal Types endpoint
+Route::get('/proposal-types', function () {
+    return response()->json([
+        'success' => true,
+        'data' => [
+            ['value' => 'research', 'label' => 'Research'],
+            ['value' => 'innovation', 'label' => 'Innovation'],
+        ],
+    ]);
+});

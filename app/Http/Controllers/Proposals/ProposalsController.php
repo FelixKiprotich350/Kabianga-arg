@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Proposals;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreProposalRequest;
 use App\Models\ApprovalStatus;
 use App\Models\Collaborator;
 use App\Models\Expenditureitem;
@@ -11,9 +12,9 @@ use App\Models\GlobalSetting;
 use App\Models\Grant;
 use App\Models\InnovationTeam;
 use App\Models\Proposal;
-use App\Models\ProposalReview;
 use App\Models\ProposalInnovationMeta;
 use App\Models\ProposalResearchMeta;
+use App\Models\ProposalReview;
 use App\Models\ProposalType;
 use App\Models\Publication;
 use App\Models\ReceivedStatus;
@@ -22,7 +23,6 @@ use App\Models\ResearchProject;
 use App\Models\SubmittedStatus;
 use App\Models\User;
 use App\Models\Workplan;
-use App\Http\Requests\StoreProposalRequest;
 use App\Services\DualNotificationService;
 use App\Traits\ApiResponse;
 use App\Traits\NotifiesUsers;
@@ -78,10 +78,10 @@ class ProposalsController extends Controller
         $proposal->themefk = $request->input('themefk');
         $proposal->proposaltitle = $request->input('proposaltitle');
         $proposal->proposaltype = ProposalType::from($request->input('proposaltype'));
-        
+
         // Save the proposal
         $proposal->save();
-        
+
         // Create meta data based on proposal type
         if ($request->input('proposaltype') === 'innovation') {
             if ($request->filled(['gap', 'solution', 'targetcustomers', 'valueproposition', 'competitors', 'attraction'])) {
@@ -92,17 +92,17 @@ class ProposalsController extends Controller
                     'targetcustomers' => $request->input('targetcustomers'),
                     'valueproposition' => $request->input('valueproposition'),
                     'competitors' => $request->input('competitors'),
-                    'attraction' => $request->input('attraction')
+                    'attraction' => $request->input('attraction'),
                 ]);
             }
-            
+
             if ($request->has('innovation_teams')) {
                 foreach ($request->innovation_teams as $teamMember) {
                     InnovationTeam::create([
                         'proposal_id' => $proposal->proposalid,
                         'name' => $teamMember['name'],
                         'contacts' => $teamMember['contacts'],
-                        'role' => $teamMember['role']
+                        'role' => $teamMember['role'],
                     ]);
                 }
             }
@@ -116,7 +116,7 @@ class ProposalsController extends Controller
                     'ethicals' => $request->input('ethicals'),
                     'expoutput' => $request->input('expoutput'),
                     'socio_impact' => $request->input('socio_impact'),
-                    'res_findings' => $request->input('res_findings')
+                    'res_findings' => $request->input('res_findings'),
                 ]);
             }
         }
@@ -212,7 +212,7 @@ class ProposalsController extends Controller
                 'message' => 'This proposal cannot be edited at this time.',
             ], 403);
         }
-        
+
         if ($proposal->proposaltype->value !== 'research') {
             return response()->json(['success' => false, 'message' => 'This endpoint is only for research proposals'], 400);
         }
@@ -239,7 +239,7 @@ class ProposalsController extends Controller
         $proposal->commencingdate = $request->input('commencingdate');
         $proposal->terminationdate = $request->input('terminationdate');
         $proposal->save();
-        
+
         // Update research meta
         $proposal->researchMeta()->updateOrCreate(
             ['proposal_id' => $proposal->proposalid],
@@ -250,7 +250,7 @@ class ProposalsController extends Controller
                 'ethicals' => $request->input('ethicals'),
                 'expoutput' => $request->input('expoutput'),
                 'socio_impact' => $request->input('socio_impact'),
-                'res_findings' => $request->input('res_findings')
+                'res_findings' => $request->input('res_findings'),
             ]
         );
 
@@ -354,15 +354,19 @@ class ProposalsController extends Controller
             ], 403);
         }
 
-        $proposal = Proposal::findOrFail($id);
+        $validator = Validator::make($request->all(), [
+            'action' => 'required|in:enable,disable'
+        ]);
 
-        $proposal->allowediting = false;
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => 'Action must be enable or disable'], 400);
+        }
+
+        $proposal->allowediting = $request->input('action') === 'enable';
         $proposal->save();
-        $notificationService = new DualNotificationService;
-        $notificationService->notifyUserReceivedProposal($proposal);
-
-        return response(['message' => 'Proposal received Successfully!!', 'type' => 'success']);
-
+        
+        $action = $request->input('action') === 'enable' ? 'enabled' : 'disabled';
+        return response()->json(['success' => true, 'message' => "Proposal editing {$action} successfully"]);
     }
 
     public function approveProposal(Request $request, $id)
@@ -490,24 +494,6 @@ class ProposalsController extends Controller
         return response()->json(['message' => 'View all proposals endpoint', 'status' => 'active']);
     }
 
-    public function getsingleproposalpage($id)
-    {
-        try {
-            $user = Auth::user();
-            $prop = Proposal::with(['applicant', 'department', 'themeitem', 'grantitem', 'reviewers.reviewer'])->findOrFail($id);
-
-            if (! $user->haspermission('canreadproposaldetails') && $user->userid != $prop->useridfk && ! $prop->isReviewer($user->userid)) {
-                return response()->json(['success' => false, 'message' => 'You are not Authorized to read the requested Proposal!'], 403);
-            }
-
-            $finyears = FinancialYear::all();
-
-            return response()->json(['success' => true, 'data' => compact('prop', 'finyears')]);
-        } catch (Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Failed to load proposal details: '.$e->getMessage()], 500);
-        }
-    }
-
     public function printpdf($id)
     {
         try {
@@ -521,7 +507,12 @@ class ProposalsController extends Controller
                 'workplans:workplanid,proposalidfk,activity,time,input,bywhom',
                 'collaborators:collaboratorid,proposalidfk,collaboratorname,position,institution',
                 'publications:publicationid,proposalidfk,title,publisher,year',
+                'researchMeta'
             ])->findOrFail($id);
+            
+            if ($proposal->proposaltype->value !== 'research') {
+                return response()->json(['success' => false, 'message' => 'PDF download is only available for research proposals'], 403);
+            }
 
             $html = $this->generateProposalHtml($proposal);
             $filename = 'Research-Proposal-'.str_replace(['/', ' ', '\\'], ['-', '-', '-'], $proposal->proposalcode).'.pdf';
@@ -743,25 +734,25 @@ class ProposalsController extends Controller
         // 1 -not completed
         // 2 -completed
         $prop = Proposal::with(['researchMeta', 'innovationMeta'])->findOrFail($id);
-        
+
         // Check research/innovation info based on proposal type
         $researchinfo = 1;
         if ($prop->proposaltype->value === 'innovation') {
             $meta = $prop->innovationMeta;
-            if ($prop->proposaltitle && $prop->commencingdate && $prop->terminationdate && 
-                $meta && $meta->gap && $meta->solution && $meta->targetcustomers && 
+            if ($prop->proposaltitle && $prop->commencingdate && $prop->terminationdate &&
+                $meta && $meta->gap && $meta->solution && $meta->targetcustomers &&
                 $meta->valueproposition && $meta->competitors && $meta->attraction) {
                 $researchinfo = 2;
             }
         } else {
             $meta = $prop->researchMeta;
-            if ($prop->proposaltitle && $prop->commencingdate && $prop->terminationdate && 
-                $meta && $meta->objectives && $meta->hypothesis && $meta->significance && 
+            if ($prop->proposaltitle && $prop->commencingdate && $prop->terminationdate &&
+                $meta && $meta->objectives && $meta->hypothesis && $meta->significance &&
                 $meta->ethicals && $meta->expoutput && $meta->socio_impact && $meta->res_findings) {
                 $researchinfo = 2;
             }
         }
-        
+
         $basic = ($prop) ? 2 : 1;
         $design = (ResearchDesignItem::where('proposalidfk', $id)->count() > 0) ? 2 : 1;
         $finanncials = (Expenditureitem::where('proposalidfk', $id)->count() > 0) ? 2 : 1;
@@ -770,13 +761,13 @@ class ProposalsController extends Controller
         $publications = (Publication::where('proposalidfk', $id)->count() > 0) ? 2 : 1;
 
         $appstatus = [
-            'basic' => $basic, 
-            'researchinfo' => $researchinfo, 
-            'design' => $design, 
-            'workplan' => $workplan, 
-            'collaborators' => $collaborators, 
-            'publications' => $publications, 
-            'expenditure' => $finanncials
+            'basic' => $basic,
+            'researchinfo' => $researchinfo,
+            'design' => $design,
+            'workplan' => $workplan,
+            'collaborators' => $collaborators,
+            'publications' => $publications,
+            'expenditure' => $finanncials,
         ];
 
         return $appstatus;
@@ -801,15 +792,15 @@ class ProposalsController extends Controller
     {
         $review = ProposalReview::findOrFail($reviewId);
         $proposal = $review->proposal;
-        
+
         if (auth()->user()->userid != $proposal->useridfk) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
-        
+
         $review->status = 'addressed';
         $review->addresstime = now();
         $review->save();
-        
+
         return response()->json(['success' => true, 'message' => 'Review marked as addressed']);
     }
 
@@ -845,12 +836,12 @@ class ProposalsController extends Controller
     public function updateinnovationdetails(Request $request, $id)
     {
         $proposal = Proposal::findOrFail($id);
-        
+
         if (auth()->user()->userid != $proposal->useridfk) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
-        
-        if (!$proposal->isEditable()) {
+
+        if (! $proposal->isEditable()) {
             return response()->json(['success' => false, 'message' => 'Proposal cannot be edited'], 403);
         }
 
@@ -873,7 +864,7 @@ class ProposalsController extends Controller
             'innovation_teams.*.contacts' => 'required_with:innovation_teams|string',
             'innovation_teams.*.role' => 'required_with:innovation_teams|string',
         ]);
-        
+
         if ($validator->fails()) {
             return response()->json(['success' => false, 'errors' => $validator->errors()], 400);
         }
@@ -883,13 +874,13 @@ class ProposalsController extends Controller
         $proposal->commencingdate = $request->input('commencingdate');
         $proposal->terminationdate = $request->input('terminationdate');
         $proposal->save();
-        
+
         // Update innovation meta
         $proposal->innovationMeta()->updateOrCreate(
             ['proposal_id' => $proposal->proposalid],
             $request->only(['gap', 'solution', 'targetcustomers', 'valueproposition', 'competitors', 'attraction'])
         );
-        
+
         // Update innovation teams
         if ($request->has('innovation_teams')) {
             InnovationTeam::where('proposal_id', $proposal->proposalid)->delete();
@@ -898,7 +889,7 @@ class ProposalsController extends Controller
                     'proposal_id' => $proposal->proposalid,
                     'name' => $teamMember['name'],
                     'contacts' => $teamMember['contacts'],
-                    'role' => $teamMember['role']
+                    'role' => $teamMember['role'],
                 ]);
             }
         }
@@ -1038,37 +1029,37 @@ class ProposalsController extends Controller
             
             <div class="section">
                 <div class="section-title">RESEARCH OBJECTIVES</div>
-                <div class="content">'.nl2br($proposal->objectives ?? 'Not specified').'</div>
+                <div class="content">'.nl2br($proposal->researchMeta->objectives ?? 'Not specified').'</div>
             </div>
             
             <div class="section">
                 <div class="section-title">HYPOTHESIS</div>
-                <div class="content">'.nl2br($proposal->hypothesis ?? 'Not specified').'</div>
+                <div class="content">'.nl2br($proposal->researchMeta->hypothesis ?? 'Not specified').'</div>
             </div>
             
             <div class="section">
                 <div class="section-title">SIGNIFICANCE OF THE STUDY</div>
-                <div class="content">'.nl2br($proposal->significance ?? 'Not specified').'</div>
+                <div class="content">'.nl2br($proposal->researchMeta->significance ?? 'Not specified').'</div>
             </div>
             
             <div class="section">
                 <div class="section-title">ETHICAL CONSIDERATIONS</div>
-                <div class="content">'.nl2br($proposal->ethicals ?? 'Not specified').'</div>
+                <div class="content">'.nl2br($proposal->researchMeta->ethicals ?? 'Not specified').'</div>
             </div>
             
             <div class="section">
                 <div class="section-title">EXPECTED OUTPUTS</div>
-                <div class="content">'.nl2br($proposal->expoutput ?? 'Not specified').'</div>
+                <div class="content">'.nl2br($proposal->researchMeta->expoutput ?? 'Not specified').'</div>
             </div>
             
             <div class="section">
                 <div class="section-title">SOCIO-ECONOMIC IMPACT</div>
-                <div class="content">'.nl2br($proposal->socio_impact ?? 'Not specified').'</div>
+                <div class="content">'.nl2br($proposal->researchMeta->socio_impact ?? 'Not specified').'</div>
             </div>
             
             <div class="section">
                 <div class="section-title">RESEARCH FINDINGS UTILIZATION</div>
-                <div class="content">'.nl2br($proposal->res_findings ?? 'Not specified').'</div>
+                <div class="content">'.nl2br($proposal->researchMeta->res_findings ?? 'Not specified').'</div>
             </div>'.
 
             ($proposal->expenditures->count() > 0 ? '
