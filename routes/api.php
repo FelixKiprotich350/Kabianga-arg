@@ -101,6 +101,7 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
         Route::get('/{id}/view', [ProposalsController::class, 'getsingleproposalpage']);
         Route::put('/{id}/basic', [ProposalsController::class, 'updatebasicdetails']);
         Route::put('/{id}/research', [ProposalsController::class, 'updateresearchdetails']);
+        Route::put('/{id}/meta', [ProposalsController::class, 'updateMetaInfo']);
         Route::post('/{id}/submit', [ProposalsController::class, 'submitproposal']);
         Route::post('/{id}/receive', [ProposalsController::class, 'receiveproposal']);
         Route::patch('/{id}/approve', [ProposalsController::class, 'approveProposal']);

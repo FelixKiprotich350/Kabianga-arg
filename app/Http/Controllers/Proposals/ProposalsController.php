@@ -83,16 +83,18 @@ class ProposalsController extends Controller
         $proposal->save();
         
         // Create meta data based on proposal type
-        if ($request->proposaltype === 'innovation') {
-            ProposalInnovationMeta::create([
-                'proposal_id' => $proposal->proposalid,
-                'gap' => $request->input('gap'),
-                'solution' => $request->input('solution'),
-                'targetcustomers' => $request->input('targetcustomers'),
-                'valueproposition' => $request->input('valueproposition'),
-                'competitors' => $request->input('competitors'),
-                'attraction' => $request->input('attraction')
-            ]);
+        if ($request->input('proposaltype') === 'innovation') {
+            if ($request->filled(['gap', 'solution', 'targetcustomers', 'valueproposition', 'competitors', 'attraction'])) {
+                ProposalInnovationMeta::create([
+                    'proposal_id' => $proposal->proposalid,
+                    'gap' => $request->input('gap'),
+                    'solution' => $request->input('solution'),
+                    'targetcustomers' => $request->input('targetcustomers'),
+                    'valueproposition' => $request->input('valueproposition'),
+                    'competitors' => $request->input('competitors'),
+                    'attraction' => $request->input('attraction')
+                ]);
+            }
             
             if ($request->has('innovation_teams')) {
                 foreach ($request->innovation_teams as $teamMember) {
@@ -105,7 +107,18 @@ class ProposalsController extends Controller
                 }
             }
         } else {
-            ProposalResearchMeta::create(['proposal_id' => $proposal->proposalid]);
+            if ($request->filled(['objectives', 'hypothesis', 'significance', 'ethicals', 'expoutput', 'socio_impact', 'res_findings'])) {
+                ProposalResearchMeta::create([
+                    'proposal_id' => $proposal->proposalid,
+                    'objectives' => $request->input('objectives'),
+                    'hypothesis' => $request->input('hypothesis'),
+                    'significance' => $request->input('significance'),
+                    'ethicals' => $request->input('ethicals'),
+                    'expoutput' => $request->input('expoutput'),
+                    'socio_impact' => $request->input('socio_impact'),
+                    'res_findings' => $request->input('res_findings')
+                ]);
+            }
         }
 
         // Return JSON response for API
@@ -200,20 +213,14 @@ class ProposalsController extends Controller
             ], 403);
         }
         
+        // Base validation rules
         $rules = [
             'researchtitle' => 'required|string',
-            'objectives' => 'required|string',
-            'hypothesis' => 'required|string',
-            'significance' => 'required|string',
-            'ethicals' => 'required|string',
-            'outputs' => 'required|string',
-            'economicimpact' => 'required|string',
-            'res_findings' => 'required|string',
             'terminationdate' => 'required|date',
             'commencingdate' => 'required|date',
         ];
         
-        // Add innovation-specific validation if proposal type is innovation
+        // Add type-specific validation rules
         if ($proposal->proposaltype->value === 'innovation') {
             $rules = array_merge($rules, [
                 'gap' => 'required|string',
@@ -226,6 +233,16 @@ class ProposalsController extends Controller
                 'innovation_teams.*.name' => 'required_with:innovation_teams|string',
                 'innovation_teams.*.contacts' => 'required_with:innovation_teams|string',
                 'innovation_teams.*.role' => 'required_with:innovation_teams|string',
+            ]);
+        } else {
+            $rules = array_merge($rules, [
+                'objectives' => 'required|string',
+                'hypothesis' => 'required|string',
+                'significance' => 'required|string',
+                'ethicals' => 'required|string',
+                'expoutput' => 'required|string',
+                'socio_impact' => 'required|string',
+                'res_findings' => 'required|string',
             ]);
         }
 
@@ -273,8 +290,8 @@ class ProposalsController extends Controller
                     'hypothesis' => $request->input('hypothesis'),
                     'significance' => $request->input('significance'),
                     'ethicals' => $request->input('ethicals'),
-                    'expoutput' => $request->input('outputs'),
-                    'socio_impact' => $request->input('economicimpact'),
+                    'expoutput' => $request->input('expoutput'),
+                    'socio_impact' => $request->input('socio_impact'),
                     'res_findings' => $request->input('res_findings')
                 ]
             );
@@ -284,7 +301,7 @@ class ProposalsController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Research Details Saved Successfully!!',
+            'message' => ucfirst($proposal->proposaltype->value) . ' Details Saved Successfully!!',
             'proposal_id' => $proposal->proposalid,
             'type' => 'success',
         ], 200);
@@ -770,20 +787,42 @@ class ProposalsController extends Controller
         // 0 -not required
         // 1 -not completed
         // 2 -completed
-        $prop = Proposal::findOrFail($id);
+        $prop = Proposal::with(['researchMeta', 'innovationMeta'])->findOrFail($id);
+        
+        // Check research/innovation info based on proposal type
         $researchinfo = 1;
-        if ($prop->researchtitle && $prop->objectives && $prop->commencingdate && $prop->terminationdate && $prop->hypothesis && $prop->significance && $prop->ethicals && $prop->expoutput && $prop->socio_impact && $prop->res_findings) {
-            $researchinfo = 2;
+        if ($prop->proposaltype->value === 'innovation') {
+            $meta = $prop->innovationMeta;
+            if ($prop->researchtitle && $prop->commencingdate && $prop->terminationdate && 
+                $meta && $meta->gap && $meta->solution && $meta->targetcustomers && 
+                $meta->valueproposition && $meta->competitors && $meta->attraction) {
+                $researchinfo = 2;
+            }
+        } else {
+            $meta = $prop->researchMeta;
+            if ($prop->researchtitle && $prop->commencingdate && $prop->terminationdate && 
+                $meta && $meta->objectives && $meta->hypothesis && $meta->significance && 
+                $meta->ethicals && $meta->expoutput && $meta->socio_impact && $meta->res_findings) {
+                $researchinfo = 2;
+            }
         }
+        
         $basic = ($prop) ? 2 : 1;
         $design = (ResearchDesignItem::where('proposalidfk', $id)->count() > 0) ? 2 : 1;
         $finanncials = (Expenditureitem::where('proposalidfk', $id)->count() > 0) ? 2 : 1;
         $workplan = (Workplan::where('proposalidfk', $id)->count() > 0) ? 2 : 1;
         $collaborators = (Collaborator::where('proposalidfk', $id)->count() > 0) ? 2 : 1;
-
         $publications = (Publication::where('proposalidfk', $id)->count() > 0) ? 2 : 1;
 
-        $appstatus = ['basic' => $basic, 'researchinfo' => $researchinfo, 'design' => $design, 'workplan' => $workplan, 'collaborators' => $collaborators, 'publications' => $publications, 'expenditure' => $finanncials];
+        $appstatus = [
+            'basic' => $basic, 
+            'researchinfo' => $researchinfo, 
+            'design' => $design, 
+            'workplan' => $workplan, 
+            'collaborators' => $collaborators, 
+            'publications' => $publications, 
+            'expenditure' => $finanncials
+        ];
 
         return $appstatus;
     }
@@ -830,6 +869,60 @@ class ProposalsController extends Controller
             'status' => $isCompliant ? 'Compliant' : 'Non-compliant',
             'message' => $isCompliant ? '60% rule met' : 'Research items < 60%',
         ]);
+    }
+
+    public function updateMetaInfo(Request $request, $id)
+    {
+        $proposal = Proposal::findOrFail($id);
+        
+        if (auth()->user()->userid != $proposal->useridfk) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+        
+        if (!$proposal->isEditable()) {
+            return response()->json(['success' => false, 'message' => 'Proposal cannot be edited'], 403);
+        }
+
+        if ($proposal->proposaltype->value === 'innovation') {
+            $validator = Validator::make($request->all(), [
+                'gap' => 'required|string',
+                'solution' => 'required|string',
+                'targetcustomers' => 'required|string',
+                'valueproposition' => 'required|string',
+                'competitors' => 'required|string',
+                'attraction' => 'required|string'
+            ]);
+            
+            if ($validator->fails()) {
+                return response()->json(['success' => false, 'errors' => $validator->errors()], 400);
+            }
+            
+            $proposal->innovationMeta()->updateOrCreate(
+                ['proposal_id' => $proposal->proposalid],
+                $request->only(['gap', 'solution', 'targetcustomers', 'valueproposition', 'competitors', 'attraction'])
+            );
+        } else {
+            $validator = Validator::make($request->all(), [
+                'objectives' => 'required|string',
+                'hypothesis' => 'required|string',
+                'significance' => 'required|string',
+                'ethicals' => 'required|string',
+                'expoutput' => 'required|string',
+                'socio_impact' => 'required|string',
+                'res_findings' => 'required|string'
+            ]);
+            
+            if ($validator->fails()) {
+                return response()->json(['success' => false, 'errors' => $validator->errors()], 400);
+            }
+            
+            $proposal->researchMeta()->updateOrCreate(
+                ['proposal_id' => $proposal->proposalid],
+                $request->only(['objectives', 'hypothesis', 'significance', 'ethicals', 'expoutput', 'socio_impact', 'res_findings'])
+            );
+        }
+
+        return response()->json(['success' => true, 'message' => 'Meta information updated successfully']);
     }
 
     public function markAsDraft(Request $request, $id)
