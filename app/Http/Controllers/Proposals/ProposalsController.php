@@ -629,9 +629,13 @@ class ProposalsController extends Controller
                 'innovationTeams',
                 'researchMeta',
                 'innovationMeta',
+                'reviewers'
             ])->findOrFail($id);
 
-            return response()->json(['success' => true, 'data' => $proposal]);
+            $proposalData = $proposal->toArray();
+            $proposalData['reviewer_ids'] = $proposal->reviewers->pluck('reviewer_id')->toArray();
+
+            return response()->json(['success' => true, 'data' => $proposalData]);
         } catch (Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }

@@ -47,7 +47,7 @@ class DashboardController extends Controller
             $pendingCount = Proposal::where('approvalstatus', 'PENDING')->count();
             $draftCount = Proposal::where('approvalstatus', 'DRAFT')->count();
 
-            $pieChartData = [
+            $prop_by_status = [
                 'labels' => ['Approved', 'Rejected', 'Pending', 'Draft'],
                 'datasets' => [[
                     'data' => [$approvedCount, $rejectedCount, $pendingCount, $draftCount],
@@ -87,10 +87,31 @@ class DashboardController extends Controller
                 $barChart2Data['datasets'][0]['data'][] = $count;
             }
 
+            // Pie Chart Data - Proposals by Type
+            $researchCount = Proposal::where('proposaltype', 'research')->count();
+            $innovationCount = Proposal::where('proposaltype', 'innovation')->count();
+
+            $prop_by_type = [
+                'labels' => ['Research', 'Innovation'],
+                'datasets' => [[
+                    'data' => [$researchCount, $innovationCount],
+                    'backgroundColor' => [
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(255, 159, 64, 0.8)',
+                    ],
+                    'borderColor' => [
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 159, 64, 1)',
+                    ],
+                    'borderWidth' => 1,
+                ]],
+            ];
+
             $chartData = [
                 'barChart_data1' => $barChartData,
                 'barchart_data2' => $barChart2Data,
-                'pieChart' => $pieChartData,
+                'prop_by_status' => $prop_by_status,
+                'prop_by_type' => $prop_by_type,
             ];
 
             return $this->successResponse($chartData, 'Chart data retrieved successfully');
