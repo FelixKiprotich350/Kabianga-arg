@@ -63,7 +63,6 @@ class Proposal extends Model
         'proposalid',
         'grantnofk',
         'useridfk',
-        'pfnofk',
         'themefk',
         'departmentidfk',
         'approvalstatus',

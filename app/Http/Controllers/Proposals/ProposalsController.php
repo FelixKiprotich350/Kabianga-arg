@@ -68,9 +68,8 @@ class ProposalsController extends Controller
         $proposal->proposalid = $incrementNumber;
         $proposal->proposalcode = $generatedCode;
         $proposal->grantnofk = $request->input('grantnofk');
-        $proposal->departmentidfk = $request->input('departmentfk');
+        $proposal->departmentidfk = $request->input('departmentidfk');
         $proposal->useridfk = Auth::user()->userid;
-        $proposal->pfnofk = Auth::user()->pfno;
         $proposal->approvalstatus = ApprovalStatus::PENDING;
         $proposal->submittedstatus = SubmittedStatus::PENDING;
         $proposal->receivedstatus = ReceivedStatus::PENDING;
