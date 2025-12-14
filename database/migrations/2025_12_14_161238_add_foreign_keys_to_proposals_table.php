@@ -15,7 +15,6 @@ return new class extends Migration
             $table->foreign(['approvedrejectedbywhofk'])->references(['userid'])->on('users')->onUpdate('no action')->onDelete('restrict');
             $table->foreign(['departmentidfk'])->references(['depid'])->on('departments')->onUpdate('no action')->onDelete('restrict');
             $table->foreign(['grantnofk'])->references(['grantid'])->on('grants')->onUpdate('no action')->onDelete('restrict');
-            $table->foreign(['pfnofk'])->references(['pfno'])->on('users')->onUpdate('no action')->onDelete('restrict');
             $table->foreign(['themefk'])->references(['themeid'])->on('researchthemes')->onUpdate('no action')->onDelete('restrict');
             $table->foreign(['useridfk'])->references(['userid'])->on('users')->onUpdate('no action')->onDelete('restrict');
         });
@@ -30,7 +29,6 @@ return new class extends Migration
             $table->dropForeign('proposals_approvedrejectedbywhofk_foreign');
             $table->dropForeign('proposals_departmentidfk_foreign');
             $table->dropForeign('proposals_grantnofk_foreign');
-            $table->dropForeign('proposals_pfnofk_foreign');
             $table->dropForeign('proposals_themefk_foreign');
             $table->dropForeign('proposals_useridfk_foreign');
         });

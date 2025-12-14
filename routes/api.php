@@ -98,7 +98,6 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
         Route::post('/', [ProposalsController::class, 'postnewproposal']);
 
         Route::get('/{id}', [ProposalsController::class, 'fetchsingleproposal']);
-        Route::put('/{id}/basic', [ProposalsController::class, 'updatebasicdetails']);
         Route::put('/{id}/research', [ProposalsController::class, 'updateresearchdetails']);
         Route::put('/{id}/innovation', [ProposalsController::class, 'updateinnovationdetails']);
         Route::post('/{id}/submit', [ProposalsController::class, 'submitproposal']);
@@ -122,11 +121,7 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
         Route::get('/{id}/research-design', [ProposalsController::class, 'fetchresearchdesign']);
         Route::get('/{id}/innovation-teams', [ProposalsController::class, 'fetchinnovationteams']);
         Route::get('/{id}/budget-validation', [ProposalsController::class, 'budgetValidation']);
-
-        // Proposal Reviewers
-        Route::post('/{id}/reviewers', [\App\Http\Controllers\Proposals\ProposalReviewersController::class, 'assignReviewers']);
-        Route::get('/{id}/reviewers', [\App\Http\Controllers\Proposals\ProposalReviewersController::class, 'getReviewers']);
-        Route::delete('/{id}/reviewers/{reviewerId}', [\App\Http\Controllers\Proposals\ProposalReviewersController::class, 'removeReviewer']);
+        Route::get('/{id}/reviewers', [ProposalsController::class, 'getProposalReviewers']);
     });
 
     // My Review Proposals
@@ -156,6 +151,14 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
         Route::get('/search', [PublicationsController::class, 'fetchsearch']);
         Route::put('/{id}', [PublicationsController::class, 'updatePublication']);
         Route::delete('/{id}', [PublicationsController::class, 'deletePublication']);
+    });
+
+    // Reviewers
+    Route::prefix('proposalreviewers')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Proposals\ProposalReviewersController::class, 'fetchall']);
+        Route::get('/master', [\App\Http\Controllers\Proposals\ProposalReviewersController::class, 'fetchmaster']);
+        Route::post('/', [\App\Http\Controllers\Proposals\ProposalReviewersController::class, 'postreviewer']);
+        Route::delete('/{id}', [\App\Http\Controllers\Proposals\ProposalReviewersController::class, 'deleteReviewer']);
     });
 
     // Expenditures

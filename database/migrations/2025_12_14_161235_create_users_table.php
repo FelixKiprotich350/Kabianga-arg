@@ -15,7 +15,7 @@ return new class extends Migration
             $table->char('userid', 36)->primary();
             $table->string('name');
             $table->string('email')->unique();
-            $table->string('pfno')->unique();
+            $table->string('pfno')->nullable()->unique();
             $table->string('phonenumber')->unique();
             $table->string('gender')->nullable();
             $table->boolean('isadmin')->default(false);

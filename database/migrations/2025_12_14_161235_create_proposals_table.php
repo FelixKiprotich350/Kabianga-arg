@@ -18,7 +18,6 @@ return new class extends Migration
             $table->unsignedInteger('grantnofk')->index('proposals_grantnofk_foreign');
             $table->char('departmentidfk', 36)->index('proposals_departmentidfk_foreign');
             $table->char('useridfk', 36)->index('proposals_useridfk_foreign');
-            $table->string('pfnofk')->index('proposals_pfnofk_foreign');
             $table->integer('themefk')->index('proposals_themefk_foreign');
             $table->enum('submittedstatus', ['PENDING', 'SUBMITTED'])->default('PENDING');
             $table->enum('receivedstatus', ['PENDING', 'RECEIVED'])->default('PENDING');

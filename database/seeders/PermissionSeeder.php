@@ -15,8 +15,8 @@ class PermissionSeeder extends Seeder
             ['shortname' => 'canapproveproposal', 'menuname' => 'Approve Proposals', 'description' => 'Can approve proposals'],
             ['shortname' => 'canrejectproposal', 'menuname' => 'Reject Proposals', 'description' => 'Can reject proposals'],
             ['shortname' => 'canreceiveproposal', 'menuname' => 'Receive Proposals', 'description' => 'Can receive proposals'],
-            ['shortname' => 'canenabledisableproposaledit', 'menuname' => 'Enable/Disable Proposal Edit', 'description' => 'Can enable/disable proposal editing'],
-            ['shortname' => 'canproposechanges', 'menuname' => 'Propose Changes', 'description' => 'Can propose changes to proposals'],
+            ['shortname' => 'canchangeproposaleditstatus', 'menuname' => 'Enable/Disable Proposal Edit', 'description' => 'Can enable/disable proposal editing'],
+            ['shortname' => 'canassignreviewers', 'menuname' => 'Assign Reviewers', 'description' => 'Can assign Reviewers to proposals'],
 
             // Project management
             ['shortname' => 'canviewallprojects', 'menuname' => 'View All Projects', 'description' => 'Can view all projects'],

@@ -147,120 +147,6 @@ class ProposalsController extends Controller
         }
     }
 
-    public function updatebasicdetails(Request $request, $id)
-    {
-        $proposal = Proposal::findOrFail($id);
-        if (! auth()->user()->userid == $proposal->useridfk) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You are not Authorized to edit this Proposal. Only the owner can Edit!',
-            ], 403);
-        }
-        if (! $proposal->isEditable()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'This proposal cannot be edited at this time.',
-            ], 403);
-        }
-        $rules = [
-            'grantnofk' => 'required|integer',
-            'departmentfk' => 'required|string',
-            'themefk' => 'required|string',
-            'proposaltype' => 'sometimes|in:research,innovation',
-        ];
-
-        // Validate incoming request
-        $validator = Validator::make($request->all(), $rules);
-
-        // Check if validation fails
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 400);
-        }
-
-        // Assign values from the request
-        $proposal->departmentidfk = $request->input('departmentfk');
-        $proposal->grantnofk = $request->input('grantnofk');
-        $proposal->themefk = $request->input('themefk');
-        if ($request->has('proposaltype')) {
-            $proposal->proposaltype = ProposalType::from($request->input('proposaltype'));
-        }
-        // Save the proposal
-        $proposal->save();
-
-        // Return JSON response
-        return response()->json([
-            'success' => true,
-            'message' => 'Basic Details Saved Successfully!!',
-            'proposal_id' => $proposal->proposalid,
-            'type' => 'success',
-        ], 200);
-    }
-
-    public function updateresearchdetails(Request $request, $id)
-    {
-        $proposal = Proposal::findOrFail($id);
-        if (! auth()->user()->userid == $proposal->useridfk) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You are not Authorized to edit this Proposal. Only the owner can Edit!',
-            ], 403);
-        }
-        if (! $proposal->isEditable()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'This proposal cannot be edited at this time.',
-            ], 403);
-        }
-
-        if ($proposal->proposaltype->value !== 'research') {
-            return response()->json(['success' => false, 'message' => 'This endpoint is only for research proposals'], 400);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'proposaltitle' => 'required|string',
-            'terminationdate' => 'required|date',
-            'commencingdate' => 'required|date',
-            'objectives' => 'required|string',
-            'hypothesis' => 'required|string',
-            'significance' => 'required|string',
-            'ethicals' => 'required|string',
-            'expoutput' => 'required|string',
-            'socio_impact' => 'required|string',
-            'res_findings' => 'required|string',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 400);
-        }
-
-        // Update basic proposal details
-        $proposal->proposaltitle = $request->input('proposaltitle');
-        $proposal->commencingdate = $request->input('commencingdate');
-        $proposal->terminationdate = $request->input('terminationdate');
-        $proposal->save();
-
-        // Update research meta
-        $proposal->researchMeta()->updateOrCreate(
-            ['proposal_id' => $proposal->proposalid],
-            [
-                'objectives' => $request->input('objectives'),
-                'hypothesis' => $request->input('hypothesis'),
-                'significance' => $request->input('significance'),
-                'ethicals' => $request->input('ethicals'),
-                'expoutput' => $request->input('expoutput'),
-                'socio_impact' => $request->input('socio_impact'),
-                'res_findings' => $request->input('res_findings'),
-            ]
-        );
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Research Details Saved Successfully!!',
-            'proposal_id' => $proposal->proposalid,
-            'type' => 'success',
-        ], 200);
-    }
-
     public function submitproposal(Request $request, $id)
     {
         $proposal = Proposal::findOrFail($id);
@@ -338,7 +224,7 @@ class ProposalsController extends Controller
 
     public function changeeditstatus(Request $request, $id)
     {
-        if (! auth()->user()->haspermission('canenabledisableproposaledit')) {
+        if (! auth()->user()->haspermission('canchangeproposaleditstatus')) {
             return response()->json([
                 'success' => false,
                 'message' => 'You are not Authorized to Enable or Disable editing of this Proposal!',
@@ -354,7 +240,7 @@ class ProposalsController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'action' => 'required|in:enable,disable'
+            'action' => 'required|in:enable,disable',
         ]);
 
         if ($validator->fails()) {
@@ -363,8 +249,9 @@ class ProposalsController extends Controller
 
         $proposal->allowediting = $request->input('action') === 'enable';
         $proposal->save();
-        
+
         $action = $request->input('action') === 'enable' ? 'enabled' : 'disabled';
+
         return response()->json(['success' => true, 'message' => "Proposal editing {$action} successfully"]);
     }
 
@@ -484,15 +371,6 @@ class ProposalsController extends Controller
 
     }
 
-    public function viewallproposals()
-    {
-        if (! auth()->user()->haspermission('canviewallapplications')) {
-            return response()->json(['success' => false, 'message' => 'You are not Authorized to view all Proposals!'], 403);
-        }
-
-        return response()->json(['message' => 'View all proposals endpoint', 'status' => 'active']);
-    }
-
     public function printpdf($id)
     {
         try {
@@ -506,9 +384,9 @@ class ProposalsController extends Controller
                 'workplans:workplanid,proposalidfk,activity,time,input,bywhom',
                 'collaborators:collaboratorid,proposalidfk,collaboratorname,position,institution',
                 'publications:publicationid,proposalidfk,title,publisher,year',
-                'researchMeta'
+                'researchMeta',
             ])->findOrFail($id);
-            
+
             if ($proposal->proposaltype->value !== 'research') {
                 return response()->json(['success' => false, 'message' => 'PDF download is only available for research proposals'], 403);
             }
@@ -565,7 +443,7 @@ class ProposalsController extends Controller
         $search = $request->input('q');
         $user = auth()->user();
 
-        $query = Proposal::with('department', 'grantitem.financialyear', 'themeitem', 'applicant');
+        $query = Proposal::with('department', 'grantitem.financialyear', 'themeitem', 'applicant', 'reviewers');
 
         if ($scope === 'my') {
             $query->where('useridfk', $user->userid);
@@ -590,11 +468,13 @@ class ProposalsController extends Controller
 
         try {
             $proposals = $query->get();
-            $data = $proposals->map(function ($proposal) {
+            $data = $proposals->map(function ($proposal) use ($user) {
+                $isOwner = $user->userid == $proposal->useridfk;
+                $isReviewer = $proposal->reviewers->contains('reviewer_id', $user->userid);
+                
                 return [
                     'proposalid' => $proposal->proposalid,
                     'proposaltitle' => $proposal->proposaltitle,
-                    'objectives' => $proposal->objectives,
                     'approvalstatus' => $proposal->approvalstatus,
                     'proposaltype' => $proposal->proposaltype,
                     'theme_name' => $proposal->themeitem->themename ?? 'N/A',
@@ -603,6 +483,7 @@ class ProposalsController extends Controller
                     'applicant_name' => $proposal->applicant->name ?? 'N/A',
                     'department_name' => $proposal->department->departmentname ?? 'N/A',
                     'is_editable' => $proposal->isEditable(),
+                    'user_canview' => $isOwner || $isReviewer,
                 ];
             });
 
@@ -612,24 +493,41 @@ class ProposalsController extends Controller
         }
     }
 
-    public function fetchsingleproposal($id)
+    public function fetchsingleproposal(Request $request, $id)
     {
         try {
-            $proposal = Proposal::with([
-                'department',
-                'grantitem',
-                'themeitem',
-                'applicant',
-                'expenditures.expenditureType',
-                'researchdesigns',
-                'workplans',
-                'collaborators',
-                'publications',
-                'innovationTeams',
-                'researchMeta',
-                'innovationMeta',
-                'reviewers'
-            ])->findOrFail($id);
+            $version = $request->query('v', 'minimal');
+            
+            $relations = ['department', 'grantitem', 'themeitem', 'applicant', 'reviewers'];
+            if ($version === 'full') {
+                $relations = array_merge($relations, [
+                    'expenditures.expenditureType',
+                    'researchdesigns',
+                    'workplans',
+                    'collaborators',
+                    'publications',
+                    'innovationTeams',
+                    'researchMeta',
+                    'innovationMeta',
+                ]);
+            }
+            
+            $proposal = Proposal::with($relations)->findOrFail($id);
+
+            $user = auth()->user();
+            $isOwner = $user->userid == $proposal->useridfk;
+            $isReviewer = $proposal->reviewers->contains('reviewer_id', $user->userid);
+            $canViewAll = $user->haspermission('canviewallproposals');
+
+            if ($version === 'minimal') {
+                if (!$canViewAll && !$isOwner && !$isReviewer) {
+                    return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+                }
+            } else {
+                if (!$isOwner && !$isReviewer) {
+                    return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+                }
+            }
 
             $proposalData = $proposal->toArray();
             $proposalData['reviewer_ids'] = $proposal->reviewers->pluck('reviewer_id')->toArray();
@@ -836,6 +734,119 @@ class ProposalsController extends Controller
         ]);
     }
 
+    public function getProposalReviewers($id)
+    {
+        try {
+            $data = \App\Models\ProposalReviewer::where('proposal_id', $id)
+                ->with('reviewer:userid,name,email')
+                ->get();
+
+            return $this->successResponse($data, 'Reviewers retrieved successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse('Failed to fetch reviewers', $e->getMessage(), 500);
+        }
+    }
+
+    public function updateresearchdetails(Request $request, $id)
+    {
+        $proposal = Proposal::findOrFail($id);
+        if (auth()->user()->userid != $proposal->useridfk) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not Authorized to edit this Proposal. Only the owner can Edit!',
+            ], 403);
+        }
+        if (! $proposal->isEditable()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This proposal cannot be edited at this time.',
+            ], 403);
+        }
+
+        if ($proposal->proposaltype->value !== 'research') {
+            return response()->json(['success' => false, 'message' => 'This endpoint is only for research proposals'], 400);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'grantnofk' => 'sometimes|integer',
+            'departmentfk' => 'sometimes|string',
+            'themefk' => 'sometimes|string',
+            'proposaltitle' => 'sometimes|string',
+            'terminationdate' => 'sometimes|date',
+            'commencingdate' => 'sometimes|date',
+            'objectives' => 'sometimes|string',
+            'hypothesis' => 'sometimes|string',
+            'significance' => 'sometimes|string',
+            'ethicals' => 'sometimes|string',
+            'expoutput' => 'sometimes|string',
+            'socio_impact' => 'sometimes|string',
+            'res_findings' => 'sometimes|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], 400);
+        }
+
+        // Update basic proposal details only if provided
+        if ($request->has('departmentfk')) {
+            $proposal->departmentidfk = $request->input('departmentfk');
+        }
+        if ($request->has('grantnofk')) {
+            $proposal->grantnofk = $request->input('grantnofk');
+        }
+        if ($request->has('themefk')) {
+            $proposal->themefk = $request->input('themefk');
+        }
+        if ($request->has('proposaltitle')) {
+            $proposal->proposaltitle = $request->input('proposaltitle');
+        }
+        if ($request->has('commencingdate')) {
+            $proposal->commencingdate = $request->input('commencingdate');
+        }
+        if ($request->has('terminationdate')) {
+            $proposal->terminationdate = $request->input('terminationdate');
+        }
+        $proposal->save();
+
+        // Update research meta only for provided fields
+        $metaData = [];
+        if ($request->has('objectives')) {
+            $metaData['objectives'] = $request->input('objectives');
+        }
+        if ($request->has('hypothesis')) {
+            $metaData['hypothesis'] = $request->input('hypothesis');
+        }
+        if ($request->has('significance')) {
+            $metaData['significance'] = $request->input('significance');
+        }
+        if ($request->has('ethicals')) {
+            $metaData['ethicals'] = $request->input('ethicals');
+        }
+        if ($request->has('expoutput')) {
+            $metaData['expoutput'] = $request->input('expoutput');
+        }
+        if ($request->has('socio_impact')) {
+            $metaData['socio_impact'] = $request->input('socio_impact');
+        }
+        if ($request->has('res_findings')) {
+            $metaData['res_findings'] = $request->input('res_findings');
+        }
+
+        if (! empty($metaData)) {
+            $proposal->researchMeta()->updateOrCreate(
+                ['proposal_id' => $proposal->proposalid],
+                $metaData
+            );
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Research Details Saved Successfully!!',
+            'proposal_id' => $proposal->proposalid,
+            'type' => 'success',
+        ], 200);
+    }
+
     public function updateinnovationdetails(Request $request, $id)
     {
         $proposal = Proposal::findOrFail($id);
@@ -853,6 +864,9 @@ class ProposalsController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
+            'grantnofk' => 'required|integer',
+            'departmentfk' => 'required|string',
+            'themefk' => 'required|string',
             'proposaltitle' => 'required|string',
             'terminationdate' => 'required|date',
             'commencingdate' => 'required|date',
@@ -873,6 +887,9 @@ class ProposalsController extends Controller
         }
 
         // Update basic proposal details
+        $proposal->departmentidfk = $request->input('departmentfk');
+        $proposal->grantnofk = $request->input('grantnofk');
+        $proposal->themefk = $request->input('themefk');
         $proposal->proposaltitle = $request->input('proposaltitle');
         $proposal->commencingdate = $request->input('commencingdate');
         $proposal->terminationdate = $request->input('terminationdate');

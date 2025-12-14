@@ -18,6 +18,7 @@ return new class extends Migration
             $table->timestamp('assigned_at')->useCurrent();
             $table->char('assigned_by', 36)->index('proposal_reviewers_assigned_by_foreign');
             $table->timestamps();
+            $table->softDeletes();
 
             $table->unique(['proposal_id', 'reviewer_id']);
         });

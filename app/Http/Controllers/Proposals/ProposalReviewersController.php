@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Proposals;
 
 use App\Http\Controllers\Controller;
-use App\Models\Proposal;
 use App\Models\ProposalReviewer;
 use App\Traits\ApiResponse;
 use Exception;
@@ -14,89 +13,99 @@ class ProposalReviewersController extends Controller
 {
     use ApiResponse;
 
-    public function assignReviewers(Request $request, $proposalId)
+    public function fetchall(Request $request)
     {
-        if (!auth()->user()->haspermission('canassignreviewers')) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'reviewer_ids' => 'required|array|min:1',
-            'reviewer_ids.*' => 'required|string|exists:users,userid',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['success' => false, 'errors' => $validator->errors()], 400);
-        }
-
-        $proposal = Proposal::findOrFail($proposalId);
-
         try {
-            $assignedReviewers = [];
-            foreach ($request->reviewer_ids as $reviewerId) {
-                $reviewer = ProposalReviewer::firstOrCreate(
-                    ['proposal_id' => $proposalId, 'reviewer_id' => $reviewerId],
-                    ['assigned_by' => auth()->user()->userid]
-                );
-                $assignedReviewers[] = $reviewer->load('reviewer');
+            $proposalId = $request->query('proposal_id');
+
+            if (! $proposalId) {
+                return $this->errorResponse('Proposal ID is required', null, 400);
             }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Reviewers assigned successfully',
-                'data' => $assignedReviewers
-            ]);
-        } catch (Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
-    }
-
-    public function removeReviewer($proposalId, $reviewerId)
-    {
-        if (!auth()->user()->haspermission('canassignreviewers')) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
-
-        try {
-            $deleted = ProposalReviewer::where('proposal_id', $proposalId)
-                ->where('reviewer_id', $reviewerId)
-                ->delete();
-
-            if ($deleted) {
-                return response()->json(['success' => true, 'message' => 'Reviewer removed successfully']);
-            }
-
-            return response()->json(['success' => false, 'message' => 'Reviewer not found'], 404);
-        } catch (Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
-    }
-
-    public function getReviewers($proposalId)
-    {
-        try {
-            $reviewers = ProposalReviewer::with(['reviewer', 'assignedBy'])
-                ->where('proposal_id', $proposalId)
+            $data = ProposalReviewer::where('proposal_id', $proposalId)
+                ->with('reviewer:userid,name,email')
                 ->get();
 
-            return response()->json(['success' => true, 'data' => $reviewers]);
+            return $this->successResponse($data, 'Reviewers retrieved successfully');
         } catch (Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            return $this->errorResponse('Failed to fetch reviewers', $e->getMessage(), 500);
         }
     }
 
-    public function getMyReviewProposals()
+    public function postreviewer(Request $request)
     {
         try {
-            $userId = auth()->user()->userid;
-            $proposals = ProposalReviewer::with(['proposal.applicant', 'proposal.department', 'proposal.themeitem'])
-                ->where('reviewer_id', $userId)
-                ->get()
-                ->pluck('proposal');
+            $validator = Validator::make($request->all(), [
+                'proposal_id' => 'required|integer|exists:proposals,proposalid',
+                'reviewer_ids' => 'required|array',
+                'reviewer_ids.*' => 'required|string|exists:users,userid',
+            ]);
 
-            return response()->json(['success' => true, 'data' => $proposals]);
+            if ($validator->fails()) {
+                return $this->errorResponse('Validation failed', $validator->errors(), 400);
+            }
+
+            // Soft delete all existing reviewers for this proposal
+            ProposalReviewer::where('proposal_id', $request->proposal_id)->delete();
+
+            $created = [];
+            foreach ($request->reviewer_ids as $reviewerId) {
+                // Check if reviewer exists (including soft deleted)
+                $reviewer = ProposalReviewer::withTrashed()
+                    ->where('proposal_id', $request->proposal_id)
+                    ->where('reviewer_id', $reviewerId)
+                    ->first();
+
+                if ($reviewer) {
+                    // Restore if soft deleted
+                    $reviewer->restore();
+                    $reviewer->assigned_by = auth()->user()->userid;
+                    $reviewer->save();
+                } else {
+                    // Create new reviewer
+                    $reviewer = ProposalReviewer::create([
+                        'proposal_id' => $request->proposal_id,
+                        'reviewer_id' => $reviewerId,
+                        'assigned_by' => auth()->user()->userid,
+                    ]);
+                }
+                $created[] = $reviewer;
+            }
+
+            return $this->successResponse($created, 'Reviewers assigned successfully', [], 201);
         } catch (Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            return $this->errorResponse('Failed to assign reviewers', $e->getMessage(), 500);
+        }
+    }
+
+    public function fetchmaster()
+    {
+        try {
+            $users = \App\Models\User::select('userid', 'name', 'highqualification')
+                ->get()
+                ->map(function ($user) {
+                    return [
+                        'userid' => $user->userid,
+                        'name' => $user->name,
+                        'highqualification' => $user->highqualification ?? 'N/A',
+                    ];
+                });
+
+            return $this->successResponse($users, 'Reviewers retrieved successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse('Failed to fetch users', $e->getMessage(), 500);
+        }
+    }
+
+    public function deleteReviewer($id)
+    {
+        try {
+            $reviewer = ProposalReviewer::findOrFail($id);
+            $reviewer->delete();
+
+            return $this->successResponse(null, 'Reviewer removed successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse('Failed to remove reviewer', $e->getMessage(), 500);
         }
     }
 }

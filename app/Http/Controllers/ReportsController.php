@@ -74,7 +74,7 @@ class ReportsController extends Controller
 
     public function getProposalsBySchool(Request $request)
     {
-        if (! auth()->user()->hasPermission('canViewAllApplications')) {
+        if (! auth()->user()->hasPermission('canviewallproposals')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403); // message: "You are not Authorized to view all Proposals!";
         }
 
@@ -175,7 +175,7 @@ class ReportsController extends Controller
 
     public function getProposalsByTheme(Request $request)
     {
-        if (! auth()->user()->hasPermission('canViewAllApplications')) {
+        if (! auth()->user()->hasPermission('canviewallproposals')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -242,7 +242,7 @@ class ReportsController extends Controller
 
     public function getProjectsReport(Request $request)
     {
-        if (! auth()->user()->hasPermission('canViewAllApplications')) {
+        if (! auth()->user()->hasPermission('canviewallproposals')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -264,7 +264,7 @@ class ReportsController extends Controller
 
     public function getUsersReport(Request $request)
     {
-        if (! auth()->user()->hasPermission('canViewAllApplications')) {
+        if (! auth()->user()->hasPermission('canviewallproposals')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -309,7 +309,7 @@ class ReportsController extends Controller
 
     public function getThemesReport(Request $request)
     {
-        if (! auth()->user()->hasPermission('canViewAllApplications')) {
+        if (! auth()->user()->hasPermission('canviewallproposals')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -337,7 +337,7 @@ class ReportsController extends Controller
 
     public function getGrantsReport(Request $request)
     {
-        if (! auth()->user()->hasPermission('canViewAllApplications')) {
+        if (! auth()->user()->hasPermission('canviewallproposals')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -370,7 +370,7 @@ class ReportsController extends Controller
 
     public function getSchoolsReport(Request $request)
     {
-        if (! auth()->user()->hasPermission('canViewAllApplications')) {
+        if (! auth()->user()->hasPermission('canviewallproposals')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -429,7 +429,7 @@ class ReportsController extends Controller
 
     public function getDepartmentsReport(Request $request)
     {
-        if (! auth()->user()->hasPermission('canViewAllApplications')) {
+        if (! auth()->user()->hasPermission('canviewallproposals')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -460,7 +460,7 @@ class ReportsController extends Controller
 
     public function getSummaryReport(Request $request)
     {
-        if (! auth()->user()->hasPermission('canViewAllApplications')) {
+        if (! auth()->user()->hasPermission('canviewallproposals')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -508,7 +508,7 @@ class ReportsController extends Controller
 
     public function exportReport(Request $request)
     {
-        if (! auth()->user()->hasPermission('canViewAllApplications')) {
+        if (! auth()->user()->hasPermission('canviewallproposals')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -544,7 +544,7 @@ class ReportsController extends Controller
 
     public function getProposalsByGrant(Request $request)
     {
-        if (! auth()->user()->hasPermission('canViewAllApplications')) {
+        if (! auth()->user()->hasPermission('canviewallproposals')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403); // message: "You are not Authorized to view all Proposals!";
         }
 

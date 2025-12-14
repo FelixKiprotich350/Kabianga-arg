@@ -198,7 +198,7 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     {
         try {
             $proposal = Proposal::findOrFail($proposalid);
-            if ($this->haspermission('canenabledisableproposaledit') && ($proposal->useridfk != $this->userid) && $proposal->approvalstatus == \App\Models\ApprovalStatus::PENDING && $proposal->submittedstatus == \App\Models\SubmittedStatus::SUBMITTED && $proposal->receivedstatus == \App\Models\ReceivedStatus::RECEIVED && ! $proposal->allowediting) {
+            if ($this->haspermission('canchangeproposaleditstatus') && ($proposal->useridfk != $this->userid) && $proposal->approvalstatus == \App\Models\ApprovalStatus::PENDING && $proposal->submittedstatus == \App\Models\SubmittedStatus::SUBMITTED && $proposal->receivedstatus == \App\Models\ReceivedStatus::RECEIVED && ! $proposal->allowediting) {
                 return true;
             } else {
                 return false;
@@ -213,7 +213,7 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     {
         try {
             $proposal = Proposal::findOrFail($proposalid);
-            if ($this->haspermission('canenabledisableproposaledit') && ($proposal->useridfk != $this->userid) && $proposal->approvalstatus == \App\Models\ApprovalStatus::PENDING && $proposal->submittedstatus == \App\Models\SubmittedStatus::SUBMITTED && $proposal->receivedstatus == \App\Models\ReceivedStatus::RECEIVED && $proposal->allowediting) {
+            if ($this->haspermission('canchangeproposaleditstatus') && ($proposal->useridfk != $this->userid) && $proposal->approvalstatus == \App\Models\ApprovalStatus::PENDING && $proposal->submittedstatus == \App\Models\SubmittedStatus::SUBMITTED && $proposal->receivedstatus == \App\Models\ReceivedStatus::RECEIVED && $proposal->allowediting) {
                 return true;
             } else {
                 return false;
