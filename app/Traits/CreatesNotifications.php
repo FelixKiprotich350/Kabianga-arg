@@ -20,7 +20,7 @@ trait CreatesNotifications
                 $user,
                 NotificationService::TYPE_PROPOSAL_SUBMITTED,
                 'New Proposal Submitted',
-                "A new research proposal '{$proposal->researchtitle}' has been submitted by {$proposal->applicant->name}.",
+                "A new research proposal '{$proposal->proposaltitle}' has been submitted by {$proposal->applicant->name}.",
                 null,
                 ['proposal_id' => $proposal->proposalid]
             );
@@ -33,7 +33,7 @@ trait CreatesNotifications
             $proposal->applicant,
             NotificationService::TYPE_PROPOSAL_APPROVED,
             'Proposal Approved',
-            "Your research proposal '{$proposal->researchtitle}' has been approved.",
+            "Your research proposal '{$proposal->proposaltitle}' has been approved.",
             null,
             ['proposal_id' => $proposal->proposalid]
         );
@@ -45,7 +45,7 @@ trait CreatesNotifications
             $proposal->applicant,
             NotificationService::TYPE_PROPOSAL_REJECTED,
             'Proposal Rejected',
-            "Your research proposal '{$proposal->researchtitle}' has been rejected.",
+            "Your research proposal '{$proposal->proposaltitle}' has been rejected.",
             null,
             ['proposal_id' => $proposal->proposalid]
         );
@@ -57,7 +57,7 @@ trait CreatesNotifications
             $proposal->applicant,
             NotificationService::TYPE_PROPOSAL_CHANGES_REQUESTED,
             'Changes Requested',
-            "Changes have been requested for your proposal '{$proposal->researchtitle}'.",
+            "Changes have been requested for your proposal '{$proposal->proposaltitle}'.",
             null,
             ['proposal_id' => $proposal->proposalid]
         );

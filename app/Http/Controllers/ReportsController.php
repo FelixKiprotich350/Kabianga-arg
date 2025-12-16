@@ -41,7 +41,7 @@ class ReportsController extends Controller
 
         if ($searchTerm != null) {
             $data = Proposal::with('department', 'grantitem', 'themeitem', 'applicant')
-                ->select(['proposalid', 'researchtitle', 'useridfk', 'departmentidfk', 'grantnofk', 'themefk', 'approvalstatus', 'created_at', 'updated_at'])
+                ->select(['proposalid', 'proposaltitle', 'useridfk', 'departmentidfk', 'grantnofk', 'themefk', 'approvalstatus', 'created_at', 'updated_at'])
                 ->where('approvalstatus', 'like', '%'.$searchTerm.'%')
                 ->orWhereHas('themeitem', function ($query) use ($searchTerm) {
                     $query->where('themename', 'like', '%'.$searchTerm.'%');
@@ -55,7 +55,7 @@ class ReportsController extends Controller
                 ->get();
         } else {
             $data = Proposal::with('department', 'grantitem', 'themeitem', 'applicant')
-                ->select(['proposalid', 'researchtitle', 'useridfk', 'departmentidfk', 'grantnofk', 'themefk', 'approvalstatus', 'created_at', 'updated_at'])
+                ->select(['proposalid', 'proposaltitle', 'useridfk', 'departmentidfk', 'grantnofk', 'themefk', 'approvalstatus', 'created_at', 'updated_at'])
                 ->get();
         }
 
@@ -807,7 +807,7 @@ class ReportsController extends Controller
 
                 return [
                     'project_id' => $project->researchid,
-                    'title' => $project->proposal->researchtitle ?? 'N/A',
+                    'title' => $project->proposal->proposaltitle ?? 'N/A',
                     'applicant' => $project->proposal->applicant->name ?? 'N/A',
                     'status' => $project->projectstatus,
                     'progress_reports' => $progressCount,
@@ -845,7 +845,7 @@ class ReportsController extends Controller
 
             $complianceData = [
                 'proposals_missing_docs' => $proposals->filter(function ($p) {
-                    return empty($p->researchtitle) || empty($p->objectives);
+                    return empty($p->proposaltitle) || empty($p->objectives);
                 })->count(),
                 'projects_no_progress' => $projects->filter(function ($p) {
                     return ResearchProgress::where('researchidfk', $p->researchid)->count() == 0;
@@ -934,7 +934,7 @@ class ReportsController extends Controller
 
                 return [
                     'proposal_id' => $proposal->proposalid,
-                    'title' => $proposal->researchtitle ?? 'N/A',
+                    'title' => $proposal->proposaltitle ?? 'N/A',
                     'grant' => $proposal->grantitem->grantid ?? 'N/A',
                     'budget_amount' => $budgetAmount,
                     'actual_funding' => $actualFunding,
@@ -1065,7 +1065,7 @@ class ReportsController extends Controller
             foreach ($data as $proposal) {
                 fputcsv($file, [
                     $proposal->proposalid,
-                    $proposal->researchtitle,
+                    $proposal->proposaltitle,
                     $proposal->applicant->name ?? 'N/A',
                     $proposal->department->shortname ?? 'N/A',
                     $proposal->grantitem->grantid ?? 'N/A',
@@ -1106,7 +1106,7 @@ class ReportsController extends Controller
         foreach ($data as $proposal) {
             $html .= '<tr>';
             $html .= '<td>'.$proposal->proposalid.'</td>';
-            $html .= '<td>'.htmlspecialchars($proposal->researchtitle).'</td>';
+            $html .= '<td>'.htmlspecialchars($proposal->proposaltitle).'</td>';
             $html .= '<td>'.htmlspecialchars($proposal->applicant->name ?? 'N/A').'</td>';
             $html .= '<td>'.htmlspecialchars($proposal->department->shortname ?? 'N/A').'</td>';
             $html .= '<td>'.htmlspecialchars($proposal->grantitem->grantid ?? 'N/A').'</td>';
@@ -1152,7 +1152,7 @@ class ReportsController extends Controller
             foreach ($data as $project) {
                 fputcsv($file, [
                     $project->researchid,
-                    $project->proposal->researchtitle ?? 'N/A',
+                    $project->proposal->proposaltitle ?? 'N/A',
                     $project->proposal->applicant->name ?? 'N/A',
                     $project->proposal->department->shortname ?? 'N/A',
                     $project->proposal->grantitem->grantid ?? 'N/A',
@@ -1193,7 +1193,7 @@ class ReportsController extends Controller
         foreach ($data as $project) {
             $html .= '<tr>';
             $html .= '<td>'.$project->researchid.'</td>';
-            $html .= '<td>'.htmlspecialchars($project->proposal->researchtitle ?? 'N/A').'</td>';
+            $html .= '<td>'.htmlspecialchars($project->proposal->proposaltitle ?? 'N/A').'</td>';
             $html .= '<td>'.htmlspecialchars($project->proposal->applicant->name ?? 'N/A').'</td>';
             $html .= '<td>'.htmlspecialchars($project->proposal->department->shortname ?? 'N/A').'</td>';
             $html .= '<td>'.htmlspecialchars($project->proposal->grantitem->grantid ?? 'N/A').'</td>';

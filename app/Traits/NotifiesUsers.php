@@ -54,7 +54,7 @@ trait NotifiesUsers
             $proposal->applicant,
             'proposal_submitted',
             'Proposal Submitted Successfully',
-            "Your research proposal '{$proposal->researchtitle}' has been submitted and is pending review."
+            "Your research proposal '{$proposal->proposaltitle}' has been submitted and is pending review."
         );
 
         // Notify reviewers
@@ -65,7 +65,7 @@ trait NotifiesUsers
             $reviewers,
             'proposal_submitted',
             'New Proposal Submitted',
-            "A new research proposal '{$proposal->researchtitle}' has been submitted by {$proposal->applicant->name}."
+            "A new research proposal '{$proposal->proposaltitle}' has been submitted by {$proposal->applicant->name}."
         );
     }
 
@@ -75,7 +75,7 @@ trait NotifiesUsers
             $proposal->applicant,
             'proposal_received',
             'Proposal Received',
-            "Your research proposal '{$proposal->researchtitle}' has been received and is now under review."
+            "Your research proposal '{$proposal->proposaltitle}' has been received and is now under review."
         );
     }
 
@@ -85,7 +85,7 @@ trait NotifiesUsers
             $proposal->applicant,
             'proposal_approved',
             'Proposal Approved',
-            "Congratulations! Your research proposal '{$proposal->researchtitle}' has been approved.",
+            "Congratulations! Your research proposal '{$proposal->proposaltitle}' has been approved.",
             ['level' => 'success']
         );
     }
@@ -96,7 +96,7 @@ trait NotifiesUsers
             $proposal->applicant,
             'proposal_rejected',
             'Proposal Rejected',
-            "Your research proposal '{$proposal->researchtitle}' has been rejected. Please review the comments.",
+            "Your research proposal '{$proposal->proposaltitle}' has been rejected. Please review the comments.",
             ['level' => 'error']
         );
     }
@@ -107,7 +107,7 @@ trait NotifiesUsers
             $proposal->applicant,
             'changes_requested',
             'Changes Requested',
-            "Changes have been requested for your proposal '{$proposal->researchtitle}'. Please review and update.",
+            "Changes have been requested for your proposal '{$proposal->proposaltitle}'. Please review and update.",
             ['level' => 'warning']
         );
     }
@@ -118,7 +118,7 @@ trait NotifiesUsers
             $project->applicant,
             'funding_added',
             'Funding Added to Your Project',
-            "Funding of KES " . number_format($amount, 2) . " has been added to your research project '{$project->proposal->researchtitle}'.",
+            "Funding of KES " . number_format($amount, 2) . " has been added to your research project '{$project->proposal->proposaltitle}'.",
             ['level' => 'success']
         );
     }
@@ -209,7 +209,7 @@ trait NotifiesUsers
             $project->applicant,
             'project_assigned',
             'Supervisor Assigned to Your Project',
-            "A supervisor ({$supervisor->name}) has been assigned to monitor your research project '{$project->proposal->researchtitle}'.",
+            "A supervisor ({$supervisor->name}) has been assigned to monitor your research project '{$project->proposal->proposaltitle}'.",
             ['level' => 'info']
         );
 
@@ -218,7 +218,7 @@ trait NotifiesUsers
             $supervisor,
             'supervision_assigned',
             'New Project Supervision Assignment',
-            "You have been assigned to supervise the research project '{$project->proposal->researchtitle}' by {$project->applicant->name}.",
+            "You have been assigned to supervise the research project '{$project->proposal->proposaltitle}' by {$project->applicant->name}.",
             ['level' => 'info']
         );
     }
@@ -233,7 +233,7 @@ trait NotifiesUsers
             $supervisors,
             'progress_submitted',
             'New Progress Report Submitted',
-            "A progress report has been submitted for project '{$project->proposal->researchtitle}' by {$project->applicant->name}.",
+            "A progress report has been submitted for project '{$project->proposal->proposaltitle}' by {$project->applicant->name}.",
             ['level' => 'info']
         );
     }

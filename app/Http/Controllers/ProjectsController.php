@@ -42,7 +42,7 @@ class ProjectsController extends Controller
                 return [
                     'researchid' => $project->researchid,
                     'researchnumber' => $project->researchnumber,
-                    'title' => $project->proposal->researchtitle ?? 'Untitled',
+                    'title' => $project->proposal->proposaltitle ?? 'Untitled',
                     'projectstatus' => $project->projectstatus,
                     'researcher' => $project->proposal->applicant->name ?? 'N/A',
                     'created_at' => $project->created_at,
@@ -78,7 +78,7 @@ class ProjectsController extends Controller
                 $q->where('projectstatus', 'like', '%'.$search.'%')
                     ->orWhere('researchnumber', 'like', '%'.$search.'%')
                     ->orWhereHas('proposal', function ($query) use ($search) {
-                        $query->where('researchtitle', 'like', '%'.$search.'%');
+                        $query->where('proposaltitle', 'like', '%'.$search.'%');
                     })
                     ->orWhereHas('proposal.applicant', function ($query) use ($search) {
                         $query->where('name', 'like', '%'.$search.'%');
@@ -93,7 +93,7 @@ class ProjectsController extends Controller
                 return [
                     'researchid' => $project->researchid,
                     'researchnumber' => $project->researchnumber,
-                    'title' => $project->proposal->researchtitle ?? 'Untitled',
+                    'title' => $project->proposal->proposaltitle ?? 'Untitled',
                     'description' => $project->proposal->objectives ?? '',
                     'status' => $project->projectstatus ?? 'ACTIVE',
                     'researcher_name' => $project->proposal->applicant->name ?? 'N/A',
