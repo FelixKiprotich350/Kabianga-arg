@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Traits\NotifiesUsers;
 use Hash;
 use Illuminate\Http\Request;
 
 class RegisterController extends Controller
 {
+    use NotifiesUsers;
     public function resetuserpassword(Request $request, $id)
     {
         if (! auth()->user()->haspermission('canresetuserpasswordordisablelogin')) {
@@ -22,6 +24,9 @@ class RegisterController extends Controller
         $user = User::findOrFail($id);
         $user->password = Hash::make($request->password);
         $user->save();
+
+        // Notify user of password change
+        $this->notifyPasswordChanged($user, true);
 
         return response()->json(['message' => 'Password reset successfully!', 'type' => 'success']);
     }

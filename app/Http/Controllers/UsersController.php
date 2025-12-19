@@ -356,6 +356,9 @@ class UsersController extends Controller
             $finalCount = DB::table('userpermissions')->where('useridfk', $id)->count();
             \Log::info('Final verification', ['final_count' => $finalCount]);
 
+            // Notify user of permission changes
+            $this->notifyUserPermissionsChanged($user);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Permissions updated successfully',

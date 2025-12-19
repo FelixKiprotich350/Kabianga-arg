@@ -183,6 +183,21 @@ trait NotifiesUsers
         );
     }
 
+    protected function notifyPasswordChanged($user, $byAdmin = false)
+    {
+        $message = $byAdmin ? 
+            'Your password has been reset by an administrator. Please use your new password to log in.' :
+            'Your password has been changed successfully. If you did not make this change, please contact the administrator immediately.';
+            
+        $this->notify(
+            $user,
+            'password_changed',
+            'Password Changed',
+            $message,
+            ['level' => $byAdmin ? 'warning' : 'success']
+        );
+    }
+
     // Project Management Notifications
     protected function notifyProjectStatusChanged($project, $newStatus)
     {
